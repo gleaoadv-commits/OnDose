@@ -12,6 +12,7 @@ import MedicationDetail from "@/pages/MedicationDetail";
 import CalendarPage from "@/pages/CalendarPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import PlansPage from "@/pages/PlansPage";
+import ProfilePage from "@/pages/ProfilePage";
 import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
                         <Route path="/calendario" element={<CalendarPage />} />
                         <Route path="/notificacoes" element={<NotificationsPage />} />
                         <Route path="/planos" element={<PlansPage />} />
+                        <Route path="/perfil" element={<ProfilePage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
