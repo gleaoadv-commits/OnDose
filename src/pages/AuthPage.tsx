@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Pill, Mail, Lock, User, Eye, EyeOff, Users, Hash } from "lucide-react";
+import { Pill, Mail, Lock, User, Eye, EyeOff, Users, Hash, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
@@ -199,22 +199,35 @@ export default function AuthPage() {
                 </div>
 
                 {isCaregiver && (
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryCode" className="text-sm font-bold">ID do Paciente Principal</Label>
-                    <div className="relative">
-                      <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
-                      <Input
-                        id="primaryCode"
-                        placeholder="Ex: DC-A1B2C3"
-                        value={primaryCode}
-                        onChange={e => setPrimaryCode(e.target.value.toUpperCase())}
-                        className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary uppercase tracking-widest font-bold"
-                        required
-                      />
+                  <div className="space-y-3">
+                    <Card className="p-4 border-amber-500/30 bg-amber-500/5 rounded-2xl">
+                      <div className="flex items-start gap-2.5">
+                        <Crown className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold text-foreground">Recurso Premium</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            O paciente principal precisa ter o plano <span className="font-bold text-amber-600">Premium</span> ativo para vincular familiares.
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="primaryCode" className="text-sm font-bold">ID do Paciente Principal</Label>
+                      <div className="relative">
+                        <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                        <Input
+                          id="primaryCode"
+                          placeholder="Ex: DC-A1B2C3"
+                          value={primaryCode}
+                          onChange={e => setPrimaryCode(e.target.value.toUpperCase())}
+                          className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary uppercase tracking-widest font-bold"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Peça ao paciente o código ID que aparece no perfil dele.
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Peça ao paciente o código ID que aparece no perfil dele.
-                    </p>
                   </div>
                 )}
               </>
