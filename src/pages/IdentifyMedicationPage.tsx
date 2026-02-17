@@ -301,7 +301,19 @@ export default function IdentifyMedicationPage() {
 
               <Button
                 onClick={() => {
-                  navigate("/novo-medicamento");
+                  navigate("/novo-medicamento", {
+                    state: {
+                      prefill: {
+                        name: result.name || "",
+                        dosage: result.dosage || "",
+                        notes: [
+                          result.form ? `Forma: ${result.form}` : "",
+                          result.manufacturer ? `Fabricante: ${result.manufacturer}` : "",
+                          result.instructions || "",
+                        ].filter(Boolean).join("\n"),
+                      },
+                    },
+                  });
                 }}
                 className="w-full rounded-2xl text-elder-base font-bold"
                 size="lg"

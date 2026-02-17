@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,17 +13,20 @@ import { toast } from "sonner";
 
 export default function AddMedication() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addMedication } = useApp();
 
-  const [name, setName] = useState("");
-  const [dosage, setDosage] = useState("");
+  const prefill = (location.state as any)?.prefill;
+
+  const [name, setName] = useState(prefill?.name || "");
+  const [dosage, setDosage] = useState(prefill?.dosage || "");
   const [quantity, setQuantity] = useState(1);
   const [frequency, setFrequency] = useState<MedicationFrequency>("1x-dia");
   const [customHours, setCustomHours] = useState(4);
   const [times, setTimes] = useState<string[]>(["08:00"]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState("");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(prefill?.notes || "");
 
   // When frequency changes, reset times to defaults
   useEffect(() => {
