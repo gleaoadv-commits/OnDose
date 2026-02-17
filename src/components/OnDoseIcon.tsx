@@ -6,8 +6,8 @@ interface OnDoseIconProps {
 }
 
 /**
- * Custom OnDose icon: Letters O and D merged into a pill/capsule shape.
- * The "O" forms the left rounded half, the "D" forms the right half — together they create a capsule.
+ * OnDose icon: A pill capsule where the left half subtly suggests an "O" (circular cutout)
+ * and the right half suggests a "D" (half-circle cutout) — but it reads as a clean pill first.
  */
 export default function OnDoseIcon({ size = 40, className }: OnDoseIconProps) {
   return (
@@ -20,57 +20,56 @@ export default function OnDoseIcon({ size = 40, className }: OnDoseIconProps) {
       className={className}
     >
       <defs>
-        <linearGradient id="pillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(168, 55%, 38%)" />
-          <stop offset="100%" stopColor="hsl(180, 50%, 48%)" />
+        <linearGradient id="odLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(168, 55%, 42%)" />
+          <stop offset="100%" stopColor="hsl(174, 52%, 46%)" />
         </linearGradient>
-        <linearGradient id="pillGradRight" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(180, 50%, 48%)" />
-          <stop offset="100%" stopColor="hsl(168, 55%, 32%)" />
+        <linearGradient id="odRight" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(178, 48%, 38%)" />
+          <stop offset="100%" stopColor="hsl(168, 55%, 34%)" />
         </linearGradient>
+        <filter id="innerGlow">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+          <feOffset dx="0" dy="1" result="offset" />
+          <feComposite in="SourceGraphic" in2="offset" operator="over" />
+        </filter>
       </defs>
 
-      {/* Pill capsule shape - full rounded rect */}
-      <rect x="5" y="20" width="90" height="60" rx="30" ry="30" fill="url(#pillGrad)" />
+      {/* Left half of capsule */}
+      <path
+        d="M50,16 L50,84 Q50,84 50,84 L50,84 
+           C50,84 16,84 16,50 
+           C16,16 50,16 50,16 Z"
+        fill="url(#odLeft)"
+      />
 
-      {/* Divider line in the middle of the capsule */}
-      <line x1="50" y1="20" x2="50" y2="80" stroke="white" strokeOpacity="0.25" strokeWidth="1.5" />
+      {/* Right half of capsule */}
+      <path
+        d="M50,16 L50,84 
+           C50,84 84,84 84,50 
+           C84,16 50,16 50,16 Z"
+        fill="url(#odRight)"
+      />
 
-      {/* Right half overlay - slightly different shade */}
-      <clipPath id="rightHalf">
-        <rect x="50" y="20" width="45" height="60" />
-      </clipPath>
-      <rect x="5" y="20" width="90" height="60" rx="30" ry="30" fill="url(#pillGradRight)" clipPath="url(#rightHalf)" />
+      {/* Subtle capsule shine */}
+      <ellipse cx="38" cy="34" rx="14" ry="6" fill="white" fillOpacity="0.15" transform="rotate(-20, 38, 34)" />
+      <ellipse cx="64" cy="34" rx="10" ry="4" fill="white" fillOpacity="0.1" transform="rotate(-20, 64, 34)" />
 
-      {/* Letter O on the left half */}
-      <text
-        x="28"
-        y="58"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="white"
-        fontSize="32"
-        fontWeight="900"
-        fontFamily="'Nunito', sans-serif"
-        letterSpacing="-1"
-      >
-        O
-      </text>
+      {/* Center divider — thin elegant line */}
+      <line x1="50" y1="18" x2="50" y2="82" stroke="white" strokeOpacity="0.2" strokeWidth="1.2" />
 
-      {/* Letter D on the right half */}
-      <text
-        x="72"
-        y="58"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="white"
-        fontSize="32"
-        fontWeight="900"
-        fontFamily="'Nunito', sans-serif"
-        letterSpacing="-1"
-      >
-        D
-      </text>
+      {/* Left: subtle O shape — a ring/circle cutout feel */}
+      <circle cx="33" cy="50" r="11" stroke="white" strokeOpacity="0.35" strokeWidth="2.5" fill="none" />
+
+      {/* Right: subtle D shape — vertical line + arc */}
+      <path
+        d="M62,39 L62,61 C62,61 74,61 74,50 C74,39 62,39 62,39 Z"
+        stroke="white"
+        strokeOpacity="0.35"
+        strokeWidth="2.5"
+        fill="none"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
