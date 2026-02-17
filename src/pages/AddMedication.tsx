@@ -44,7 +44,9 @@ export default function AddMedication() {
     setTimes(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !dosage.trim()) {
       toast.error("Preencha o nome e a dosagem do medicamento.");
@@ -54,22 +56,27 @@ export default function AddMedication() {
       toast.error("Adicione pelo menos um horário.");
       return;
     }
-    const success = addMedication({
-      name: name.trim(),
-      dosage: dosage.trim(),
-      quantity,
-      frequency,
-      customFrequencyHours: frequency === "personalizado" ? customHours : undefined,
-      times: [...times].sort(),
-      startDate,
-      endDate: endDate || undefined,
-      notes: notes.trim() || undefined,
-    });
-    if (success) {
-      toast.success(`${name} cadastrado com sucesso!`);
-      navigate("/");
-    } else {
-      toast.error("Limite de medicamentos atingido no plano gratuito.");
+    setSaving(true);
+    try {
+      const success = await addMedication({
+        name: name.trim(),
+        dosage: dosage.trim(),
+        quantity,
+        frequency,
+        customFrequencyHours: frequency === "personalizado" ? customHours : undefined,
+        times: [...times].sort(),
+        startDate,
+        endDate: endDate || undefined,
+        notes: notes.trim() || undefined,
+      });
+      if (success) {
+        toast.success(`${name} cadastrado com sucesso!`);
+        navigate("/");
+      } else {
+        toast.error("Limite de medicamentos atingido no plano gratuito.");
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -232,8 +239,8 @@ export default function AddMedication() {
           </div>
         </Card>
 
-        <Button type="submit" size="lg" className="w-full text-elder-base font-bold rounded-2xl h-14 shadow-glow">
-          <Save className="h-5 w-5 mr-2" /> Cadastrar Medicamento
+        <Button type="submit" size="lg" disabled={saving} className="w-full text-elder-base font-bold rounded-2xl h-14 shadow-glow">
+          <Save className="h-5 w-5 mr-2" /> {saving ? "Salvando..." : "Cadastrar Medicamento"}
         </Button>
       </form>
     </div>
