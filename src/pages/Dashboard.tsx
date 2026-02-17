@@ -37,7 +37,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
             </Link>
             <Badge variant="outline" className={status.className + " text-xs font-bold"}>{status.label}</Badge>
           </div>
-          <p className="text-elder-sm text-muted-foreground mt-0.5">{med.dosage}</p>
+          <p className="text-elder-sm text-muted-foreground mt-0.5">{med.dosage} — {med.quantity} comp.</p>
           <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
             <span>{FREQUENCY_LABELS[med.frequency]}</span>

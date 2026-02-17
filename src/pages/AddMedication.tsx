@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Pill, Calendar } from "lucide-react";
-import { MedicationFrequency, FREQUENCY_LABELS, generateTimesForFrequency } from "@/types/medication";
+import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X } from "lucide-react";
+import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes, getTimeSlotsCount } from "@/types/medication";
 import { toast } from "sonner";
 
 export default function AddMedication() {
@@ -17,13 +17,32 @@ export default function AddMedication() {
 
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [frequency, setFrequency] = useState<MedicationFrequency>("1x-dia");
   const [customHours, setCustomHours] = useState(4);
+  const [times, setTimes] = useState<string[]>(["08:00"]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  const previewTimes = generateTimesForFrequency(frequency, customHours);
+  // When frequency changes, reset times to defaults
+  useEffect(() => {
+    const defaults = getDefaultTimes(frequency, customHours);
+    setTimes(defaults);
+  }, [frequency, customHours]);
+
+  const updateTime = (index: number, value: string) => {
+    setTimes(prev => prev.map((t, i) => i === index ? value : t));
+  };
+
+  const addTimeSlot = () => {
+    setTimes(prev => [...prev, "12:00"]);
+  };
+
+  const removeTimeSlot = (index: number) => {
+    if (times.length <= 1) return;
+    setTimes(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +50,17 @@ export default function AddMedication() {
       toast.error("Preencha o nome e a dosagem do medicamento.");
       return;
     }
+    if (times.length === 0) {
+      toast.error("Adicione pelo menos um horário.");
+      return;
+    }
     const success = addMedication({
       name: name.trim(),
       dosage: dosage.trim(),
+      quantity,
       frequency,
       customFrequencyHours: frequency === "personalizado" ? customHours : undefined,
+      times: [...times].sort(),
       startDate,
       endDate: endDate || undefined,
       notes: notes.trim() || undefined,
@@ -71,16 +96,32 @@ export default function AddMedication() {
               required
             />
           </div>
-          <div>
-            <Label className="text-sm font-bold">Dosagem *</Label>
-            <Input
-              value={dosage}
-              onChange={e => setDosage(e.target.value)}
-              placeholder="Ex: 50mg, 1 comprimido"
-              className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
-              required
-            />
+
+          {/* Dosagem + Quantidade side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-sm font-bold">Dosagem *</Label>
+              <Input
+                value={dosage}
+                onChange={e => setDosage(e.target.value)}
+                placeholder="Ex: 50mg"
+                className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
+                required
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-bold">Quant. comprimidos</Label>
+              <Input
+                type="number"
+                value={quantity}
+                onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+                min={1}
+                max={20}
+                className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
+              />
+            </div>
           </div>
+
           <div>
             <Label className="text-sm font-bold">Frequência</Label>
             <Select value={frequency} onValueChange={(v) => setFrequency(v as MedicationFrequency)}>
@@ -108,14 +149,54 @@ export default function AddMedication() {
               />
             </div>
           )}
-
-          {/* Preview times */}
-          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Horários gerados</p>
-            <p className="text-elder-base font-bold text-primary">{previewTimes.join("  •  ")}</p>
-          </div>
         </Card>
 
+        {/* Horários */}
+        <Card className="p-5 space-y-4 rounded-2xl border-border/40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Horários das doses</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addTimeSlot}
+              className="rounded-xl text-xs border-border/60"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Horário
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {times.map((time, i) => (
+              <div key={i} className="relative">
+                <Input
+                  type="time"
+                  value={time}
+                  onChange={e => updateTime(i, e.target.value)}
+                  className="text-elder-base h-13 rounded-2xl border-border/60 pr-10 text-center font-bold"
+                />
+                {times.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeTimeSlot(i)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Toque para ajustar cada horário. Sugestões preenchidas com base na frequência.
+          </p>
+        </Card>
+
+        {/* Período */}
         <Card className="p-5 space-y-5 rounded-2xl border-border/40">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="h-4 w-4 text-primary" />

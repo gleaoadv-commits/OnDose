@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, generateTimesForFrequency } from "@/types/medication";
+import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS } from "@/types/medication";
 
 interface AppState {
   medications: Medication[];
   schedule: ScheduleEvent[];
   notifications: AppNotification[];
   plan: UserPlan;
-  addMedication: (med: Omit<Medication, "id" | "times" | "status" | "color">) => boolean;
+  addMedication: (med: Omit<Medication, "id" | "status" | "color">) => boolean;
   updateMedication: (id: string, updates: Partial<Medication>) => void;
   pauseMedication: (id: string) => void;
   resumeMedication: (id: string) => void;
@@ -30,6 +30,7 @@ function generateScheduleForMedication(med: Medication): ScheduleEvent[] {
   const start = new Date(med.startDate);
   const end = med.endDate ? new Date(med.endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
   const dayStep = med.frequency === "semanal" ? 7 : 1;
+  const dosageLabel = `${med.dosage} — ${med.quantity} comp.`;
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + dayStep)) {
     for (const time of med.times) {
@@ -40,7 +41,7 @@ function generateScheduleForMedication(med: Medication): ScheduleEvent[] {
         id: `${med.id}-${dt.toISOString()}`,
         medicationId: med.id,
         medicationName: med.name,
-        dosage: med.dosage,
+        dosage: dosageLabel,
         scheduledTime: dt.toISOString(),
         taken: false,
         color: med.color,
@@ -61,12 +62,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return medications.filter(m => m.status !== "encerrado").length < 3;
   }, [medications, plan]);
 
-  const addMedication = useCallback((med: Omit<Medication, "id" | "times" | "status" | "color">): boolean => {
+  const addMedication = useCallback((med: Omit<Medication, "id" | "status" | "color">): boolean => {
     if (!canAddMedication()) return false;
     const id = crypto.randomUUID();
-    const times = generateTimesForFrequency(med.frequency, med.customFrequencyHours);
     const color = MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
-    const newMed: Medication = { ...med, id, times, status: "ativo", color };
+    const newMed: Medication = { ...med, id, status: "ativo", color };
     
     setMedications(prev => [...prev, newMed]);
     const events = generateScheduleForMedication(newMed);
@@ -76,7 +76,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       {
         id: crypto.randomUUID(),
         medicationId: id,
-        message: `${med.name} cadastrado com sucesso! ${times.length} dose(s) por dia.`,
+        message: `${med.name} cadastrado com sucesso! ${med.times.length} dose(s) por dia.`,
         time: new Date().toISOString(),
         read: false,
       },
@@ -89,10 +89,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMedications(prev => prev.map(m => {
       if (m.id !== id) return m;
       const updated = { ...m, ...updates };
-      if (updates.frequency || updates.customFrequencyHours) {
-        updated.times = generateTimesForFrequency(updated.frequency, updated.customFrequencyHours);
-      }
-      // Regenerate schedule
       setSchedule(s => [
         ...s.filter(e => e.medicationId !== id),
         ...generateScheduleForMedication(updated),

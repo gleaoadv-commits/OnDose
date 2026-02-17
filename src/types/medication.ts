@@ -16,12 +16,13 @@ export type UserPlan = "free" | "pro";
 export interface Medication {
   id: string;
   name: string;
-  dosage: string;
+  dosage: string;        // ex: "50mg"
+  quantity: number;       // quant. comprimidos por dose
   frequency: MedicationFrequency;
   customFrequencyHours?: number;
   startDate: string;
   endDate?: string;
-  times: string[]; // horários gerados
+  times: string[];       // horários escolhidos pelo usuário
   status: MedicationStatus;
   notes?: string;
   color: string;
@@ -67,7 +68,26 @@ export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
   "personalizado": "Personalizado",
 };
 
-export function generateTimesForFrequency(freq: MedicationFrequency, customHours?: number): string[] {
+/** Returns the default number of time slots for a frequency */
+export function getTimeSlotsCount(freq: MedicationFrequency, customHours?: number): number {
+  switch (freq) {
+    case "1x-dia": return 1;
+    case "2x-dia": return 2;
+    case "3x-dia": return 3;
+    case "4x-dia": return 4;
+    case "6-6h": return 4;
+    case "8-8h": return 3;
+    case "12-12h": return 2;
+    case "semanal": return 1;
+    case "personalizado": {
+      if (!customHours || customHours <= 0) return 1;
+      return Math.max(1, Math.floor(24 / customHours));
+    }
+  }
+}
+
+/** Returns suggested default times for a frequency */
+export function getDefaultTimes(freq: MedicationFrequency, customHours?: number): string[] {
   switch (freq) {
     case "1x-dia": return ["08:00"];
     case "2x-dia": return ["08:00", "20:00"];
@@ -81,7 +101,7 @@ export function generateTimesForFrequency(freq: MedicationFrequency, customHours
       if (!customHours || customHours <= 0) return ["08:00"];
       const times: string[] = [];
       for (let h = 6; h < 24; h += customHours) {
-        times.push(`${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`);
+        times.push(`${String(Math.floor(h)).padStart(2, "0")}:00`);
       }
       return times.length > 0 ? times : ["08:00"];
     }
