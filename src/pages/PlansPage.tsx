@@ -21,7 +21,7 @@ const features = [
   { label: "Cadastro de medicamentos", free: true, pro: true, premium: true },
   { label: "Agenda e calendário", free: true, pro: true, premium: true },
   { label: "Notificações no app", free: true, pro: true, premium: true },
-  { label: "Até 3 medicamentos", free: true, pro: false, premium: false },
+  { label: "Até 2 medicamentos", free: true, pro: false, premium: false },
   { label: "Medicamentos ilimitados", free: false, pro: true, premium: true },
   { label: "Notificações por WhatsApp", free: false, pro: true, premium: true },
   { label: "Notificações por e-mail", free: false, pro: true, premium: true },
