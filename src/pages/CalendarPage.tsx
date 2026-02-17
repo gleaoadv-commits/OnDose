@@ -7,22 +7,71 @@ import { Button } from "@/components/ui/button";
 export default function CalendarPage() {
   const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const dateStr = currentDate.toLocaleDateString("pt-BR", {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  const activeMedIds = useMemo(
+    () => new Set(medications.filter(m => m.status === "ativo").map(m => m.id)),
+    [medications]
+  );
+
+  // Build a map: dateKey -> array of { color, taken, isPast }
+  const dayDots = useMemo(() => {
+    const map: Record<string, { color: string; taken: boolean; isPast: boolean }[]> = {};
+    const now = new Date();
+
+    schedule.forEach(e => {
+      if (!activeMedIds.has(e.medicationId)) return;
+      const d = new Date(e.scheduledTime);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push({
+        color: e.color,
+        taken: e.taken,
+        isPast: d < now && !e.taken,
+      });
+    });
+    return map;
+  }, [schedule, activeMedIds]);
+
+  // Calendar grid
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const startWeekday = firstDay.getDay(); // 0=Sun
+    const daysInMonth = lastDay.getDate();
+
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < startWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    // pad to fill last row
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [currentMonth, currentYear]);
+
+  const changeMonth = (delta: number) => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+  };
+
+  const monthLabel = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+  const selectedDateStr = selectedDate.toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 
+  // Events for selected day
   const dayEvents = useMemo(() => {
-    const start = new Date(currentDate);
+    const start = new Date(selectedDate);
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
-
-    const activeMedIds = new Set(
-      medications.filter(m => m.status === "ativo").map(m => m.id)
-    );
 
     return schedule
       .filter(e => {
@@ -30,19 +79,14 @@ export default function CalendarPage() {
         return d >= start && d < end && activeMedIds.has(e.medicationId);
       })
       .sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
-  }, [schedule, medications, currentDate]);
+  }, [schedule, activeMedIds, selectedDate]);
 
-  const changeDay = (delta: number) => {
-    setCurrentDate(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + delta);
-      return d;
-    });
-  };
-
-  const isToday = new Date().toDateString() === currentDate.toDateString();
+  const isSelectedToday = today.toDateString() === selectedDate.toDateString();
   const taken = dayEvents.filter(e => e.taken).length;
   const total = dayEvents.length;
+  const now = new Date();
+
+  const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
 
   return (
     <div className="space-y-5">
@@ -51,27 +95,122 @@ export default function CalendarPage() {
         Agenda
       </h2>
 
+      {/* Month Calendar */}
       <Card className="p-4 rounded-2xl border-0 shadow-card">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => changeDay(-1)} className="rounded-xl">
-            <ChevronLeft className="h-6 w-6" />
+        {/* Month nav */}
+        <div className="flex items-center justify-between mb-3">
+          <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)} className="rounded-xl h-8 w-8">
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-          <div className="text-center">
-            <p className="text-elder-base font-bold text-foreground capitalize">{dateStr}</p>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              {isToday && (
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
-              )}
-              {total > 0 && (
-                <span className="text-xs font-bold text-muted-foreground">{taken}/{total} doses</span>
-              )}
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => changeDay(1)} className="rounded-xl">
-            <ChevronRight className="h-6 w-6" />
+          <p className="text-elder-base font-bold text-foreground capitalize">{monthLabel}</p>
+          <Button variant="ghost" size="icon" onClick={() => changeMonth(1)} className="rounded-xl h-8 w-8">
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {weekDays.map((d, i) => (
+            <div key={i} className="text-center text-xs font-bold text-muted-foreground py-1">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7 gap-1">
+          {calendarDays.map((day, idx) => {
+            if (day === null) return <div key={idx} />;
+
+            const cellDate = new Date(currentYear, currentMonth, day);
+            const key = `${currentYear}-${currentMonth}-${day}`;
+            const dots = dayDots[key] || [];
+            const isToday = cellDate.toDateString() === today.toDateString();
+            const isSelected = cellDate.toDateString() === selectedDate.toDateString();
+
+            // Unique colors for dots (max 4 shown)
+            const uniqueDots: { color: string; status: "taken" | "overdue" | "pending" }[] = [];
+            const seen = new Set<string>();
+            dots.forEach(dot => {
+              const status = dot.taken ? "taken" : dot.isPast ? "overdue" : "pending";
+              const dotKey = `${dot.color}-${status}`;
+              if (!seen.has(dotKey)) {
+                seen.add(dotKey);
+                uniqueDots.push({ color: dot.color, status });
+              }
+            });
+
+            return (
+              <button
+                key={idx}
+                onClick={() => setSelectedDate(cellDate)}
+                className={`flex flex-col items-center justify-center rounded-xl py-1.5 min-h-[48px] transition-all ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground font-bold shadow-md"
+                    : isToday
+                    ? "bg-primary/10 text-primary font-bold"
+                    : "hover:bg-muted/50 text-foreground"
+                }`}
+              >
+                <span className="text-sm leading-none">{day}</span>
+                {uniqueDots.length > 0 && (
+                  <div className="flex gap-0.5 mt-1">
+                    {uniqueDots.slice(0, 4).map((dot, i) => (
+                      <span
+                        key={i}
+                        className={`block rounded-full ${
+                          dot.status === "taken"
+                            ? "h-1.5 w-1.5 opacity-50"
+                            : dot.status === "overdue"
+                            ? "h-2 w-2 animate-pulse ring-1 ring-destructive/40"
+                            : "h-1.5 w-1.5"
+                        }`}
+                        style={{
+                          backgroundColor:
+                            dot.status === "overdue"
+                              ? "hsl(var(--destructive))"
+                              : isSelected
+                              ? "hsl(var(--primary-foreground))"
+                              : dot.color,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/30">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="block h-2 w-2 rounded-full bg-primary" />
+            Pendente
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="block h-2 w-2 rounded-full bg-primary opacity-50" />
+            Tomado
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="block h-2 w-2 rounded-full bg-destructive animate-pulse" />
+            Atrasado
+          </div>
+        </div>
       </Card>
+
+      {/* Selected day detail */}
+      <div className="flex items-center justify-between">
+        <p className="text-elder-sm font-bold text-foreground capitalize">{selectedDateStr}</p>
+        <div className="flex items-center gap-1.5">
+          {isSelectedToday && (
+            <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
+          )}
+          {total > 0 && (
+            <span className="text-xs font-bold text-muted-foreground">{taken}/{total} doses</span>
+          )}
+        </div>
+      </div>
 
       {dayEvents.length === 0 ? (
         <Card className="p-10 text-center rounded-2xl border-dashed border-2 border-border/60">
@@ -82,13 +221,14 @@ export default function CalendarPage() {
         <div className="space-y-2.5">
           {dayEvents.map((event, i) => {
             const time = new Date(event.scheduledTime);
+            const isPast = time < now && !event.taken;
             const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
             return (
               <Card
                 key={event.id}
                 className={`p-0 overflow-hidden border-0 shadow-card animate-slide-up transition-all duration-300 ${
-                  event.taken ? "opacity-60" : ""
+                  event.taken ? "opacity-60" : isPast ? "ring-2 ring-destructive/30" : ""
                 }`}
                 style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
               >
@@ -96,7 +236,6 @@ export default function CalendarPage() {
                   <div className="w-1.5 self-stretch rounded-l-lg" style={{ backgroundColor: event.color }} />
                   
                   <div className="flex items-center gap-3 flex-1 p-4">
-                    {/* Check toggle */}
                     <button
                       onClick={() => event.taken ? unmarkDoseTaken(event.id) : markDoseTaken(event.id)}
                       className="shrink-0 transition-all duration-300 active:scale-90"
@@ -106,7 +245,9 @@ export default function CalendarPage() {
                           <Check className="h-5 w-5 text-white stroke-[3]" />
                         </div>
                       ) : (
-                        <div className="h-10 w-10 rounded-full border-2 border-border hover:border-primary hover:bg-primary/5 flex items-center justify-center transition-colors">
+                        <div className={`h-10 w-10 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          isPast ? "border-destructive/50 bg-destructive/5" : "border-border hover:border-primary hover:bg-primary/5"
+                        }`}>
                           <Circle className="h-5 w-5 text-muted-foreground/30" />
                         </div>
                       )}
@@ -123,6 +264,9 @@ export default function CalendarPage() {
                       <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
                         {timeStr}
                       </p>
+                      {isPast && !event.taken && (
+                        <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
+                      )}
                       {event.taken && event.takenAt && (
                         <p className="text-xs text-success font-semibold">
                           ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}

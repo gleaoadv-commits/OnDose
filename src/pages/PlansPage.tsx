@@ -29,7 +29,7 @@ const features = [
   { label: "Relatórios de adesão", free: false, pro: true, premium: true },
   { label: "Histórico completo", free: false, pro: true, premium: true },
   { label: "Até 2 cuidadores inclusos", free: false, pro: false, premium: true },
-  { label: "Cuidadores extras (R$19,90/cada)", free: false, pro: false, premium: true },
+  { label: "Cuidadores extras (R$19,90/mês cada)", free: false, pro: false, premium: true },
   { label: "Relatórios para familiares", free: false, pro: false, premium: true },
   { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true },
   { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true },
