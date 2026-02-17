@@ -11,7 +11,7 @@ export type MedicationFrequency =
 
 export type MedicationStatus = "ativo" | "pausado" | "encerrado";
 
-export type UserPlan = "free" | "pro";
+export type UserPlan = "free" | "pro" | "premium";
 
 export interface Medication {
   id: string;

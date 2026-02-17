@@ -40,7 +40,7 @@ export default function IdentifyMedicationPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MedicationResult | null>(null);
 
-  if (plan !== "pro") {
+  if (plan !== "pro" && plan !== "premium") {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-3">

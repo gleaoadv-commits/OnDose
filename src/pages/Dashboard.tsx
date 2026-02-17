@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +90,34 @@ export default function Dashboard() {
       {/* Today's schedule */}
       <TodaySchedule />
 
+      {/* Premium shortcuts */}
+      {plan === "premium" && (
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/cuidadores">
+            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex items-center gap-3">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
+                <Users className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-foreground">Cuidadores</p>
+                <p className="text-[10px] text-muted-foreground">Gerenciar família</p>
+              </div>
+            </Card>
+          </Link>
+          <Link to="/exames">
+            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex items-center gap-3">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
+                <FileText className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-foreground">Exames</p>
+                <p className="text-[10px] text-muted-foreground">Acompanhamento IA</p>
+              </div>
+            </Card>
+          </Link>
+        </div>
+      )}
+
       {/* Medications */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
@@ -98,7 +126,7 @@ export default function Dashboard() {
             Medicamentos
           </h2>
           <div className="flex gap-2">
-            {plan === "pro" && (
+            {(plan === "pro" || plan === "premium") && (
               <Link to="/identificar">
                 <Button
                   size="sm"

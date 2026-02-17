@@ -46,6 +46,9 @@
     --pro: 265 80% 60%;
     --pro-foreground: 0 0% 100%;
 
+    --premium: 38 92% 50%;
+    --premium-foreground: 0 0% 100%;
+
     --gradient-primary: linear-gradient(135deg, hsl(168, 55%, 38%), hsl(180, 50%, 48%));
     --gradient-accent: linear-gradient(135deg, hsl(12, 80%, 62%), hsl(28, 85%, 58%));
     --gradient-pro: linear-gradient(135deg, hsl(265, 80%, 60%), hsl(285, 70%, 55%));

@@ -99,7 +99,7 @@ export default function ReportsPage() {
     );
   }, [filteredEvents]);
 
-  if (plan !== "pro") {
+  if (plan !== "pro" && plan !== "premium") {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-3">
