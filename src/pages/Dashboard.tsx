@@ -87,8 +87,8 @@ export default function Dashboard() {
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
 
-      {/* Low stock alerts */}
-      {medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent / m.stockTotal) <= 0.2).map(med => (
+      {/* Low stock alerts (Pro+ only) */}
+      {(plan === "pro" || plan === "premium") && medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent / m.stockTotal) <= 0.2).map(med => (
         <Link key={med.id} to={`/medicamento/${med.id}`}>
           <Card className="p-3 rounded-2xl border-destructive/20 bg-destructive/5 flex items-center gap-3 card-hover mb-2">
             <Package className="h-5 w-5 text-destructive shrink-0" />
