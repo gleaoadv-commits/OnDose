@@ -29,12 +29,13 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/");
       } else {
+        const redirectUrl = window.location.origin;
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: name },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: redirectUrl,
           },
         });
         if (error) throw error;
