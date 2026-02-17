@@ -1,20 +1,24 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Crown, X, Sparkles, Shield } from "lucide-react";
+import { Check, Crown, X, Sparkles, Shield, Star } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
 const features = [
-  { label: "Cadastro de medicamentos", free: true, pro: true },
-  { label: "Agenda e calendário", free: true, pro: true },
-  { label: "Notificações no app", free: true, pro: true },
-  { label: "Até 3 medicamentos", free: true, pro: false },
-  { label: "Medicamentos ilimitados", free: false, pro: true },
-  { label: "Notificações por WhatsApp", free: false, pro: true },
-  { label: "Notificações por e-mail", free: false, pro: true },
-  { label: "Reconhecimento por foto (IA)", free: false, pro: true },
-  { label: "Relatórios de adesão", free: false, pro: true },
-  { label: "Histórico completo", free: false, pro: true },
+  { label: "Cadastro de medicamentos", free: true, pro: true, premium: true },
+  { label: "Agenda e calendário", free: true, pro: true, premium: true },
+  { label: "Notificações no app", free: true, pro: true, premium: true },
+  { label: "Até 3 medicamentos", free: true, pro: false, premium: false },
+  { label: "Medicamentos ilimitados", free: false, pro: true, premium: true },
+  { label: "Notificações por WhatsApp", free: false, pro: true, premium: true },
+  { label: "Notificações por e-mail", free: false, pro: true, premium: true },
+  { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true },
+  { label: "Relatórios de adesão", free: false, pro: true, premium: true },
+  { label: "Histórico completo", free: false, pro: true, premium: true },
+  { label: "Cadastro de cuidadores/parentes", free: false, pro: false, premium: true },
+  { label: "Relatórios para familiares", free: false, pro: false, premium: true },
+  { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true },
+  { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true },
 ];
 
 export default function PlansPage() {
@@ -62,9 +66,7 @@ export default function PlansPage() {
 
         {/* Pro */}
         <Card className={`p-5 rounded-2xl border-2 overflow-hidden relative ${plan === "pro" ? "border-pro" : "border-pro/30"}`}>
-          {/* Glow */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-pro/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          
           <div className="relative">
             <div className="flex items-center gap-2 mb-3">
               <div className="gradient-pro rounded-xl p-2">
@@ -82,6 +84,52 @@ export default function PlansPage() {
             <ul className="space-y-2.5 mb-5">
               {features.map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                  {f.pro ? (
+                    <div className="bg-success/10 rounded-full p-0.5">
+                      <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
+                    </div>
+                  ) : (
+                    <div className="bg-muted rounded-full p-0.5">
+                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className={f.pro ? "text-foreground" : "text-muted-foreground"}>{f.label}</span>
+                </li>
+              ))}
+            </ul>
+            {plan === "free" && (
+              <Button
+                size="lg"
+                className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                onClick={() => toast.info("Em breve! O plano PRO estará disponível.")}
+              >
+                <Crown className="h-5 w-5 mr-2" /> Assinar PRO
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {/* Premium */}
+        <Card className={`p-5 rounded-2xl border-2 overflow-hidden relative ${plan === "premium" ? "border-amber-500" : "border-amber-500/30"}`}>
+          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-600/8 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2">
+                <Star className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-elder-xl font-bold text-foreground">Premium</h3>
+              {plan === "premium" && (
+                <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
+              )}
+            </div>
+            <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+              R$ 19,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">Controle total + acompanhamento familiar e de exames</p>
+            <ul className="space-y-2.5 mb-5">
+              {features.map(f => (
+                <li key={f.label} className="flex items-center gap-2.5 text-sm">
                   <div className="bg-success/10 rounded-full p-0.5">
                     <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
                   </div>
@@ -89,13 +137,13 @@ export default function PlansPage() {
                 </li>
               ))}
             </ul>
-            {plan !== "pro" && (
+            {plan !== "premium" && (
               <Button
                 size="lg"
-                className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                onClick={() => toast.info("Em breve! O plano PRO estará disponível.")}
+                className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                onClick={() => toast.info("Em breve! O plano Premium estará disponível.")}
               >
-                <Crown className="h-5 w-5 mr-2" /> Assinar PRO
+                <Star className="h-5 w-5 mr-2" /> Assinar Premium
               </Button>
             )}
           </div>

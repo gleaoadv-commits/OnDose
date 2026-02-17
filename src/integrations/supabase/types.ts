@@ -14,6 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
+      caregivers: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notify_app: boolean
+          notify_email: boolean
+          notify_whatsapp: boolean
+          report_frequency: string
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notify_app?: boolean
+          notify_email?: boolean
+          notify_whatsapp?: boolean
+          report_frequency?: string
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notify_app?: boolean
+          notify_email?: boolean
+          notify_whatsapp?: boolean
+          report_frequency?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      exam_indicators: {
+        Row: {
+          created_at: string
+          exam_result_id: string
+          id: string
+          indicator_name: string
+          reference_max: number | null
+          reference_min: number | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          exam_result_id: string
+          id?: string
+          indicator_name: string
+          reference_max?: number | null
+          reference_min?: number | null
+          unit?: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          exam_result_id?: string
+          id?: string
+          indicator_name?: string
+          reference_max?: number | null
+          reference_min?: number | null
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_indicators_exam_result_id_fkey"
+            columns: ["exam_result_id"]
+            isOneToOne: false
+            referencedRelation: "exam_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_results: {
+        Row: {
+          created_at: string
+          exam_date: string
+          exam_name: string
+          id: string
+          image_url: string | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          exam_name: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          exam_name?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medications: {
         Row: {
           color: string

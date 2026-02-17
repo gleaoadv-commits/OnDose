@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.identify-medication]
 verify_jwt = false
+
+[functions.read-exam]
+verify_jwt = false

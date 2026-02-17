@@ -123,7 +123,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const canAddMedication = useCallback(() => {
-    if (plan === "pro") return true;
+    if (plan === "pro" || plan === "premium") return true;
     return medications.filter(m => m.status !== "encerrado").length < 3;
   }, [medications, plan]);
 
