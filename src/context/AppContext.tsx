@@ -13,6 +13,7 @@ interface AppState {
   stopMedication: (id: string) => void;
   deleteMedication: (id: string) => void;
   markDoseTaken: (eventId: string) => void;
+  unmarkDoseTaken: (eventId: string) => void;
   markNotificationRead: (id: string) => void;
   canAddMedication: () => boolean;
 }
@@ -71,17 +72,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMedications(prev => [...prev, newMed]);
     const events = generateScheduleForMedication(newMed);
     setSchedule(prev => [...prev, ...events]);
-    
+
+    // Create info notification
     setNotifications(prev => [
       {
         id: crypto.randomUUID(),
         medicationId: id,
-        message: `${med.name} cadastrado com sucesso! ${med.times.length} dose(s) por dia.`,
+        message: `✅ ${med.name} cadastrado! ${med.times.length} dose(s) por dia.`,
         time: new Date().toISOString(),
         read: false,
+        type: "info",
       },
       ...prev,
     ]);
+
+    // Create dose reminder notifications for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayEvents = events.filter(e => {
+      const d = new Date(e.scheduledTime);
+      return d.toDateString() === new Date().toDateString();
+    });
+    
+    const doseNotifs: AppNotification[] = todayEvents.map(e => ({
+      id: crypto.randomUUID(),
+      medicationId: id,
+      eventId: e.id,
+      message: `💊 Hora de tomar ${med.name} (${med.dosage})`,
+      time: e.scheduledTime,
+      read: false,
+      type: "dose_reminder" as const,
+    }));
+
+    if (doseNotifs.length > 0) {
+      setNotifications(prev => [...doseNotifs, ...prev]);
+    }
+
     return true;
   }, [canAddMedication, medications.length]);
 
@@ -118,6 +144,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSchedule(prev => prev.map(e => 
       e.id === eventId ? { ...e, taken: true, takenAt: new Date().toISOString() } : e
     ));
+    // Also mark linked notifications as read
+    setNotifications(prev => prev.map(n =>
+      n.eventId === eventId ? { ...n, read: true } : n
+    ));
+  }, []);
+
+  const unmarkDoseTaken = useCallback((eventId: string) => {
+    setSchedule(prev => prev.map(e => 
+      e.id === eventId ? { ...e, taken: false, takenAt: undefined } : e
+    ));
   }, []);
 
   const markNotificationRead = useCallback((id: string) => {
@@ -128,8 +164,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider value={{
       medications, schedule, notifications, plan,
       addMedication, updateMedication, pauseMedication, resumeMedication,
-      stopMedication, deleteMedication, markDoseTaken, markNotificationRead,
-      canAddMedication,
+      stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
+      markNotificationRead, canAddMedication,
     }}>
       {children}
     </AppContext.Provider>

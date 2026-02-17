@@ -16,13 +16,13 @@ export type UserPlan = "free" | "pro";
 export interface Medication {
   id: string;
   name: string;
-  dosage: string;        // ex: "50mg"
-  quantity: number;       // quant. comprimidos por dose
+  dosage: string;
+  quantity: number;
   frequency: MedicationFrequency;
   customFrequencyHours?: number;
   startDate: string;
   endDate?: string;
-  times: string[];       // horários escolhidos pelo usuário
+  times: string[];
   status: MedicationStatus;
   notes?: string;
   color: string;
@@ -33,7 +33,7 @@ export interface ScheduleEvent {
   medicationId: string;
   medicationName: string;
   dosage: string;
-  scheduledTime: string; // ISO
+  scheduledTime: string;
   taken: boolean;
   takenAt?: string;
   color: string;
@@ -42,18 +42,20 @@ export interface ScheduleEvent {
 export interface AppNotification {
   id: string;
   medicationId: string;
+  eventId?: string; // linked schedule event for quick mark
   message: string;
   time: string;
   read: boolean;
+  type: "info" | "dose_reminder";
 }
 
 export const MEDICATION_COLORS = [
-  "hsl(187, 60%, 42%)",
-  "hsl(152, 45%, 45%)",
-  "hsl(262, 60%, 55%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(340, 65%, 55%)",
-  "hsl(210, 55%, 50%)",
+  "hsl(168, 55%, 40%)",
+  "hsl(210, 60%, 52%)",
+  "hsl(265, 65%, 58%)",
+  "hsl(340, 60%, 55%)",
+  "hsl(38, 85%, 52%)",
+  "hsl(152, 50%, 42%)",
 ];
 
 export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
@@ -68,7 +70,6 @@ export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
   "personalizado": "Personalizado",
 };
 
-/** Returns the default number of time slots for a frequency */
 export function getTimeSlotsCount(freq: MedicationFrequency, customHours?: number): number {
   switch (freq) {
     case "1x-dia": return 1;
@@ -86,7 +87,6 @@ export function getTimeSlotsCount(freq: MedicationFrequency, customHours?: numbe
   }
 }
 
-/** Returns suggested default times for a frequency */
 export function getDefaultTimes(freq: MedicationFrequency, customHours?: number): string[] {
   switch (freq) {
     case "1x-dia": return ["08:00"];
