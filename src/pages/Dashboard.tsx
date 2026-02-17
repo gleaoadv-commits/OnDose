@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,57 +11,67 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
   const { pauseMedication, resumeMedication, stopMedication } = useApp();
 
   const statusConfig = {
-    ativo: { label: "Ativo", className: "bg-success/15 text-success border-success/20" },
-    pausado: { label: "Pausado", className: "bg-warning/15 text-warning border-warning/20" },
-    encerrado: { label: "Encerrado", className: "bg-muted text-muted-foreground border-border" },
+    ativo: { label: "Ativo", className: "bg-success/15 text-success border-success/30", dot: "bg-success" },
+    pausado: { label: "Pausado", className: "bg-warning/15 text-warning border-warning/30", dot: "bg-warning" },
+    encerrado: { label: "Encerrado", className: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" },
   };
 
   const status = statusConfig[med.status];
 
   return (
     <Card
-      className="p-4 card-hover border-border/40 animate-slide-up"
-      style={{ animationDelay: `${index * 60}ms`, animationFillMode: "both" }}
+      className="p-0 overflow-hidden border-0 shadow-card card-hover animate-slide-up"
+      style={{ animationDelay: `${index * 70}ms`, animationFillMode: "both" }}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className="pill-icon"
-          style={{ backgroundColor: med.color + "18", color: med.color }}
-        >
-          <Pill className="h-6 w-6" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link to={`/medicamento/${med.id}`} className="text-elder-base font-bold text-foreground hover:text-primary transition-colors">
-              {med.name}
-            </Link>
-            <Badge variant="outline" className={status.className + " text-xs font-bold"}>{status.label}</Badge>
+      <div className="flex">
+        {/* Color stripe */}
+        <div className="w-1.5 self-stretch rounded-l-lg" style={{ backgroundColor: med.color }} />
+        
+        <div className="flex-1 p-4">
+          <div className="flex items-start gap-3">
+            <div
+              className="pill-icon rounded-2xl"
+              style={{ backgroundColor: med.color + "15", color: med.color }}
+            >
+              <Pill className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link to={`/medicamento/${med.id}`} className="text-elder-base font-bold text-foreground hover:text-primary transition-colors">
+                  {med.name}
+                </Link>
+                <Badge variant="outline" className={status.className + " text-[10px] font-bold px-2 py-0.5"}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${status.dot} mr-1`} />
+                  {status.label}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mt-0.5">{med.dosage} — {med.quantity} comp.</p>
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{FREQUENCY_LABELS[med.frequency]}</span>
+                <span className="text-border">•</span>
+                <span className="font-semibold text-foreground/60">{med.times.join(", ")}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-elder-sm text-muted-foreground mt-0.5">{med.dosage} — {med.quantity} comp.</p>
-          <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            <span>{FREQUENCY_LABELS[med.frequency]}</span>
-            <span className="text-border">•</span>
-            <span className="font-semibold text-foreground/70">{med.times.join(", ")}</span>
-          </div>
+          {med.status !== "encerrado" && (
+            <div className="flex gap-2 mt-3 ml-[60px]">
+              {med.status === "ativo" ? (
+                <Button variant="outline" size="sm" onClick={() => pauseMedication(med.id)} className="text-xs rounded-xl border-border/50 h-8">
+                  <Pause className="h-3 w-3 mr-1" /> Pausar
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => resumeMedication(med.id)} className="text-xs rounded-xl border-border/50 h-8">
+                  <Play className="h-3 w-3 mr-1" /> Retomar
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => stopMedication(med.id)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
+                <Square className="h-3 w-3 mr-1" /> Encerrar
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-      {med.status !== "encerrado" && (
-        <div className="flex gap-2 mt-3 ml-[60px]">
-          {med.status === "ativo" ? (
-            <Button variant="outline" size="sm" onClick={() => pauseMedication(med.id)} className="text-sm rounded-xl border-border/60">
-              <Pause className="h-3.5 w-3.5 mr-1" /> Pausar
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => resumeMedication(med.id)} className="text-sm rounded-xl border-border/60">
-              <Play className="h-3.5 w-3.5 mr-1" /> Retomar
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => stopMedication(med.id)} className="text-sm rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5">
-            <Square className="h-3.5 w-3.5 mr-1" /> Encerrar
-          </Button>
-        </div>
-      )}
     </Card>
   );
 }
@@ -80,14 +90,14 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-header">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Meus Medicamentos
+            <Heart className="h-5 w-5 text-accent" />
+            Medicamentos
           </h2>
           <Link to="/novo-medicamento">
             <Button
               size="lg"
               disabled={!canAddMedication()}
-              className="rounded-2xl text-sm font-bold shadow-glow px-5"
+              className="rounded-2xl text-sm font-bold shadow-glow px-5 h-10"
             >
               <Plus className="h-4 w-4 mr-1" /> Novo
             </Button>
@@ -95,21 +105,21 @@ export default function Dashboard() {
         </div>
 
         {!canAddMedication() && (
-          <Card className="p-4 mb-4 bg-warning/8 border-warning/20 rounded-2xl">
-            <p className="text-elder-sm text-foreground">
+          <Card className="p-4 mb-4 border-0 shadow-card rounded-2xl gradient-warm">
+            <p className="text-sm text-white font-semibold">
               ⚠️ Limite de 3 medicamentos no plano gratuito.{" "}
-              <Link to="/planos" className="text-primary font-bold underline underline-offset-2">Fazer upgrade</Link>
+              <Link to="/planos" className="underline underline-offset-2 font-bold">Fazer upgrade →</Link>
             </p>
           </Card>
         )}
 
         {activeMeds.length === 0 ? (
-          <Card className="p-10 text-center rounded-2xl border-dashed border-2 border-border/60">
-            <div className="bg-primary/8 rounded-3xl p-5 inline-flex mb-4">
-              <Pill className="h-10 w-10 text-primary animate-float" />
+          <Card className="p-10 text-center rounded-2xl border-dashed border-2 border-border/50">
+            <div className="bg-primary/8 rounded-3xl p-6 inline-flex mb-4">
+              <Pill className="h-12 w-12 text-primary animate-float" />
             </div>
-            <p className="text-elder-base text-muted-foreground font-medium">Nenhum medicamento cadastrado.</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Comece adicionando seu primeiro medicamento</p>
+            <p className="text-elder-base text-foreground font-bold">Nenhum medicamento cadastrado</p>
+            <p className="text-sm text-muted-foreground mt-1">Comece adicionando seu primeiro medicamento</p>
             <Link to="/novo-medicamento">
               <Button className="mt-5 text-sm font-bold rounded-2xl shadow-glow px-6" size="lg">
                 <Plus className="h-4 w-4 mr-1.5" /> Cadastrar Medicamento
@@ -126,8 +136,8 @@ export default function Dashboard() {
 
         {endedMeds.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">Encerrados</h3>
-            <div className="space-y-2 opacity-50">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Encerrados</h3>
+            <div className="space-y-2 opacity-45">
               {endedMeds.map((med, i) => (
                 <MedicationCard key={med.id} med={med} index={i} />
               ))}
