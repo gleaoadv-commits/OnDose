@@ -158,11 +158,11 @@ export default function ReportsPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Relatório DoseCerta</title>
+        <title>Relatório On.Dose</title>
         <style>body{font-family:Arial,sans-serif;padding:40px;color:#333}h1{color:#2a9d6f}table{width:100%;border-collapse:collapse;margin:20px 0}th{text-align:left;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd}.summary{display:flex;gap:20px;margin:20px 0}.stat{background:#f9f9f9;padding:16px;border-radius:8px;flex:1;text-align:center}.stat h3{margin:0;font-size:24px}.stat p{margin:4px 0 0;font-size:12px;color:#888}</style>
       </head>
       <body>
-        <h1>📊 Relatório de Adesão — DoseCerta</h1>
+        <h1>📊 Relatório de Adesão — On.Dose</h1>
         <p>Período: ${periodStart.toLocaleDateString("pt-BR")} a ${now.toLocaleDateString("pt-BR")}</p>
         
         <div class="summary">
@@ -183,7 +183,7 @@ export default function ReportsPage() {
           <tbody>${rows}</tbody>
         </table>
 
-        <p style="margin-top:40px;font-size:11px;color:#aaa">Gerado por DoseCerta em ${new Date().toLocaleString("pt-BR")}. Este relatório é apenas informativo.</p>
+        <p style="margin-top:40px;font-size:11px;color:#aaa">Gerado por On.Dose em ${new Date().toLocaleString("pt-BR")}. Este relatório é apenas informativo.</p>
         <script>window.print();</script>
       </body>
       </html>

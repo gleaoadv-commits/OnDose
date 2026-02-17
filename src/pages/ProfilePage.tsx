@@ -84,7 +84,7 @@ export default function ProfilePage() {
       <Card className="p-5 rounded-2xl border-primary/20 bg-primary/5 space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Seu ID DoseCerta</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Seu ID On.Dose</p>
             <p className="text-elder-2xl font-extrabold text-primary tracking-widest mt-1">{userCode}</p>
           </div>
           <Button variant="outline" size="icon" onClick={copyCode} className="rounded-xl h-10 w-10">
