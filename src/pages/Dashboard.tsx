@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, BarChart3, ArrowLeft } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,22 +85,6 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Today's schedule */}
       <TodaySchedule />
-
-      {/* PRO: Reports shortcut */}
-      {plan === "pro" && (
-        <Link to="/relatorios">
-          <Card className="p-4 rounded-2xl border-pro/20 flex items-center gap-3 card-hover">
-            <div className="gradient-pro rounded-xl p-2">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-foreground">Relatórios de Adesão</p>
-              <p className="text-xs text-muted-foreground">Gráficos, histórico e exportar PDF</p>
-            </div>
-            <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
-          </Card>
-        </Link>
-      )}
 
       {/* Medications */}
       <div>

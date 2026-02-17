@@ -40,12 +40,24 @@ export default function ReportsPage() {
     return new Date(0);
   }, [period]);
 
+  // Build a map of medication start dates
+  const medStartDates = useMemo(() => {
+    const map = new Map<string, Date>();
+    medications.forEach((m) => map.set(m.id, new Date(m.startDate)));
+    return map;
+  }, [medications]);
+
   const filteredEvents = useMemo(() => {
     return schedule.filter((e) => {
       const d = new Date(e.scheduledTime);
-      return d >= periodStart && d <= now;
+      // Only include events within the selected period AND up to now (future events aren't missed)
+      if (d < periodStart || d > now) return false;
+      // Only count as relevant if the scheduled time is >= the medication's start date
+      const medStart = medStartDates.get(e.medicationId);
+      if (medStart && d < medStart) return false;
+      return true;
     });
-  }, [schedule, periodStart]);
+  }, [schedule, periodStart, medStartDates]);
 
   const totalDoses = filteredEvents.length;
   const takenDoses = filteredEvents.filter((e) => e.taken).length;
