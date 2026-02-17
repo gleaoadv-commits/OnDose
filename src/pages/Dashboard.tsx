@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, BarChart3, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,9 +86,25 @@ export default function Dashboard() {
       {/* Today's schedule */}
       <TodaySchedule />
 
+      {/* PRO: Reports shortcut */}
+      {plan === "pro" && (
+        <Link to="/relatorios">
+          <Card className="p-4 rounded-2xl border-pro/20 flex items-center gap-3 card-hover">
+            <div className="gradient-pro rounded-xl p-2">
+              <BarChart3 className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-foreground">Relatórios de Adesão</p>
+              <p className="text-xs text-muted-foreground">Gráficos, histórico e exportar PDF</p>
+            </div>
+            <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+          </Card>
+        </Link>
+      )}
+
       {/* Medications */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
           <h2 className="section-header">
             <Heart className="h-5 w-5 text-accent" />
             Medicamentos
@@ -97,21 +113,21 @@ export default function Dashboard() {
             {plan === "pro" && (
               <Link to="/identificar">
                 <Button
-                  size="lg"
+                  size="sm"
                   variant="outline"
-                  className="rounded-2xl text-sm font-bold px-4 h-10 border-pro/30 text-pro hover:bg-pro/5"
+                  className="rounded-2xl text-xs font-bold px-3 h-9 border-pro/30 text-pro hover:bg-pro/5"
                 >
-                  <Camera className="h-4 w-4 mr-1" /> Foto IA
+                  <Camera className="h-3.5 w-3.5 mr-1" /> Foto IA
                 </Button>
               </Link>
             )}
             <Link to="/novo-medicamento">
               <Button
-                size="lg"
+                size="sm"
                 disabled={!canAddMedication()}
-                className="rounded-2xl text-sm font-bold shadow-glow px-5 h-10"
+                className="rounded-2xl text-xs font-bold shadow-glow px-3 h-9"
               >
-                <Plus className="h-4 w-4 mr-1" /> Novo
+                <Plus className="h-3.5 w-3.5 mr-1" /> Novo
               </Button>
             </Link>
           </div>
