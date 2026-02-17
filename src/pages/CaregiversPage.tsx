@@ -132,7 +132,7 @@ export default function CaregiversPage() {
         toast.error("Erro ao atualizar");
         return;
       }
-      toast.success("Cuidador atualizado!");
+      toast.success("Familiar atualizado!");
     } else {
       const { error } = await supabase
         .from("caregivers")
@@ -141,7 +141,7 @@ export default function CaregiversPage() {
         toast.error("Erro ao cadastrar");
         return;
       }
-      toast.success("Cuidador cadastrado!");
+      toast.success("Familiar cadastrado!");
     }
 
     setDialogOpen(false);
@@ -155,7 +155,7 @@ export default function CaregiversPage() {
       toast.error("Erro ao remover");
       return;
     }
-    toast.success("Cuidador removido");
+    toast.success("Familiar removido");
     setCaregivers((prev) => prev.filter((c) => c.id !== id));
   };
 
@@ -178,14 +178,14 @@ export default function CaregiversPage() {
           </Button>
           <h2 className="section-header mb-0">
             <Users className="h-5 w-5 text-amber-500" />
-            Cuidadores
+            Familiares
           </h2>
         </div>
         <Card className="p-6 rounded-2xl border-border/40 text-center space-y-3">
           <Sparkles className="h-10 w-10 text-amber-500 mx-auto" />
           <p className="text-elder-base font-bold text-foreground">Recurso exclusivo Premium</p>
           <p className="text-sm text-muted-foreground">
-            Cadastre parentes e cuidadores para acompanhar seus medicamentos.
+            Cadastre familiares para acompanhar seus medicamentos.
           </p>
           <Button
             onClick={() => navigate("/planos")}
@@ -206,7 +206,7 @@ export default function CaregiversPage() {
         </Button>
         <h2 className="section-header mb-0">
           <Users className="h-5 w-5 text-amber-500" />
-          Cuidadores
+          Familiares
         </h2>
       </div>
 
@@ -218,12 +218,12 @@ export default function CaregiversPage() {
       <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
         <DialogTrigger asChild>
           <Button className="w-full rounded-2xl font-bold h-11 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0">
-            <UserPlus className="h-4 w-4 mr-2" /> Adicionar Cuidador
+            <UserPlus className="h-4 w-4 mr-2" /> Adicionar Familiar
           </Button>
         </DialogTrigger>
         <DialogContent className="rounded-2xl max-w-[380px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Cuidador" : "Novo Cuidador"}</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Familiar" : "Novo Familiar"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
@@ -258,7 +258,7 @@ export default function CaregiversPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Monitor className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">No app (cuidador)</span>
+                  <span className="text-sm">No app (familiar)</span>
                 </div>
                 <Switch checked={notifyApp} onCheckedChange={setNotifyApp} />
               </div>
@@ -292,7 +292,7 @@ export default function CaregiversPage() {
       ) : caregivers.length === 0 ? (
         <Card className="p-8 text-center rounded-2xl border-dashed border-2 border-border/50">
           <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm font-bold text-foreground">Nenhum cuidador cadastrado</p>
+          <p className="text-sm font-bold text-foreground">Nenhum familiar cadastrado</p>
           <p className="text-xs text-muted-foreground mt-1">Adicione um familiar para acompanhar seus medicamentos.</p>
         </Card>
       ) : (

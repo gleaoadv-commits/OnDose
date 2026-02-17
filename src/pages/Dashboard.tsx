@@ -113,7 +113,7 @@ export default function Dashboard() {
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
                 <Users className="h-4 w-4 text-white" />
               </div>
-              <p className="text-[10px] font-bold text-foreground leading-tight">Cuidadores</p>
+              <p className="text-[10px] font-bold text-foreground leading-tight">Familiares</p>
             </Card>
           </Link>
           <Link to="/exames">
