@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3 } from "lucide-react";
+import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3, Calendar } from "lucide-react";
 import OnDoseLogo from "@/components/OnDoseLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useApp } from "@/context/AppContext";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { path: "/", label: "Início", icon: Home },
-  { path: "/calendario", label: "Agenda", icon: CalendarDays },
+  { path: "/agenda", label: "Agenda", icon: CalendarDays },
+  { path: "/calendario", label: "Calendário", icon: Calendar, requiresPlan: true },
   { path: "/notificacoes", label: "Alertas", icon: Bell },
   { path: "/planos", label: "Pro", icon: Crown },
 ];
@@ -76,7 +77,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 glass-nav z-30 pb-safe">
         <div className="max-w-2xl mx-auto flex">
-          {navItems.map(({ path, label, icon: Icon }) => {
+          {navItems
+            .filter(item => !item.requiresPlan || plan !== "free")
+            .map(({ path, label, icon: Icon }) => {
             const isActive = location.pathname === path;
             const showBadge = path === "/notificacoes" && unreadCount > 0;
             return (

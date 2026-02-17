@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import AddMedication from "@/pages/AddMedication";
 import MedicationDetail from "@/pages/MedicationDetail";
 import CalendarPage from "@/pages/CalendarPage";
+import AgendaPage from "@/pages/AgendaPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import PlansPage from "@/pages/PlansPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -94,6 +95,7 @@ const App = () => (
                           <Route path="/" element={<Dashboard />} />
                           <Route path="/novo-medicamento" element={<AddMedication />} />
                           <Route path="/medicamento/:id" element={<MedicationDetail />} />
+                          <Route path="/agenda" element={<AgendaPage />} />
                           <Route path="/calendario" element={<CalendarPage />} />
                           <Route path="/notificacoes" element={<NotificationsPage />} />
                           <Route path="/planos" element={<PlansPage />} />

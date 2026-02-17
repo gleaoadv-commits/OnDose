@@ -19,7 +19,8 @@ const TIERS = {
 
 const features = [
   { label: "Cadastro de medicamentos", free: true, pro: true, premium: true },
-  { label: "Agenda e calendário", free: true, pro: true, premium: true },
+  { label: "Agenda diária", free: true, pro: true, premium: true },
+  { label: "Calendário visual", free: false, pro: true, premium: true },
   { label: "Notificações no app", free: true, pro: true, premium: true },
   { label: "Até 2 medicamentos", free: true, pro: false, premium: false },
   { label: "Medicamentos ilimitados", free: false, pro: true, premium: true },
