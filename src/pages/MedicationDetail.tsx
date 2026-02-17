@@ -9,6 +9,10 @@ import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, 
 import { FREQUENCY_LABELS } from "@/types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function MedicationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -358,9 +362,27 @@ export default function MedicationDetail() {
         </Card>
       )}
 
-      <Button variant="outline" size="lg" className="w-full text-destructive border-destructive/20 hover:bg-destructive/5 rounded-2xl text-sm" onClick={handleDelete}>
-        <Trash2 className="h-5 w-5 mr-2" /> Excluir Medicamento
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="lg" className="w-full text-destructive border-destructive/20 hover:bg-destructive/5 rounded-2xl text-sm">
+            <Trash2 className="h-5 w-5 mr-2" /> Excluir Medicamento
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {med.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. O medicamento e todo o histórico de doses serão apagados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="rounded-xl bg-destructive hover:bg-destructive/90" onClick={handleDelete}>
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

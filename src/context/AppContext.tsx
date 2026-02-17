@@ -11,6 +11,8 @@ interface AppState {
   subscriptionEnd: string | null;
   isAdmin: boolean;
   loading: boolean;
+  devPlanOverride: UserPlan | null;
+  setDevPlanOverride: (plan: UserPlan | null) => void;
   refreshSubscription: () => Promise<void>;
   addMedication: (med: Omit<Medication, "id" | "status" | "color">) => Promise<boolean>;
   updateMedication: (id: string, updates: Partial<Medication>) => void;
@@ -66,6 +68,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [devPlanOverride, setDevPlanOverride] = useState<UserPlan | null>(null);
+
+  const effectivePlan = devPlanOverride ?? plan;
 
   const refreshSubscription = useCallback(async () => {
     if (!user) return;
@@ -148,9 +153,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const canAddMedication = useCallback(() => {
-    if (plan === "pro" || plan === "premium") return true;
+    if (effectivePlan === "pro" || effectivePlan === "premium") return true;
     return medications.filter(m => m.status !== "encerrado").length < 2;
-  }, [medications, plan]);
+  }, [medications, effectivePlan]);
 
   const addMedication = useCallback(async (med: Omit<Medication, "id" | "status" | "color">): Promise<boolean> => {
     if (!canAddMedication() || !user) return false;
@@ -295,9 +300,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteMedication = useCallback(async (id: string) => {
     if (!user) return;
+    // Delete schedule events first (FK constraint)
+    await supabase.from("schedule_events").delete().eq("medication_id", id).eq("user_id", user.id);
     await supabase.from("medications").delete().eq("id", id).eq("user_id", user.id);
     setMedications(prev => prev.filter(m => m.id !== id));
     setSchedule(prev => prev.filter(e => e.medicationId !== id));
+    setNotifications(prev => prev.filter(n => n.medicationId !== id));
   }, [user]);
 
   const markDoseTaken = useCallback(async (eventId: string) => {
@@ -338,7 +346,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      medications, schedule, notifications, plan, subscriptionEnd, loading, isAdmin,
+      medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, loading, isAdmin,
+      devPlanOverride, setDevPlanOverride,
       refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
       stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
