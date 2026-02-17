@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency } from "@/types/medication";
+import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency, getFrequencyDayStep } from "@/types/medication";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -35,8 +35,8 @@ export function useApp() {
 function generateScheduleForMedication(med: Medication, userId: string): Omit<ScheduleEvent, "id">[] {
   const events: Omit<ScheduleEvent, "id">[] = [];
   const start = new Date(med.startDate);
-  const end = med.endDate ? new Date(med.endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const dayStep = med.frequency === "semanal" ? 7 : 1;
+  const end = med.endDate ? new Date(med.endDate) : new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const dayStep = getFrequencyDayStep(med.frequency);
   const dosageLabel = `${med.dosage} — ${med.quantity} comp.`;
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + dayStep)) {
@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await refreshSubscription();
 
         if (medsRes.data) {
-          setMedications(medsRes.data.map(row => ({
+          setMedications(medsRes.data.map((row: any) => ({
             id: row.id,
             name: row.name,
             dosage: row.dosage,
@@ -120,6 +120,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             status: row.status as Medication["status"],
             notes: row.notes ?? undefined,
             color: row.color,
+            stockTotal: row.stock_total ?? undefined,
+            stockCurrent: row.stock_current ?? undefined,
           })));
         }
 
@@ -169,7 +171,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       status: "ativo",
       notes: med.notes ?? null,
       color,
-    }).select().single();
+      stock_total: med.stockTotal ?? null,
+      stock_current: med.stockCurrent ?? null,
+    } as any).select().single();
 
     if (medError || !medRow) {
       console.error("Error adding medication:", medError);
@@ -189,6 +193,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       status: "ativo",
       notes: med.notes,
       color,
+      stockTotal: med.stockTotal,
+      stockCurrent: med.stockCurrent,
     };
 
     setMedications(prev => [newMed, ...prev]);
@@ -274,6 +280,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (updates.times !== undefined) dbUpdates.times = updates.times;
     if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
+    if (updates.stockTotal !== undefined) dbUpdates.stock_total = updates.stockTotal ?? null;
+    if (updates.stockCurrent !== undefined) dbUpdates.stock_current = updates.stockCurrent ?? null;
 
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("medications").update(dbUpdates).eq("id", id).eq("user_id", user.id);
@@ -296,6 +304,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const now = new Date().toISOString();
     await supabase.from("schedule_events").update({ taken: true, taken_at: now }).eq("id", eventId).eq("user_id", user.id);
+    
+    // Decrement stock for the medication
+    const event = schedule.find(e => e.id === eventId);
+    if (event) {
+      const med = medications.find(m => m.id === event.medicationId);
+      if (med && med.stockCurrent != null && med.stockCurrent > 0) {
+        const newStock = Math.max(0, med.stockCurrent - med.quantity);
+        await supabase.from("medications").update({ stock_current: newStock } as any).eq("id", med.id).eq("user_id", user.id);
+        setMedications(prev => prev.map(m => m.id === med.id ? { ...m, stockCurrent: newStock } : m));
+      }
+    }
+
     setSchedule(prev => prev.map(e =>
       e.id === eventId ? { ...e, taken: true, takenAt: now } : e
     ));

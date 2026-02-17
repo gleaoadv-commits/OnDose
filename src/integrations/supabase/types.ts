@@ -177,6 +177,8 @@ export type Database = {
           quantity: number
           start_date: string
           status: string
+          stock_current: number | null
+          stock_total: number | null
           times: string[]
           updated_at: string
           user_id: string
@@ -194,6 +196,8 @@ export type Database = {
           quantity?: number
           start_date: string
           status?: string
+          stock_current?: number | null
+          stock_total?: number | null
           times?: string[]
           updated_at?: string
           user_id: string
@@ -211,6 +215,8 @@ export type Database = {
           quantity?: number
           start_date?: string
           status?: string
+          stock_current?: number | null
+          stock_total?: number | null
           times?: string[]
           updated_at?: string
           user_id?: string
