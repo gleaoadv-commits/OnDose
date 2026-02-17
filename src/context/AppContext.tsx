@@ -8,8 +8,10 @@ interface AppState {
   schedule: ScheduleEvent[];
   notifications: AppNotification[];
   plan: UserPlan;
+  subscriptionEnd: string | null;
   isAdmin: boolean;
   loading: boolean;
+  refreshSubscription: () => Promise<void>;
   addMedication: (med: Omit<Medication, "id" | "status" | "color">) => Promise<boolean>;
   updateMedication: (id: string, updates: Partial<Medication>) => void;
   pauseMedication: (id: string) => void;
@@ -61,8 +63,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [schedule, setSchedule] = useState<ScheduleEvent[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [plan, setPlan] = useState<UserPlan>("free");
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const refreshSubscription = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) {
+        console.error("Error checking subscription:", error);
+        return;
+      }
+      if (data?.plan) {
+        setPlan(data.plan as UserPlan);
+        setSubscriptionEnd(data.subscription_end ?? null);
+      }
+    } catch (err) {
+      console.error("Error refreshing subscription:", err);
+    }
+  }, [user]);
 
   // Load data from DB on mount
   useEffect(() => {
@@ -82,6 +102,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setIsAdmin(true);
           setPlan("pro");
         }
+
+        // Check Stripe subscription
+        await refreshSubscription();
 
         if (medsRes.data) {
           setMedications(medsRes.data.map(row => ({
@@ -287,7 +310,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      medications, schedule, notifications, plan, loading, isAdmin,
+      medications, schedule, notifications, plan, subscriptionEnd, loading, isAdmin,
+      refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
       stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
       markNotificationRead, canAddMedication,

@@ -1,8 +1,21 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Crown, X, Sparkles, Shield, Star } from "lucide-react";
+import { Check, Crown, X, Sparkles, Shield, Star, Loader2, Settings } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const TIERS = {
+  pro: {
+    price_id: "price_1T1gulDG7KKNrw1gSZ5BjB4f",
+    product_id: "prod_TzgHE734N3eI9w",
+  },
+  premium: {
+    price_id: "price_1T1gvNDG7KKNrw1gxHZ4ZRQC",
+    product_id: "prod_TzgHpjEhcgv0gi",
+  },
+};
 
 const features = [
   { label: "Cadastro de medicamentos", free: true, pro: true, premium: true },
@@ -15,21 +28,76 @@ const features = [
   { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true },
   { label: "Relatórios de adesão", free: false, pro: true, premium: true },
   { label: "Histórico completo", free: false, pro: true, premium: true },
-  { label: "Cadastro de cuidadores/parentes", free: false, pro: false, premium: true },
+  { label: "Até 2 cuidadores inclusos", free: false, pro: false, premium: true },
+  { label: "Cuidadores extras (R$19,90/cada)", free: false, pro: false, premium: true },
   { label: "Relatórios para familiares", free: false, pro: false, premium: true },
   { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true },
   { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true },
 ];
 
 export default function PlansPage() {
-  const { plan } = useApp();
+  const { plan, subscriptionEnd, refreshSubscription } = useApp();
+  const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
+  const [loadingPortal, setLoadingPortal] = useState(false);
+
+  const handleCheckout = async (tier: "pro" | "premium") => {
+    setLoadingCheckout(tier);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId: TIERS[tier].price_id },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao iniciar pagamento. Tente novamente.");
+      console.error(err);
+    } finally {
+      setLoadingCheckout(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao abrir portal. Tente novamente.");
+      console.error(err);
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await refreshSubscription();
+    toast.success("Status atualizado!");
+  };
 
   return (
     <div className="space-y-5">
-      <h2 className="section-header">
-        <Crown className="h-5 w-5 text-pro" />
-        Planos
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="section-header">
+          <Crown className="h-5 w-5 text-pro" />
+          Planos
+        </h2>
+        {plan !== "free" && (
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="text-xs">
+            Atualizar status
+          </Button>
+        )}
+      </div>
+
+      {subscriptionEnd && plan !== "free" && (
+        <p className="text-xs text-muted-foreground">
+          Sua assinatura renova em {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
+        </p>
+      )}
 
       <div className="grid gap-4">
         {/* Free */}
@@ -78,7 +146,7 @@ export default function PlansPage() {
               )}
             </div>
             <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-              R$ 9,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              R$ 12,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
             </p>
             <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
             <ul className="space-y-2.5 mb-5">
@@ -101,9 +169,27 @@ export default function PlansPage() {
               <Button
                 size="lg"
                 className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                onClick={() => toast.info("Em breve! O plano PRO estará disponível.")}
+                onClick={() => handleCheckout("pro")}
+                disabled={!!loadingCheckout}
               >
-                <Crown className="h-5 w-5 mr-2" /> Assinar PRO
+                {loadingCheckout === "pro" ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Crown className="h-5 w-5 mr-2" />
+                )}
+                Assinar PRO
+              </Button>
+            )}
+            {plan === "pro" && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full rounded-2xl text-elder-base font-bold"
+                onClick={handleManageSubscription}
+                disabled={loadingPortal}
+              >
+                {loadingPortal ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Settings className="h-5 w-5 mr-2" />}
+                Gerenciar assinatura
               </Button>
             )}
           </div>
@@ -124,9 +210,9 @@ export default function PlansPage() {
               )}
             </div>
             <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-              R$ 19,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              R$ 34,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
             </p>
-            <p className="text-sm text-muted-foreground mb-4">Controle total + acompanhamento familiar e de exames</p>
+            <p className="text-sm text-muted-foreground mb-4">Controle total + 2 cuidadores inclusos + exames IA</p>
             <ul className="space-y-2.5 mb-5">
               {features.map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
@@ -141,9 +227,27 @@ export default function PlansPage() {
               <Button
                 size="lg"
                 className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                onClick={() => toast.info("Em breve! O plano Premium estará disponível.")}
+                onClick={() => handleCheckout("premium")}
+                disabled={!!loadingCheckout}
               >
-                <Star className="h-5 w-5 mr-2" /> Assinar Premium
+                {loadingCheckout === "premium" ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Star className="h-5 w-5 mr-2" />
+                )}
+                Assinar Premium
+              </Button>
+            )}
+            {plan === "premium" && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full rounded-2xl text-elder-base font-bold"
+                onClick={handleManageSubscription}
+                disabled={loadingPortal}
+              >
+                {loadingPortal ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Settings className="h-5 w-5 mr-2" />}
+                Gerenciar assinatura
               </Button>
             )}
           </div>
