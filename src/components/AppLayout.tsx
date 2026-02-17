@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Pill, CalendarDays, Bell, Crown, Home, LogOut, User } from "lucide-react";
+import { Pill, CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const navItems = [
 export default function AppLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { notifications } = useApp();
+  const { notifications, plan } = useApp();
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -33,6 +33,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <h1 className="text-elder-lg font-extrabold text-white leading-tight tracking-tight">DoseCerta</h1>
               <p className="text-xs text-white/50 font-medium">Controle inteligente de medicamentos</p>
             </div>
+            {plan === "pro" && (
+              <Link
+                to="/relatorios"
+                className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
+                title="Relatórios"
+              >
+                <BarChart3 className="h-5 w-5" />
+              </Link>
+            )}
             <Link
               to="/perfil"
               className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
