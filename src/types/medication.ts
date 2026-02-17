@@ -1,0 +1,89 @@
+export type MedicationFrequency = 
+  | "1x-dia" 
+  | "2x-dia" 
+  | "3x-dia" 
+  | "4x-dia" 
+  | "6-6h" 
+  | "8-8h" 
+  | "12-12h" 
+  | "semanal" 
+  | "personalizado";
+
+export type MedicationStatus = "ativo" | "pausado" | "encerrado";
+
+export type UserPlan = "free" | "pro";
+
+export interface Medication {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: MedicationFrequency;
+  customFrequencyHours?: number;
+  startDate: string;
+  endDate?: string;
+  times: string[]; // horários gerados
+  status: MedicationStatus;
+  notes?: string;
+  color: string;
+}
+
+export interface ScheduleEvent {
+  id: string;
+  medicationId: string;
+  medicationName: string;
+  dosage: string;
+  scheduledTime: string; // ISO
+  taken: boolean;
+  takenAt?: string;
+  color: string;
+}
+
+export interface AppNotification {
+  id: string;
+  medicationId: string;
+  message: string;
+  time: string;
+  read: boolean;
+}
+
+export const MEDICATION_COLORS = [
+  "hsl(187, 60%, 42%)",
+  "hsl(152, 45%, 45%)",
+  "hsl(262, 60%, 55%)",
+  "hsl(38, 92%, 50%)",
+  "hsl(340, 65%, 55%)",
+  "hsl(210, 55%, 50%)",
+];
+
+export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
+  "1x-dia": "1 vez ao dia",
+  "2x-dia": "2 vezes ao dia",
+  "3x-dia": "3 vezes ao dia",
+  "4x-dia": "4 vezes ao dia",
+  "6-6h": "A cada 6 horas",
+  "8-8h": "A cada 8 horas",
+  "12-12h": "A cada 12 horas",
+  "semanal": "1 vez por semana",
+  "personalizado": "Personalizado",
+};
+
+export function generateTimesForFrequency(freq: MedicationFrequency, customHours?: number): string[] {
+  switch (freq) {
+    case "1x-dia": return ["08:00"];
+    case "2x-dia": return ["08:00", "20:00"];
+    case "3x-dia": return ["08:00", "14:00", "20:00"];
+    case "4x-dia": return ["06:00", "12:00", "18:00", "00:00"];
+    case "6-6h": return ["06:00", "12:00", "18:00", "00:00"];
+    case "8-8h": return ["06:00", "14:00", "22:00"];
+    case "12-12h": return ["08:00", "20:00"];
+    case "semanal": return ["08:00"];
+    case "personalizado": {
+      if (!customHours || customHours <= 0) return ["08:00"];
+      const times: string[] = [];
+      for (let h = 6; h < 24; h += customHours) {
+        times.push(`${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`);
+      }
+      return times.length > 0 ? times : ["08:00"];
+    }
+  }
+}
