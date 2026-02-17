@@ -17,9 +17,13 @@ import IdentifyMedicationPage from "@/pages/IdentifyMedicationPage";
 import ReportsPage from "@/pages/ReportsPage";
 import CaregiversPage from "@/pages/CaregiversPage";
 import ExamsPage from "@/pages/ExamsPage";
+import FamilyLinksPage from "@/pages/FamilyLinksPage";
+import CaregiverDashboard from "@/pages/CaregiverDashboard";
 import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +43,36 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function CaregiverGuard({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) {
+  const { user } = useAuth();
+  const [accountType, setAccountType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("account_type")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        setAccountType((data as any)?.account_type || "primary");
+        setLoading(false);
+      });
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+      </div>
+    );
+  }
+
+  if (accountType === "caregiver") return <>{fallback}</>;
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -53,24 +87,27 @@ const App = () => (
               path="/*"
               element={
                 <ProtectedRoute>
-                  <AppProvider>
-                    <AppLayout>
-                      <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/novo-medicamento" element={<AddMedication />} />
-                        <Route path="/medicamento/:id" element={<MedicationDetail />} />
-                        <Route path="/calendario" element={<CalendarPage />} />
-                        <Route path="/notificacoes" element={<NotificationsPage />} />
-                        <Route path="/planos" element={<PlansPage />} />
-                        <Route path="/perfil" element={<ProfilePage />} />
-                        <Route path="/identificar" element={<IdentifyMedicationPage />} />
-                        <Route path="/relatorios" element={<ReportsPage />} />
-                        <Route path="/cuidadores" element={<CaregiversPage />} />
-                        <Route path="/exames" element={<ExamsPage />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </AppLayout>
-                  </AppProvider>
+                  <CaregiverGuard fallback={<CaregiverDashboard />}>
+                    <AppProvider>
+                      <AppLayout>
+                        <Routes>
+                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/novo-medicamento" element={<AddMedication />} />
+                          <Route path="/medicamento/:id" element={<MedicationDetail />} />
+                          <Route path="/calendario" element={<CalendarPage />} />
+                          <Route path="/notificacoes" element={<NotificationsPage />} />
+                          <Route path="/planos" element={<PlansPage />} />
+                          <Route path="/perfil" element={<ProfilePage />} />
+                          <Route path="/identificar" element={<IdentifyMedicationPage />} />
+                          <Route path="/relatorios" element={<ReportsPage />} />
+                          <Route path="/cuidadores" element={<CaregiversPage />} />
+                          <Route path="/exames" element={<ExamsPage />} />
+                          <Route path="/vinculos" element={<FamilyLinksPage />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </AppLayout>
+                    </AppProvider>
+                  </CaregiverGuard>
                 </ProtectedRoute>
               }
             />

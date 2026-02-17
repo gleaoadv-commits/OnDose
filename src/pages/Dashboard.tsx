@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,27 +92,29 @@ export default function Dashboard() {
 
       {/* Premium shortcuts */}
       {plan === "premium" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Link to="/cuidadores">
-            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex items-center gap-3">
+            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex flex-col items-center gap-2 text-center">
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
                 <Users className="h-4 w-4 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-foreground">Cuidadores</p>
-                <p className="text-[10px] text-muted-foreground">Gerenciar família</p>
-              </div>
+              <p className="text-[10px] font-bold text-foreground leading-tight">Cuidadores</p>
             </Card>
           </Link>
           <Link to="/exames">
-            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex items-center gap-3">
+            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex flex-col items-center gap-2 text-center">
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
                 <FileText className="h-4 w-4 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-foreground">Exames</p>
-                <p className="text-[10px] text-muted-foreground">Acompanhamento IA</p>
+              <p className="text-[10px] font-bold text-foreground leading-tight">Exames</p>
+            </Card>
+          </Link>
+          <Link to="/vinculos">
+            <Card className="p-4 rounded-2xl border-primary/20 card-hover flex flex-col items-center gap-2 text-center">
+              <div className="bg-gradient-to-br from-primary to-primary/80 rounded-xl p-2 shrink-0">
+                <Link2 className="h-4 w-4 text-white" />
               </div>
+              <p className="text-[10px] font-bold text-foreground leading-tight">Vínculos</p>
             </Card>
           </Link>
         </div>

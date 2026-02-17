@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Pill, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Pill, Mail, Lock, User, Eye, EyeOff, Users, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isCaregiver, setIsCaregiver] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [primaryCode, setPrimaryCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -29,19 +31,62 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/");
       } else {
+        // If caregiver signup, validate the primary code first
+        if (isCaregiver) {
+          if (!primaryCode.trim()) {
+            toast({ title: "Erro", description: "Informe o ID do usuário principal.", variant: "destructive" });
+            setLoading(false);
+            return;
+          }
+          // Verify the code exists
+          const { data: primaryProfile } = await supabase
+            .from("profiles")
+            .select("user_id, user_code")
+            .eq("user_code", primaryCode.trim().toUpperCase())
+            .single();
+          if (!primaryProfile) {
+            toast({ title: "Erro", description: "ID do usuário principal não encontrado. Verifique o código.", variant: "destructive" });
+            setLoading(false);
+            return;
+          }
+        }
+
         const redirectUrl = window.location.origin;
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: name },
+            data: {
+              full_name: name,
+              account_type: isCaregiver ? "caregiver" : "primary",
+            },
             emailRedirectTo: redirectUrl,
           },
         });
         if (error) throw error;
+
+        // If caregiver, create the family link after signup
+        if (isCaregiver && signUpData.user) {
+          const { data: primaryProfile } = await supabase
+            .from("profiles")
+            .select("user_id")
+            .eq("user_code", primaryCode.trim().toUpperCase())
+            .single();
+
+          if (primaryProfile) {
+            await supabase.from("family_links").insert({
+              primary_user_id: (primaryProfile as any).user_id,
+              caregiver_user_id: signUpData.user.id,
+              status: "pending",
+            });
+          }
+        }
+
         toast({
           title: "Conta criada!",
-          description: "Verifique seu e-mail para confirmar o cadastro.",
+          description: isCaregiver
+            ? "Verifique seu e-mail. Após confirmar, aguarde o usuário principal aprovar o vínculo."
+            : "Verifique seu e-mail para confirmar o cadastro.",
         });
       }
     } catch (error: any) {
@@ -110,25 +155,69 @@ export default function AuthPage() {
 
         <Card className="p-7 space-y-5 shadow-elevated border-border/30 rounded-3xl animate-slide-up">
           <h2 className="text-elder-lg font-bold text-foreground text-center">
-            {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
+            {isLogin ? "Bem-vindo de volta!" : isCaregiver ? "Criar conta de Familiar" : "Crie sua conta"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-bold">Nome</Label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    placeholder="Seu nome completo"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary"
-                    required
-                  />
+              <>
+                {/* Account type toggle */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={!isCaregiver ? "default" : "outline"}
+                    className="flex-1 rounded-xl text-sm font-bold h-10"
+                    onClick={() => setIsCaregiver(false)}
+                  >
+                    <User className="h-4 w-4 mr-1.5" />
+                    Paciente
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={isCaregiver ? "default" : "outline"}
+                    className="flex-1 rounded-xl text-sm font-bold h-10"
+                    onClick={() => setIsCaregiver(true)}
+                  >
+                    <Users className="h-4 w-4 mr-1.5" />
+                    Familiar
+                  </Button>
                 </div>
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-bold">Nome</Label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                    <Input
+                      id="name"
+                      placeholder="Seu nome completo"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {isCaregiver && (
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryCode" className="text-sm font-bold">ID do Paciente Principal</Label>
+                    <div className="relative">
+                      <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                      <Input
+                        id="primaryCode"
+                        placeholder="Ex: DC-A1B2C3"
+                        value={primaryCode}
+                        onChange={e => setPrimaryCode(e.target.value.toUpperCase())}
+                        className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary uppercase tracking-widest font-bold"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Peça ao paciente o código ID que aparece no perfil dele.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="space-y-2">
