@@ -19,7 +19,7 @@ function MedicationCard({ med }: { med: Medication }) {
   const status = statusConfig[med.status];
 
   return (
-    <Card className="p-4 animate-slide-up">
+    <Card className="p-4 animate-slide-up shadow-card border-border/50 hover:shadow-elevated transition-shadow duration-300">
       <div className="flex items-start gap-3">
         <div
           className="rounded-xl p-3 shrink-0"
