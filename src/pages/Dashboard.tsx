@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FREQUENCY_LABELS, Medication } from "@/types/medication";
 import TodaySchedule from "@/components/TodaySchedule";
+import OverdueDoseAlert from "@/components/OverdueDoseAlert";
 
 function MedicationCard({ med, index }: { med: Medication; index: number }) {
   const { pauseMedication, resumeMedication, stopMedication } = useApp();
@@ -83,6 +84,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Overdue dose alerts */}
+      <OverdueDoseAlert />
+
       {/* Today's schedule */}
       <TodaySchedule />
 
