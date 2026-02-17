@@ -29,8 +29,8 @@ const features = [
   { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true },
   { label: "Relatórios de adesão", free: false, pro: true, premium: true },
   { label: "Histórico completo", free: false, pro: true, premium: true },
-  { label: "Até 2 cuidadores inclusos", free: false, pro: false, premium: true },
-  { label: "Cuidadores extras (R$19,90/mês cada)", free: false, pro: false, premium: true },
+  { label: "Até 2 familiares inclusos", free: false, pro: false, premium: true },
+  { label: "Familiares extras (R$19,90/mês cada)", free: false, pro: false, premium: true },
   { label: "Relatórios para familiares", free: false, pro: false, premium: true },
   { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true },
   { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true },
@@ -213,7 +213,7 @@ export default function PlansPage() {
             <p className="text-elder-2xl font-extrabold text-foreground mb-1">
               R$ 34,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
             </p>
-            <p className="text-sm text-muted-foreground mb-4">Controle total + 2 cuidadores inclusos + exames IA</p>
+            <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
             <ul className="space-y-2.5 mb-5">
               {features.map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
