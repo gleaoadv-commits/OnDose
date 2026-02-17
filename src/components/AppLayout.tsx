@@ -33,6 +33,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <h1 className="text-elder-lg font-extrabold text-white leading-tight tracking-tight">DoseCerta</h1>
               <p className="text-xs text-white/50 font-medium">Controle inteligente de medicamentos</p>
             </div>
+            <Link
+              to="/perfil"
+              className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
+              title="Meu Perfil"
+            >
+              <User className="h-5 w-5" />
+            </Link>
             <Button
               variant="ghost"
               size="icon"
