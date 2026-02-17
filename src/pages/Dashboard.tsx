@@ -152,12 +152,14 @@ export default function Dashboard() {
         </div>
 
         {!canAddMedication() && (
-          <Card className="p-4 mb-4 border-0 shadow-card rounded-2xl gradient-warm">
-            <p className="text-sm text-white font-semibold">
-              ⚠️ Limite de 3 medicamentos no plano gratuito.{" "}
-              <Link to="/planos" className="underline underline-offset-2 font-bold">Fazer upgrade →</Link>
-            </p>
-          </Card>
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+            <span className="text-sm text-destructive font-semibold">
+              Limite de 2 medicamentos atingido.
+            </span>
+            <Link to="/planos" className="text-sm font-bold text-primary underline underline-offset-2 ml-auto whitespace-nowrap">
+              Upgrade →
+            </Link>
+          </div>
         )}
 
         {activeMeds.length === 0 ? (
