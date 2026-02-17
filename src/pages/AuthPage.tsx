@@ -149,7 +149,7 @@ export default function AuthPage() {
           <div className="gradient-primary rounded-3xl p-5 inline-flex mb-5 shadow-glow">
             <Pill className="h-12 w-12 text-white" />
           </div>
-          <h1 className="text-elder-3xl font-extrabold text-foreground tracking-tight">DoseCerta</h1>
+          <h1 className="text-elder-3xl font-extrabold text-foreground tracking-tight">On.Dose</h1>
           <p className="text-elder-sm text-muted-foreground mt-1">Seu controle inteligente de medicamentos</p>
         </div>
 

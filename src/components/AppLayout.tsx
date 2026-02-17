@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <Pill className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="text-elder-lg font-extrabold text-white leading-tight tracking-tight">DoseCerta</h1>
+              <h1 className="text-elder-lg font-extrabold text-white leading-tight tracking-tight">On.Dose</h1>
               <p className="text-xs text-white/50 font-medium">Controle inteligente de medicamentos</p>
             </div>
             {(plan === "pro" || plan === "premium") && (

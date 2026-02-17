@@ -7,25 +7,25 @@ function generateEmailHTML(type: string, confirmUrl: string, userName?: string) 
 
   const configs: Record<string, { subject: string; heading: string; body: string; buttonText: string }> = {
     signup: {
-      subject: "Confirme sua conta no DoseCerta",
-      heading: "Bem-vindo ao DoseCerta! 💊",
+      subject: "Confirme sua conta no On.Dose",
+      heading: "Bem-vindo ao On.Dose! 💊",
       body: `Olá, ${name}! Estamos felizes em ter você conosco. Clique no botão abaixo para confirmar sua conta e começar a gerenciar seus medicamentos.`,
       buttonText: "Confirmar minha conta",
     },
     recovery: {
-      subject: "Redefinir senha - DoseCerta",
+      subject: "Redefinir senha - On.Dose",
       heading: "Redefinição de senha 🔐",
       body: `Olá, ${name}! Recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para criar uma nova senha.`,
       buttonText: "Redefinir minha senha",
     },
     magic_link: {
-      subject: "Seu link de acesso - DoseCerta",
+      subject: "Seu link de acesso - On.Dose",
       heading: "Link de acesso mágico ✨",
-      body: `Olá, ${name}! Use o botão abaixo para acessar sua conta no DoseCerta.`,
+      body: `Olá, ${name}! Use o botão abaixo para acessar sua conta no On.Dose.`,
       buttonText: "Acessar minha conta",
     },
     email_change: {
-      subject: "Confirme seu novo e-mail - DoseCerta",
+      subject: "Confirme seu novo e-mail - On.Dose",
       heading: "Confirmação de e-mail 📧",
       body: `Olá, ${name}! Confirme seu novo endereço de e-mail clicando no botão abaixo.`,
       buttonText: "Confirmar novo e-mail",
@@ -53,7 +53,7 @@ function generateEmailHTML(type: string, confirmUrl: string, userName?: string) 
               <div style="background:rgba(255,255,255,0.2);border-radius:16px;display:inline-block;padding:12px;margin-bottom:12px;">
                 <span style="font-size:32px;">💊</span>
               </div>
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">DoseCerta</h1>
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">On.Dose</h1>
               <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Seu controle inteligente de medicamentos</p>
             </td>
           </tr>
@@ -75,7 +75,7 @@ function generateEmailHTML(type: string, confirmUrl: string, userName?: string) 
           <!-- Footer -->
           <tr>
             <td style="padding:20px 24px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
-              <p style="margin:0;color:#94a3b8;font-size:12px;">© ${new Date().getFullYear()} DoseCerta. Todos os direitos reservados.</p>
+              <p style="margin:0;color:#94a3b8;font-size:12px;">© ${new Date().getFullYear()} On.Dose. Todos os direitos reservados.</p>
             </td>
           </tr>
         </table>
