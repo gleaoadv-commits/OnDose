@@ -92,18 +92,21 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      {/* Decorative gradient blob */}
+      <div className="fixed top-0 left-0 right-0 h-72 gradient-primary opacity-10 blur-3xl -z-10" />
+
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="text-center">
-          <div className="bg-primary rounded-2xl p-4 inline-flex mb-4">
-            <Pill className="h-10 w-10 text-primary-foreground" />
+          <div className="gradient-primary rounded-3xl p-5 inline-flex mb-4 shadow-elevated">
+            <Pill className="h-12 w-12 text-white" />
           </div>
-          <h1 className="text-elder-xl font-extrabold text-foreground">DoseCerta</h1>
-          <p className="text-elder-sm text-muted-foreground mt-1">Seu controle de medicamentos</p>
+          <h1 className="text-elder-2xl font-extrabold text-foreground tracking-tight">DoseCerta</h1>
+          <p className="text-elder-sm text-muted-foreground mt-1">Seu controle inteligente de medicamentos</p>
         </div>
 
-        <Card className="p-6 space-y-5">
+        <Card className="p-6 space-y-5 shadow-card border-border/50">
           <h2 className="text-elder-lg font-bold text-foreground text-center">
             {isLogin ? "Entrar" : "Criar conta"}
           </h2>

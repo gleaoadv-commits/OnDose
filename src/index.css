@@ -2,48 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap');
 
 @layer base {
   :root {
-    --background: 200 20% 97%;
-    --foreground: 210 30% 15%;
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 30% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 30% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 187 60% 42%;
+    --primary: 173 58% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 25% 92%;
-    --secondary-foreground: 210 30% 20%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 20%;
 
-    --muted: 200 15% 93%;
-    --muted-foreground: 210 10% 45%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 152 45% 45%;
+    --accent: 346 77% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 20% 88%;
-    --input: 200 20% 88%;
-    --ring: 187 60% 42%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 173 58% 39%;
 
     --radius: 1rem;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 152 45% 45%;
+    --success: 160 60% 45%;
     --success-foreground: 0 0% 100%;
 
-    --pro: 262 60% 55%;
+    --pro: 262 83% 58%;
     --pro-foreground: 0 0% 100%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(173, 58%, 39%), hsl(187, 70%, 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(346, 77%, 60%), hsl(330, 80%, 55%));
+    --gradient-pro: linear-gradient(135deg, hsl(262, 83%, 58%), hsl(280, 75%, 55%));
+    --shadow-soft: 0 1px 3px 0 hsl(220 13% 91% / 0.5), 0 1px 2px -1px hsl(220 13% 91% / 0.5);
+    --shadow-card: 0 4px 6px -1px hsl(220 20% 50% / 0.08), 0 2px 4px -2px hsl(220 20% 50% / 0.06);
+    --shadow-elevated: 0 10px 15px -3px hsl(220 20% 50% / 0.1), 0 4px 6px -4px hsl(220 20% 50% / 0.08);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -56,33 +63,37 @@
   }
 
   .dark {
-    --background: 210 30% 10%;
-    --foreground: 200 20% 95%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
 
-    --card: 210 25% 14%;
-    --card-foreground: 200 20% 95%;
+    --card: 222 40% 12%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 210 25% 14%;
-    --popover-foreground: 200 20% 95%;
+    --popover: 222 40% 12%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 187 55% 50%;
-    --primary-foreground: 210 30% 10%;
+    --primary: 173 55% 48%;
+    --primary-foreground: 222 47% 8%;
 
-    --secondary: 210 20% 20%;
-    --secondary-foreground: 200 20% 90%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 210 15% 18%;
-    --muted-foreground: 200 10% 60%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 152 40% 50%;
-    --accent-foreground: 210 30% 10%;
+    --accent: 346 72% 55%;
+    --accent-foreground: 222 47% 8%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 20% 22%;
-    --input: 210 20% 22%;
-    --ring: 187 55% 50%;
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 173 55% 48%;
+
+    --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.2);
+    --shadow-elevated: 0 10px 15px -3px hsl(0 0% 0% / 0.3);
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -101,12 +112,39 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Nunito', sans-serif;
   }
 
   h1, h2, h3, h4 {
     font-family: 'Nunito', sans-serif;
-    @apply font-bold;
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+    box-shadow: var(--shadow-card);
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-pro {
+    background: var(--gradient-pro);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
   }
 }
