@@ -1,5 +1,5 @@
-import { Pill } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OnDoseIcon from "@/components/OnDoseIcon";
 
 interface OnDoseLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -9,10 +9,10 @@ interface OnDoseLogoProps {
 }
 
 const sizeConfig = {
-  sm: { icon: "h-5 w-5", iconBox: "p-1.5 rounded-xl", text: "text-lg", sub: "text-[9px]", gap: "gap-2" },
-  md: { icon: "h-6 w-6", iconBox: "p-2.5 rounded-2xl", text: "text-xl", sub: "text-[10px]", gap: "gap-2.5" },
-  lg: { icon: "h-8 w-8", iconBox: "p-3 rounded-2xl", text: "text-2xl", sub: "text-xs", gap: "gap-3" },
-  xl: { icon: "h-12 w-12", iconBox: "p-5 rounded-3xl", text: "text-4xl", sub: "text-sm", gap: "gap-4" },
+  sm: { icon: 28, text: "text-lg", sub: "text-[9px]", gap: "gap-2" },
+  md: { icon: 36, text: "text-xl", sub: "text-[10px]", gap: "gap-2.5" },
+  lg: { icon: 44, text: "text-2xl", sub: "text-xs", gap: "gap-3" },
+  xl: { icon: 64, text: "text-4xl", sub: "text-sm", gap: "gap-4" },
 };
 
 export default function OnDoseLogo({
@@ -24,19 +24,12 @@ export default function OnDoseLogo({
   const s = sizeConfig[size];
 
   const isLight = theme === "light";
-  const isDark = theme === "dark";
-
-  const textColor = isLight ? "text-white" : isDark ? "text-foreground" : "text-foreground";
-  const subColor = isLight ? "text-white/60" : "text-muted-foreground";
+  const textColor = isLight ? "text-white" : "text-foreground";
   const accentColor = isLight ? "text-white" : "text-primary";
-  const iconTextColor = "text-white";
+  const subColor = isLight ? "text-white/60" : "text-muted-foreground";
 
   if (variant === "icon") {
-    return (
-      <div className={cn("gradient-primary shadow-glow", s.iconBox, className)}>
-        <Pill className={cn(s.icon, iconTextColor)} />
-      </div>
-    );
+    return <OnDoseIcon size={s.icon} className={className} />;
   }
 
   const LogoText = () => (
@@ -56,9 +49,7 @@ export default function OnDoseLogo({
 
   return (
     <div className={cn("flex items-center", s.gap, className)}>
-      <div className={cn("gradient-primary shadow-glow backdrop-blur-sm", s.iconBox)}>
-        <Pill className={cn(s.icon, iconTextColor)} />
-      </div>
+      <OnDoseIcon size={s.icon} />
       <div className="flex flex-col">
         <LogoText />
         <span className={cn(s.sub, subColor, "font-semibold tracking-wide leading-tight")}>
