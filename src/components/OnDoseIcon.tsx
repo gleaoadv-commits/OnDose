@@ -10,7 +10,7 @@ export default function OnDoseIcon({ size = 40, className }: OnDoseIconProps) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 120 100"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -24,49 +24,36 @@ export default function OnDoseIcon({ size = 40, className }: OnDoseIconProps) {
           <stop offset="0%" stopColor="hsl(178, 48%, 38%)" />
           <stop offset="100%" stopColor="hsl(168, 55%, 34%)" />
         </linearGradient>
-        <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(168, 55%, 50%)" />
-          <stop offset="100%" stopColor="hsl(180, 50%, 42%)" />
-        </linearGradient>
       </defs>
-
-      {/* Outer border ring — rounded rectangle (pill marker) */}
-      <rect
-        x="4" y="10" width="112" height="80" rx="40" ry="40"
-        stroke="url(#borderGrad)"
-        strokeWidth="3"
-        fill="none"
-        strokeOpacity="0.5"
-      />
 
       {/* Left half of capsule */}
       <path
-        d="M60,18 L60,82 C60,82 12,82 12,50 C12,18 60,18 60,18 Z"
+        d="M50,16 L50,84 C50,84 16,84 16,50 C16,16 50,16 50,16 Z"
         fill="url(#odLeft)"
       />
 
       {/* Right half of capsule */}
       <path
-        d="M60,18 L60,82 C60,82 108,82 108,50 C108,18 60,18 60,18 Z"
+        d="M50,16 L50,84 C50,84 84,84 84,50 C84,16 50,16 50,16 Z"
         fill="url(#odRight)"
       />
 
-      {/* Capsule shine highlights */}
-      <ellipse cx="42" cy="34" rx="18" ry="6" fill="white" fillOpacity="0.15" transform="rotate(-15, 42, 34)" />
-      <ellipse cx="78" cy="34" rx="14" ry="5" fill="white" fillOpacity="0.1" transform="rotate(-15, 78, 34)" />
+      {/* Subtle capsule shine */}
+      <ellipse cx="38" cy="34" rx="14" ry="6" fill="white" fillOpacity="0.15" transform="rotate(-20, 38, 34)" />
+      <ellipse cx="64" cy="34" rx="10" ry="4" fill="white" fillOpacity="0.1" transform="rotate(-20, 64, 34)" />
 
       {/* Center divider */}
-      <line x1="60" y1="20" x2="60" y2="80" stroke="white" strokeOpacity="0.22" strokeWidth="1.2" />
+      <line x1="50" y1="18" x2="50" y2="82" stroke="white" strokeOpacity="0.2" strokeWidth="1.2" />
 
-      {/* Left: subtle O — oval ring */}
-      <ellipse cx="38" cy="50" rx="12" ry="14" stroke="white" strokeOpacity="0.3" strokeWidth="2.2" fill="none" />
+      {/* Left: subtle O shape */}
+      <circle cx="33" cy="50" r="11" stroke="white" strokeOpacity="0.35" strokeWidth="2.5" fill="none" />
 
-      {/* Right: subtle D — vertical + arc */}
+      {/* Right: subtle D shape */}
       <path
-        d="M76,36 L76,64 C76,64 92,64 92,50 C92,36 76,36 76,36 Z"
+        d="M62,39 L62,61 C62,61 74,61 74,50 C74,39 62,39 62,39 Z"
         stroke="white"
-        strokeOpacity="0.3"
-        strokeWidth="2.2"
+        strokeOpacity="0.35"
+        strokeWidth="2.5"
         fill="none"
         strokeLinejoin="round"
       />
