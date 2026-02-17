@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      medications: {
+        Row: {
+          color: string
+          created_at: string
+          custom_frequency_hours: number | null
+          dosage: string
+          end_date: string | null
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+          start_date: string
+          status: string
+          times: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          custom_frequency_hours?: number | null
+          dosage: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+          start_date: string
+          status?: string
+          times?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          custom_frequency_hours?: number | null
+          dosage?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+          start_date?: string
+          status?: string
+          times?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -40,6 +94,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      schedule_events: {
+        Row: {
+          color: string
+          created_at: string
+          dosage: string
+          id: string
+          medication_id: string
+          medication_name: string
+          scheduled_time: string
+          taken: boolean
+          taken_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          dosage: string
+          id?: string
+          medication_id: string
+          medication_name: string
+          scheduled_time: string
+          taken?: boolean
+          taken_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          dosage?: string
+          id?: string
+          medication_id?: string
+          medication_name?: string
+          scheduled_time?: string
+          taken?: boolean
+          taken_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
