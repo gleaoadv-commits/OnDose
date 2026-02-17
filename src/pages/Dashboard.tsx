@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2, Package, MapPin } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2, Package, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,9 +79,10 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 }
 
 export default function Dashboard() {
-  const { medications, canAddMedication, plan } = useApp();
+  const { medications, canAddMedication, plan, devPlanOverride, setDevPlanOverride } = useApp();
   const activeMeds = medications.filter(m => m.status !== "encerrado");
   const endedMeds = medications.filter(m => m.status === "encerrado");
+  const [showDevPanel, setShowDevPanel] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -216,6 +218,41 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Dev test panel */}
+      <div className="fixed bottom-20 right-4 z-50">
+        {showDevPanel ? (
+          <Card className="p-3 rounded-2xl shadow-lg space-y-2 min-w-[160px]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-muted-foreground">🧪 Teste</p>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowDevPanel(false)}>
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Plano atual: <span className="font-bold text-foreground">{plan}</span></p>
+            {(["free", "pro", "premium"] as const).map(p => (
+              <Button
+                key={p}
+                size="sm"
+                variant={devPlanOverride === p ? "default" : "outline"}
+                className="w-full text-xs rounded-xl h-7"
+                onClick={() => setDevPlanOverride(devPlanOverride === p ? null : p)}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </Button>
+            ))}
+            {devPlanOverride && (
+              <Button size="sm" variant="ghost" className="w-full text-xs rounded-xl h-7 text-muted-foreground" onClick={() => setDevPlanOverride(null)}>
+                Resetar
+              </Button>
+            )}
+          </Card>
+        ) : (
+          <Button size="sm" className="rounded-full h-10 w-10 p-0 shadow-lg" variant="outline" onClick={() => setShowDevPanel(true)}>
+            🧪
+          </Button>
         )}
       </div>
     </div>
