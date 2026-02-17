@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw } from "lucide-react";
 import { FREQUENCY_LABELS } from "@/types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -26,6 +26,9 @@ export default function MedicationDetail() {
 
   const [editingNotes, setEditingNotes] = useState(false);
   const [editNotes, setEditNotes] = useState("");
+
+  const [editingStock, setEditingStock] = useState(false);
+  const [editStock, setEditStock] = useState("");
 
   if (!med) {
     return (
@@ -90,6 +93,33 @@ export default function MedicationDetail() {
     setEditingNotes(false);
     toast.success("Observações atualizadas!");
   };
+
+  // Stock editing
+  const startEditStock = () => {
+    setEditStock(String(med.stockCurrent ?? med.stockTotal ?? ""));
+    setEditingStock(true);
+  };
+  const saveStock = () => {
+    const val = Number(editStock);
+    if (isNaN(val) || val < 0) {
+      toast.error("Informe um número válido.");
+      return;
+    }
+    updateMedication(med.id, { stockCurrent: val, stockTotal: med.stockTotal ?? val });
+    setEditingStock(false);
+    toast.success("Estoque atualizado!");
+  };
+  const handleRestock = () => {
+    if (med.stockTotal) {
+      updateMedication(med.id, { stockCurrent: med.stockTotal });
+      toast.success("Estoque reposto! 🎉");
+    }
+  };
+
+  const stockPercentage = med.stockTotal && med.stockCurrent != null
+    ? (med.stockCurrent / med.stockTotal) * 100
+    : null;
+  const stockLow = stockPercentage != null && stockPercentage <= 20;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -238,6 +268,73 @@ export default function MedicationDetail() {
               </p>
             )}
           </div>
+
+          {/* Stock */}
+          {med.stockTotal != null && (
+            <div className={`rounded-2xl p-4 ${stockLow ? "bg-destructive/10 border border-destructive/20" : "bg-muted/50"}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Package className={`h-5 w-5 shrink-0 ${stockLow ? "text-destructive" : "text-primary"}`} />
+                  <p className="font-bold text-elder-base">Estoque</p>
+                </div>
+                <div className="flex gap-1">
+                  {!editingStock && (
+                    <>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={handleRestock} title="Repor estoque">
+                        <RefreshCw className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={startEditStock}>
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {editingStock ? (
+                <div className="space-y-2 ml-8">
+                  <Input
+                    type="number"
+                    value={editStock}
+                    onChange={e => setEditStock(e.target.value)}
+                    min={0}
+                    className="rounded-xl h-10"
+                    placeholder="Quantidade atual"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveStock}>
+                      <Check className="h-3.5 w-3.5" /> Salvar
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setEditingStock(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="ml-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className={`text-elder-base font-extrabold ${stockLow ? "text-destructive" : "text-foreground"}`}>
+                      {med.stockCurrent ?? 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">/ {med.stockTotal} cápsulas</p>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        stockLow ? "bg-destructive" : "bg-primary"
+                      }`}
+                      style={{ width: `${stockPercentage ?? 0}%` }}
+                    />
+                  </div>
+                  {stockLow && (
+                    <p className="text-xs font-bold text-destructive mt-2 animate-pulse">
+                      ⚠️ Estoque baixo! Considere comprar mais.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 

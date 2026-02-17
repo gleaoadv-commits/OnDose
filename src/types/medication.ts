@@ -7,6 +7,10 @@ export type MedicationFrequency =
   | "8-8h" 
   | "12-12h" 
   | "semanal" 
+  | "10-10dias"
+  | "15-15dias"
+  | "20-20dias"
+  | "mensal"
   | "personalizado";
 
 export type MedicationStatus = "ativo" | "pausado" | "encerrado";
@@ -26,6 +30,8 @@ export interface Medication {
   status: MedicationStatus;
   notes?: string;
   color: string;
+  stockTotal?: number;
+  stockCurrent?: number;
 }
 
 export interface ScheduleEvent {
@@ -67,6 +73,10 @@ export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
   "8-8h": "A cada 8 horas",
   "12-12h": "A cada 12 horas",
   "semanal": "1 vez por semana",
+  "10-10dias": "A cada 10 dias",
+  "15-15dias": "A cada 15 dias",
+  "20-20dias": "A cada 20 dias",
+  "mensal": "1 vez por mês",
   "personalizado": "Personalizado",
 };
 
@@ -80,6 +90,10 @@ export function getTimeSlotsCount(freq: MedicationFrequency, customHours?: numbe
     case "8-8h": return 3;
     case "12-12h": return 2;
     case "semanal": return 1;
+    case "10-10dias": return 1;
+    case "15-15dias": return 1;
+    case "20-20dias": return 1;
+    case "mensal": return 1;
     case "personalizado": {
       if (!customHours || customHours <= 0) return 1;
       return Math.max(1, Math.floor(24 / customHours));
@@ -97,6 +111,10 @@ export function getDefaultTimes(freq: MedicationFrequency, customHours?: number)
     case "8-8h": return ["06:00", "14:00", "22:00"];
     case "12-12h": return ["08:00", "20:00"];
     case "semanal": return ["08:00"];
+    case "10-10dias": return ["08:00"];
+    case "15-15dias": return ["08:00"];
+    case "20-20dias": return ["08:00"];
+    case "mensal": return ["08:00"];
     case "personalizado": {
       if (!customHours || customHours <= 0) return ["08:00"];
       const times: string[] = [];
@@ -105,5 +123,21 @@ export function getDefaultTimes(freq: MedicationFrequency, customHours?: number)
       }
       return times.length > 0 ? times : ["08:00"];
     }
+  }
+}
+
+// Frequencies that are "infrequent" and deserve motivational messages
+export const INFREQUENT_FREQUENCIES: MedicationFrequency[] = [
+  "10-10dias", "15-15dias", "20-20dias", "mensal"
+];
+
+export function getFrequencyDayStep(freq: MedicationFrequency): number {
+  switch (freq) {
+    case "semanal": return 7;
+    case "10-10dias": return 10;
+    case "15-15dias": return 15;
+    case "20-20dias": return 20;
+    case "mensal": return 30;
+    default: return 1;
   }
 }

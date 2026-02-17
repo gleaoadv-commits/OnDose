@@ -21,6 +21,7 @@ export default function AddMedication() {
   const [name, setName] = useState(prefill?.name || "");
   const [dosage, setDosage] = useState(prefill?.dosage || "");
   const [quantity, setQuantity] = useState(1);
+  const [stockTotal, setStockTotal] = useState<number | "">("");
   const [frequency, setFrequency] = useState<MedicationFrequency>("1x-dia");
   const [customHours, setCustomHours] = useState(4);
   const [times, setTimes] = useState<string[]>(["08:00"]);
@@ -71,6 +72,8 @@ export default function AddMedication() {
         startDate,
         endDate: endDate || undefined,
         notes: notes.trim() || undefined,
+        stockTotal: stockTotal ? Number(stockTotal) : undefined,
+        stockCurrent: stockTotal ? Number(stockTotal) : undefined,
       });
       if (success) {
         toast.success(`${name} cadastrado com sucesso!`);
@@ -130,6 +133,19 @@ export default function AddMedication() {
                 className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
               />
             </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-bold">Cápsulas na embalagem (opcional)</Label>
+            <Input
+              type="number"
+              value={stockTotal}
+              onChange={e => setStockTotal(e.target.value ? Number(e.target.value) : "")}
+              placeholder="Ex: 30"
+              min={1}
+              className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
+            />
+            <p className="text-xs text-muted-foreground mt-1">O sistema avisará quando estiver acabando.</p>
           </div>
 
           <div>

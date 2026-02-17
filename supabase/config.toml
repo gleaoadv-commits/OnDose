@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.motivational-message]
+verify_jwt = false

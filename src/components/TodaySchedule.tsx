@@ -2,6 +2,8 @@ import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
 import { Check, Clock, CalendarClock, Circle } from "lucide-react";
 import { useMemo } from "react";
+import { INFREQUENT_FREQUENCIES, MedicationFrequency } from "@/types/medication";
+import MotivationalBanner from "@/components/MotivationalBanner";
 
 export default function TodaySchedule() {
   const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();
@@ -56,9 +58,21 @@ export default function TodaySchedule() {
         {todayEvents.map((event, i) => {
           const time = new Date(event.scheduledTime);
           const isPast = time < now && !event.taken;
+          const med = medications.find(m => m.id === event.medicationId);
+          const isInfrequent = med && INFREQUENT_FREQUENCIES.includes(med.frequency as MedicationFrequency);
+          const showMotivational = isInfrequent && !event.taken && !isPast;
           const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
           return (
+            <div key={event.id} className="space-y-2.5">
+              {showMotivational && med && (
+                <MotivationalBanner
+                  medicationName={event.medicationName}
+                  frequency={med.frequency as MedicationFrequency}
+                  dosage={event.dosage}
+                  eventId={event.id}
+                />
+              )}
             <Card
               key={event.id}
               className={`p-0 overflow-hidden transition-all duration-300 animate-slide-up border-0 shadow-card ${
@@ -114,6 +128,7 @@ export default function TodaySchedule() {
                 </div>
               </div>
             </Card>
+            </div>
           );
         })}
       </div>
