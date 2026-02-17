@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2, Package } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2, Package, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -142,15 +142,26 @@ export default function Dashboard() {
           </h2>
           <div className="flex gap-2">
             {(plan === "pro" || plan === "premium") && (
-              <Link to="/identificar">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-2xl text-xs font-bold px-3 h-9 border-pro/30 text-pro hover:bg-pro/5"
-                >
-                  <Camera className="h-3.5 w-3.5 mr-1" /> Foto IA
-                </Button>
-              </Link>
+              <>
+                <Link to="/identificar">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-2xl text-xs font-bold px-3 h-9 border-pro/30 text-pro hover:bg-pro/5"
+                  >
+                    <Camera className="h-3.5 w-3.5 mr-1" /> Foto IA
+                  </Button>
+                </Link>
+                <Link to="/farmacias">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-2xl text-xs font-bold px-3 h-9 border-pro/30 text-pro hover:bg-pro/5"
+                  >
+                    <MapPin className="h-3.5 w-3.5 mr-1" /> Farmácias
+                  </Button>
+                </Link>
+              </>
             )}
             <Link to="/novo-medicamento">
               <Button
