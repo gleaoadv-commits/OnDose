@@ -147,7 +147,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const canAddMedication = useCallback(() => {
     if (plan === "pro" || plan === "premium") return true;
-    return medications.filter(m => m.status !== "encerrado").length < 3;
+    return medications.filter(m => m.status !== "encerrado").length < 2;
   }, [medications, plan]);
 
   const addMedication = useCallback(async (med: Omit<Medication, "id" | "status" | "color">): Promise<boolean> => {

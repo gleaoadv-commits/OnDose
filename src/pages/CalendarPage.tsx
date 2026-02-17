@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { Check, ChevronLeft, ChevronRight, CalendarDays, Circle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CalendarDays, Circle, Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function CalendarPage() {
-  const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();
+  const { schedule, medications, markDoseTaken, unmarkDoseTaken, plan } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -88,6 +89,8 @@ export default function CalendarPage() {
 
   const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
 
+  const isFree = plan === "free";
+
   return (
     <div className="space-y-5">
       <h2 className="section-header">
@@ -96,189 +99,217 @@ export default function CalendarPage() {
       </h2>
 
       {/* Month Calendar */}
-      <Card className="p-4 rounded-2xl border-0 shadow-card">
-        {/* Month nav */}
-        <div className="flex items-center justify-between mb-3">
-          <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)} className="rounded-xl h-8 w-8">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <p className="text-elder-base font-bold text-foreground capitalize">{monthLabel}</p>
-          <Button variant="ghost" size="icon" onClick={() => changeMonth(1)} className="rounded-xl h-8 w-8">
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {weekDays.map((d, i) => (
-            <div key={i} className="text-center text-xs font-bold text-muted-foreground py-1">
-              {d}
+      <div className="relative">
+        <Card className={`p-4 rounded-2xl border-0 shadow-card ${isFree ? "select-none" : ""}`}>
+          <div className={isFree ? "blur-sm pointer-events-none" : ""}>
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-3">
+              <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)} className="rounded-xl h-8 w-8">
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <p className="text-elder-base font-bold text-foreground capitalize">{monthLabel}</p>
+              <Button variant="ghost" size="icon" onClick={() => changeMonth(1)} className="rounded-xl h-8 w-8">
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
-          ))}
-        </div>
 
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, idx) => {
-            if (day === null) return <div key={idx} />;
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {weekDays.map((d, i) => (
+                <div key={i} className="text-center text-xs font-bold text-muted-foreground py-1">
+                  {d}
+                </div>
+              ))}
+            </div>
 
-            const cellDate = new Date(currentYear, currentMonth, day);
-            const key = `${currentYear}-${currentMonth}-${day}`;
-            const dots = dayDots[key] || [];
-            const isToday = cellDate.toDateString() === today.toDateString();
-            const isSelected = cellDate.toDateString() === selectedDate.toDateString();
+            {/* Day cells */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day, idx) => {
+                if (day === null) return <div key={idx} />;
 
-            // Unique colors for dots (max 4 shown)
-            const uniqueDots: { color: string; status: "taken" | "overdue" | "pending" }[] = [];
-            const seen = new Set<string>();
-            dots.forEach(dot => {
-              const status = dot.taken ? "taken" : dot.isPast ? "overdue" : "pending";
-              const dotKey = `${dot.color}-${status}`;
-              if (!seen.has(dotKey)) {
-                seen.add(dotKey);
-                uniqueDots.push({ color: dot.color, status });
-              }
-            });
+                const cellDate = new Date(currentYear, currentMonth, day);
+                const key = `${currentYear}-${currentMonth}-${day}`;
+                const dots = dayDots[key] || [];
+                const isToday = cellDate.toDateString() === today.toDateString();
+                const isSelected = cellDate.toDateString() === selectedDate.toDateString();
 
-            return (
-              <button
-                key={idx}
-                onClick={() => setSelectedDate(cellDate)}
-                className={`flex flex-col items-center justify-center rounded-xl py-1.5 min-h-[48px] transition-all ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground font-bold shadow-md"
-                    : isToday
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "hover:bg-muted/50 text-foreground"
-                }`}
-              >
-                <span className="text-sm leading-none">{day}</span>
-                {uniqueDots.length > 0 && (
-                  <div className="flex gap-0.5 mt-1">
-                    {uniqueDots.slice(0, 4).map((dot, i) => (
-                      <span
-                        key={i}
-                        className={`block rounded-full ${
-                          dot.status === "taken"
-                            ? "h-1.5 w-1.5 opacity-50"
-                            : dot.status === "overdue"
-                            ? "h-2 w-2 animate-pulse ring-1 ring-destructive/40"
-                            : "h-1.5 w-1.5"
-                        }`}
-                        style={{
-                          backgroundColor:
-                            dot.status === "overdue"
-                              ? "hsl(var(--destructive))"
-                              : isSelected
-                              ? "hsl(var(--primary-foreground))"
-                              : dot.color,
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                const uniqueDots: { color: string; status: "taken" | "overdue" | "pending" }[] = [];
+                const seen = new Set<string>();
+                dots.forEach(dot => {
+                  const status = dot.taken ? "taken" : dot.isPast ? "overdue" : "pending";
+                  const dotKey = `${dot.color}-${status}`;
+                  if (!seen.has(dotKey)) {
+                    seen.add(dotKey);
+                    uniqueDots.push({ color: dot.color, status });
+                  }
+                });
 
-        {/* Legend */}
-        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/30">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="block h-2 w-2 rounded-full bg-primary" />
-            Pendente
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedDate(cellDate)}
+                    className={`flex flex-col items-center justify-center rounded-xl py-1.5 min-h-[48px] transition-all ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground font-bold shadow-md"
+                        : isToday
+                        ? "bg-primary/10 text-primary font-bold"
+                        : "hover:bg-muted/50 text-foreground"
+                    }`}
+                  >
+                    <span className="text-sm leading-none">{day}</span>
+                    {uniqueDots.length > 0 && (
+                      <div className="flex gap-0.5 mt-1">
+                        {uniqueDots.slice(0, 4).map((dot, i) => (
+                          <span
+                            key={i}
+                            className={`block rounded-full ${
+                              dot.status === "taken"
+                                ? "h-1.5 w-1.5 opacity-50"
+                                : dot.status === "overdue"
+                                ? "h-2 w-2 animate-pulse ring-1 ring-destructive/40"
+                                : "h-1.5 w-1.5"
+                            }`}
+                            style={{
+                              backgroundColor:
+                                dot.status === "overdue"
+                                  ? "hsl(var(--destructive))"
+                                  : isSelected
+                                  ? "hsl(var(--primary-foreground))"
+                                  : dot.color,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/30">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="block h-2 w-2 rounded-full bg-primary" />
+                Pendente
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="block h-2 w-2 rounded-full bg-primary opacity-50" />
+                Tomado
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="block h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                Atrasado
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="block h-2 w-2 rounded-full bg-primary opacity-50" />
-            Tomado
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="block h-2 w-2 rounded-full bg-destructive animate-pulse" />
-            Atrasado
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Selected day detail */}
-      <div className="flex items-center justify-between">
-        <p className="text-elder-sm font-bold text-foreground capitalize">{selectedDateStr}</p>
-        <div className="flex items-center gap-1.5">
-          {isSelectedToday && (
-            <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
-          )}
-          {total > 0 && (
-            <span className="text-xs font-bold text-muted-foreground">{taken}/{total} doses</span>
-          )}
-        </div>
+        {/* Lock overlay for free users */}
+        {isFree && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+            <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 text-center shadow-elevated border border-border/40 mx-4">
+              <div className="gradient-pro rounded-full p-3 w-fit mx-auto mb-3">
+                <Lock className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-elder-base font-bold text-foreground mb-1">Calendário Visual</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Acompanhe suas doses de forma visual com o calendário completo.
+              </p>
+              <Link to="/planos">
+                <Button className="gradient-pro text-white border-0 rounded-xl font-bold gap-2 shadow-md hover:opacity-90 transition-opacity">
+                  <Crown className="h-4 w-4" />
+                  Adquirir versão PRO
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
-      {dayEvents.length === 0 ? (
-        <Card className="p-10 text-center rounded-2xl border-dashed border-2 border-border/60">
-          <CalendarDays className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-elder-base text-muted-foreground">Nenhuma dose programada.</p>
-        </Card>
-      ) : (
-        <div className="space-y-2.5">
-          {dayEvents.map((event, i) => {
-            const time = new Date(event.scheduledTime);
-            const isPast = time < now && !event.taken;
-            const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      {/* Selected day detail - only for paid users */}
+      {!isFree && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-elder-sm font-bold text-foreground capitalize">{selectedDateStr}</p>
+            <div className="flex items-center gap-1.5">
+              {isSelectedToday && (
+                <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
+              )}
+              {total > 0 && (
+                <span className="text-xs font-bold text-muted-foreground">{taken}/{total} doses</span>
+              )}
+            </div>
+          </div>
 
-            return (
-              <Card
-                key={event.id}
-                className={`p-0 overflow-hidden border-0 shadow-card animate-slide-up transition-all duration-300 ${
-                  event.taken ? "opacity-60" : isPast ? "ring-2 ring-destructive/30" : ""
-                }`}
-                style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
-              >
-                <div className="flex items-center">
-                  <div className="w-1.5 self-stretch rounded-l-lg" style={{ backgroundColor: event.color }} />
-                  
-                  <div className="flex items-center gap-3 flex-1 p-4">
-                    <button
-                      onClick={() => event.taken ? unmarkDoseTaken(event.id) : markDoseTaken(event.id)}
-                      className="shrink-0 transition-all duration-300 active:scale-90"
-                    >
-                      {event.taken ? (
-                        <div className="h-10 w-10 rounded-full bg-success flex items-center justify-center shadow-md">
-                          <Check className="h-5 w-5 text-white stroke-[3]" />
+          {dayEvents.length === 0 ? (
+            <Card className="p-10 text-center rounded-2xl border-dashed border-2 border-border/60">
+              <CalendarDays className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-elder-base text-muted-foreground">Nenhuma dose programada.</p>
+            </Card>
+          ) : (
+            <div className="space-y-2.5">
+              {dayEvents.map((event, i) => {
+                const time = new Date(event.scheduledTime);
+                const isPast = time < now && !event.taken;
+                const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+                return (
+                  <Card
+                    key={event.id}
+                    className={`p-0 overflow-hidden border-0 shadow-card animate-slide-up transition-all duration-300 ${
+                      event.taken ? "opacity-60" : isPast ? "ring-2 ring-destructive/30" : ""
+                    }`}
+                    style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-1.5 self-stretch rounded-l-lg" style={{ backgroundColor: event.color }} />
+                      
+                      <div className="flex items-center gap-3 flex-1 p-4">
+                        <button
+                          onClick={() => event.taken ? unmarkDoseTaken(event.id) : markDoseTaken(event.id)}
+                          className="shrink-0 transition-all duration-300 active:scale-90"
+                        >
+                          {event.taken ? (
+                            <div className="h-10 w-10 rounded-full bg-success flex items-center justify-center shadow-md">
+                              <Check className="h-5 w-5 text-white stroke-[3]" />
+                            </div>
+                          ) : (
+                            <div className={`h-10 w-10 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              isPast ? "border-destructive/50 bg-destructive/5" : "border-border hover:border-primary hover:bg-primary/5"
+                            }`}>
+                              <Circle className="h-5 w-5 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </button>
+
+                        <div className="flex-1">
+                          <p className={`text-elder-sm font-bold ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            {event.medicationName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{event.dosage}</p>
                         </div>
-                      ) : (
-                        <div className={`h-10 w-10 rounded-full border-2 flex items-center justify-center transition-colors ${
-                          isPast ? "border-destructive/50 bg-destructive/5" : "border-border hover:border-primary hover:bg-primary/5"
-                        }`}>
-                          <Circle className="h-5 w-5 text-muted-foreground/30" />
+
+                        <div className="text-right shrink-0">
+                          <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
+                            {timeStr}
+                          </p>
+                          {isPast && !event.taken && (
+                            <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
+                          )}
+                          {event.taken && event.takenAt && (
+                            <p className="text-xs text-success font-semibold">
+                              ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          )}
                         </div>
-                      )}
-                    </button>
-
-                    <div className="flex-1">
-                      <p className={`text-elder-sm font-bold ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                        {event.medicationName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{event.dosage}</p>
+                      </div>
                     </div>
-
-                    <div className="text-right shrink-0">
-                      <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
-                        {timeStr}
-                      </p>
-                      {isPast && !event.taken && (
-                        <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
-                      )}
-                      {event.taken && event.takenAt && (
-                        <p className="text-xs text-success font-semibold">
-                          ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
