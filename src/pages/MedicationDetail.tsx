@@ -52,7 +52,7 @@ export default function MedicationDetail() {
                 {statusConfig[med.status].label}
               </Badge>
             </div>
-            <p className="text-elder-lg text-muted-foreground mt-1">{med.dosage}</p>
+            <p className="text-elder-lg text-muted-foreground mt-1">{med.dosage} — {med.quantity} comprimido(s)</p>
           </div>
         </div>
 
