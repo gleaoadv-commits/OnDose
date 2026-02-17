@@ -8,6 +8,7 @@ interface AppState {
   schedule: ScheduleEvent[];
   notifications: AppNotification[];
   plan: UserPlan;
+  isAdmin: boolean;
   loading: boolean;
   addMedication: (med: Omit<Medication, "id" | "status" | "color">) => Promise<boolean>;
   updateMedication: (id: string, updates: Partial<Medication>) => void;
@@ -59,8 +60,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [plan] = useState<UserPlan>("free");
+  const [plan, setPlan] = useState<UserPlan>("free");
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Load data from DB on mount
   useEffect(() => {
@@ -69,10 +71,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [medsRes, eventsRes] = await Promise.all([
+        const [medsRes, eventsRes, rolesRes] = await Promise.all([
           supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("schedule_events").select("*").eq("user_id", user.id),
+          supabase.from("user_roles").select("role").eq("user_id", user.id),
         ]);
+
+        // Admin users get PRO plan
+        if (rolesRes.data?.some((r: any) => r.role === "admin")) {
+          setIsAdmin(true);
+          setPlan("pro");
+        }
 
         if (medsRes.data) {
           setMedications(medsRes.data.map(row => ({
@@ -278,7 +287,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      medications, schedule, notifications, plan, loading,
+      medications, schedule, notifications, plan, loading, isAdmin,
       addMedication, updateMedication, pauseMedication, resumeMedication,
       stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
       markNotificationRead, canAddMedication,
