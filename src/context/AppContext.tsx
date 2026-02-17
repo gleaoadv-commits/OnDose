@@ -268,10 +268,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMedications(prev => prev.map(m => m.id === id ? { ...m, status: status as Medication["status"] } : m));
   }, [user]);
 
-  const updateMedication = useCallback((id: string, updates: Partial<Medication>) => {
-    // For now, just update locally. Full edit can be added later.
+  const updateMedication = useCallback(async (id: string, updates: Partial<Medication>) => {
+    if (!user) return;
+    const dbUpdates: Record<string, any> = {};
+    if (updates.times !== undefined) dbUpdates.times = updates.times;
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
+
+    if (Object.keys(dbUpdates).length > 0) {
+      await supabase.from("medications").update(dbUpdates).eq("id", id).eq("user_id", user.id);
+    }
     setMedications(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
-  }, []);
+  }, [user]);
 
   const pauseMedication = useCallback((id: string) => updateMedicationStatus(id, "pausado"), [updateMedicationStatus]);
   const resumeMedication = useCallback((id: string) => updateMedicationStatus(id, "ativo"), [updateMedicationStatus]);
