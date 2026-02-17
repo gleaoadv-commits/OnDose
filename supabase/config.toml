@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.motivational-message]
 verify_jwt = false
+
+[functions.nearby-pharmacies]
+verify_jwt = false
