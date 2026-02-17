@@ -1,6 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +77,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 }
 
 export default function Dashboard() {
-  const { medications, canAddMedication } = useApp();
+  const { medications, canAddMedication, plan } = useApp();
   const activeMeds = medications.filter(m => m.status !== "encerrado");
   const endedMeds = medications.filter(m => m.status === "encerrado");
 
@@ -93,15 +93,28 @@ export default function Dashboard() {
             <Heart className="h-5 w-5 text-accent" />
             Medicamentos
           </h2>
-          <Link to="/novo-medicamento">
-            <Button
-              size="lg"
-              disabled={!canAddMedication()}
-              className="rounded-2xl text-sm font-bold shadow-glow px-5 h-10"
-            >
-              <Plus className="h-4 w-4 mr-1" /> Novo
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            {plan === "pro" && (
+              <Link to="/identificar">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-2xl text-sm font-bold px-4 h-10 border-pro/30 text-pro hover:bg-pro/5"
+                >
+                  <Camera className="h-4 w-4 mr-1" /> Foto IA
+                </Button>
+              </Link>
+            )}
+            <Link to="/novo-medicamento">
+              <Button
+                size="lg"
+                disabled={!canAddMedication()}
+                className="rounded-2xl text-sm font-bold shadow-glow px-5 h-10"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Novo
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {!canAddMedication() && (

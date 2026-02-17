@@ -1,0 +1,121 @@
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const { imageBase64, mimeType } = await req.json();
+
+    if (!imageBase64) {
+      return new Response(
+        JSON.stringify({ error: "imageBase64 is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const systemPrompt = `Você é um farmacêutico especialista em identificação de medicamentos. 
+Analise a foto enviada e identifique o medicamento.
+
+Responda SEMPRE em JSON com a seguinte estrutura (sem markdown, apenas JSON puro):
+{
+  "identified": true/false,
+  "name": "Nome do medicamento (nome comercial e/ou princípio ativo)",
+  "dosage": "Dosagem identificada (ex: 500mg, 10mg/ml)",
+  "form": "Forma farmacêutica (comprimido, cápsula, xarope, etc)",
+  "manufacturer": "Fabricante (se visível)",
+  "description": "Breve descrição do medicamento e para que serve",
+  "instructions": "Instruções gerais de uso (se conhecidas)",
+  "warnings": "Avisos importantes ou contraindicações comuns",
+  "confidence": "alta/média/baixa"
+}
+
+Se não conseguir identificar, retorne identified=false com uma mensagem em description explicando por quê.
+Seja preciso e responsável — informe que o usuário deve sempre consultar um médico ou farmacêutico.`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}`,
+                },
+              },
+              {
+                type: "text",
+                text: "Identifique este medicamento na foto. Responda em JSON.",
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos insuficientes para IA." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText);
+      return new Response(
+        JSON.stringify({ error: "Erro na análise da imagem" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const aiResult = await response.json();
+    const content = aiResult.choices?.[0]?.message?.content || "";
+
+    // Parse the JSON from the AI response
+    let parsed;
+    try {
+      // Try to extract JSON from potential markdown code blocks
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } catch {
+      parsed = {
+        identified: false,
+        description: content || "Não foi possível processar a resposta da IA.",
+        confidence: "baixa",
+      };
+    }
+
+    return new Response(JSON.stringify(parsed), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

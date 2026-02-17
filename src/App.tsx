@@ -13,6 +13,7 @@ import CalendarPage from "@/pages/CalendarPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import PlansPage from "@/pages/PlansPage";
 import ProfilePage from "@/pages/ProfilePage";
+import IdentifyMedicationPage from "@/pages/IdentifyMedicationPage";
 import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -59,6 +60,7 @@ const App = () => (
                         <Route path="/notificacoes" element={<NotificationsPage />} />
                         <Route path="/planos" element={<PlansPage />} />
                         <Route path="/perfil" element={<ProfilePage />} />
+                        <Route path="/identificar" element={<IdentifyMedicationPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
