@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Pill, CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3 } from "lucide-react";
+import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3 } from "lucide-react";
+import OnDoseLogo from "@/components/OnDoseLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -26,13 +27,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <header className="gradient-primary px-5 pt-5 pb-6 sticky top-0 z-30 shadow-elevated">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-2.5 shadow-glow">
-              <Pill className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-elder-lg font-extrabold text-white leading-tight tracking-tight">On.Dose</h1>
-              <p className="text-xs text-white/50 font-medium">Controle inteligente de medicamentos</p>
-            </div>
+            <OnDoseLogo size="md" theme="light" className="flex-1" />
             {(plan === "pro" || plan === "premium") && (
               <Link
                 to="/relatorios"

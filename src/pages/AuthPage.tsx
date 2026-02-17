@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Pill, Mail, Lock, User, Eye, EyeOff, Users, Hash, Crown } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Users, Hash, Crown } from "lucide-react";
+import OnDoseLogo from "@/components/OnDoseLogo";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
@@ -145,12 +146,8 @@ export default function AuthPage() {
 
       <div className="w-full max-w-md space-y-8 relative z-10">
         {/* Logo */}
-        <div className="text-center animate-scale-in">
-          <div className="gradient-primary rounded-3xl p-5 inline-flex mb-5 shadow-glow">
-            <Pill className="h-12 w-12 text-white" />
-          </div>
-          <h1 className="text-elder-3xl font-extrabold text-foreground tracking-tight">On.Dose</h1>
-          <p className="text-elder-sm text-muted-foreground mt-1">Seu controle inteligente de medicamentos</p>
+        <div className="text-center animate-scale-in flex flex-col items-center">
+          <OnDoseLogo size="xl" variant="full" />
         </div>
 
         <Card className="p-7 space-y-5 shadow-elevated border-border/30 rounded-3xl animate-slide-up">

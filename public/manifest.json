@@ -1,6 +1,6 @@
 {
-  "name": "On.Dose",
-  "short_name": "On.Dose",
+  "name": "OnDose",
+  "short_name": "OnDose",
   "description": "Seu controle inteligente de medicamentos",
   "start_url": "/",
   "display": "standalone",
