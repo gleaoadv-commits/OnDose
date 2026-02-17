@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Nunito", "sans-serif"],
+        display: ["Nunito", "sans-serif"],
       },
       fontSize: {
         "elder-sm": ["1rem", "1.5rem"],
@@ -22,6 +23,7 @@ export default {
         "elder-lg": ["1.375rem", "2rem"],
         "elder-xl": ["1.75rem", "2.25rem"],
         "elder-2xl": ["2.25rem", "2.75rem"],
+        "elder-3xl": ["2.75rem", "3.25rem"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -32,6 +34,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -99,15 +102,30 @@ export default {
           "50%": { opacity: "0.7" },
         },
         "slide-up": {
-          from: { transform: "translateY(10px)", opacity: "0" },
+          from: { transform: "translateY(12px)", opacity: "0" },
           to: { transform: "translateY(0)", opacity: "1" },
+        },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "scale-in": {
+          from: { transform: "scale(0.95)", opacity: "0" },
+          to: { transform: "scale(1)", opacity: "1" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
-        "slide-up": "slide-up 0.3s ease-out",
+        "slide-up": "slide-up 0.4s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "scale-in": "scale-in 0.3s ease-out",
+        "float": "float 3s ease-in-out infinite",
       },
     },
   },

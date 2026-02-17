@@ -93,37 +93,38 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      {/* Decorative gradient blob */}
-      <div className="fixed top-0 left-0 right-0 h-72 gradient-primary opacity-10 blur-3xl -z-10" />
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* Decorative blobs */}
+      <div className="fixed top-[-120px] right-[-80px] w-72 h-72 rounded-full bg-primary/8 blur-3xl" />
+      <div className="fixed bottom-[-100px] left-[-60px] w-64 h-64 rounded-full bg-accent/6 blur-3xl" />
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-8 relative z-10">
         {/* Logo */}
-        <div className="text-center">
-          <div className="gradient-primary rounded-3xl p-5 inline-flex mb-4 shadow-elevated">
+        <div className="text-center animate-scale-in">
+          <div className="gradient-primary rounded-3xl p-5 inline-flex mb-5 shadow-glow">
             <Pill className="h-12 w-12 text-white" />
           </div>
-          <h1 className="text-elder-2xl font-extrabold text-foreground tracking-tight">DoseCerta</h1>
+          <h1 className="text-elder-3xl font-extrabold text-foreground tracking-tight">DoseCerta</h1>
           <p className="text-elder-sm text-muted-foreground mt-1">Seu controle inteligente de medicamentos</p>
         </div>
 
-        <Card className="p-6 space-y-5 shadow-card border-border/50">
+        <Card className="p-7 space-y-5 shadow-elevated border-border/30 rounded-3xl animate-slide-up">
           <h2 className="text-elder-lg font-bold text-foreground text-center">
-            {isLogin ? "Entrar" : "Criar conta"}
+            {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-elder-sm font-semibold">Nome</Label>
+                <Label htmlFor="name" className="text-sm font-bold">Nome</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                   <Input
                     id="name"
                     placeholder="Seu nome completo"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="pl-10 h-12 text-elder-sm rounded-xl"
+                    className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary"
                     required
                   />
                 </div>
@@ -131,41 +132,41 @@ export default function AuthPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-elder-sm font-semibold">E-mail</Label>
+              <Label htmlFor="email" className="text-sm font-bold">E-mail</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="pl-10 h-12 text-elder-sm rounded-xl"
+                  className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-elder-sm font-semibold">Senha</Label>
+              <Label htmlFor="password" className="text-sm font-bold">Senha</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Sua senha"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 text-elder-sm rounded-xl"
+                  className="pl-11 pr-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary"
                   required
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                 </button>
               </div>
             </div>
@@ -174,22 +175,22 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm text-primary font-semibold hover:underline"
+                className="text-sm text-primary font-semibold hover:underline underline-offset-2"
               >
                 Esqueci minha senha
               </button>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full h-12 text-elder-sm font-bold rounded-xl" size="lg">
+            <Button type="submit" disabled={loading} className="w-full h-13 text-elder-sm font-bold rounded-2xl shadow-glow" size="lg">
               {loading ? "Carregando..." : isLogin ? "Entrar" : "Criar conta"}
             </Button>
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-sm text-muted-foreground">ou continue com</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-border/60" />
+            <span className="text-xs text-muted-foreground font-medium">ou continue com</span>
+            <div className="flex-1 h-px bg-border/60" />
           </div>
 
           {/* Social buttons */}
@@ -198,7 +199,7 @@ export default function AuthPage() {
               variant="outline"
               onClick={() => handleSocialLogin("google")}
               disabled={loading}
-              className="h-12 text-elder-sm font-semibold rounded-xl"
+              className="h-12 text-sm font-semibold rounded-2xl border-border/60 hover:bg-muted/50"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -212,7 +213,7 @@ export default function AuthPage() {
               variant="outline"
               onClick={() => handleSocialLogin("apple")}
               disabled={loading}
-              className="h-12 text-elder-sm font-semibold rounded-xl"
+              className="h-12 text-sm font-semibold rounded-2xl border-border/60 hover:bg-muted/50"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -222,11 +223,11 @@ export default function AuthPage() {
           </div>
 
           {/* Toggle */}
-          <p className="text-center text-elder-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-bold hover:underline"
+              className="text-primary font-bold hover:underline underline-offset-2"
             >
               {isLogin ? "Criar conta" : "Entrar"}
             </button>

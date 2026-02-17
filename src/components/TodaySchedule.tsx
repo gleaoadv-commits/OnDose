@@ -1,7 +1,7 @@
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, CalendarClock } from "lucide-react";
 import { useMemo } from "react";
 
 export default function TodaySchedule() {
@@ -28,12 +28,32 @@ export default function TodaySchedule() {
   if (todayEvents.length === 0) return null;
 
   const now = new Date();
+  const taken = todayEvents.filter(e => e.taken).length;
+  const total = todayEvents.length;
+  const progress = total > 0 ? (taken / total) * 100 : 0;
 
   return (
-    <div>
-      <h2 className="text-elder-xl font-bold text-foreground mb-3">📋 Hoje</h2>
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-header">
+          <CalendarClock className="h-5 w-5 text-primary" />
+          Hoje
+        </h2>
+        <span className="text-sm font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full">
+          {taken}/{total} doses
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
+        <div
+          className="h-full gradient-primary rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
       <div className="space-y-2">
-        {todayEvents.map(event => {
+        {todayEvents.map((event, i) => {
           const time = new Date(event.scheduledTime);
           const isPast = time < now && !event.taken;
           const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -41,33 +61,40 @@ export default function TodaySchedule() {
           return (
             <Card
               key={event.id}
-              className={`p-3 flex items-center gap-3 transition-all ${
-                event.taken ? "opacity-50" : isPast ? "border-destructive/50 bg-destructive/5" : ""
+              className={`p-3.5 flex items-center gap-3 transition-all duration-300 animate-slide-up border-border/40 ${
+                event.taken
+                  ? "opacity-40"
+                  : isPast
+                    ? "border-destructive/40 bg-destructive/5"
+                    : "card-hover"
               }`}
+              style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
             >
               <div
-                className="rounded-lg p-2 shrink-0"
-                style={{ backgroundColor: event.color + "22", color: event.color }}
+                className="rounded-xl p-2.5 shrink-0"
+                style={{ backgroundColor: event.color + "15", color: event.color }}
               >
                 <Clock className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-elder-sm font-bold text-foreground">{event.medicationName}</p>
                 <p className="text-sm text-muted-foreground">
-                  {event.dosage} • {timeStr}
-                  {isPast && " — Atrasado!"}
+                  {event.dosage} • <span className="font-semibold">{timeStr}</span>
+                  {isPast && <span className="text-destructive font-bold"> — Atrasado!</span>}
                 </p>
               </div>
               {!event.taken ? (
                 <Button
                   size="sm"
                   onClick={() => markDoseTaken(event.id)}
-                  className="rounded-xl font-bold shrink-0"
+                  className="rounded-xl font-bold shrink-0 shadow-glow"
                 >
                   <Check className="h-4 w-4 mr-1" /> Tomei
                 </Button>
               ) : (
-                <span className="text-sm text-success font-bold">✓ Tomado</span>
+                <div className="bg-success/10 text-success rounded-full p-1.5">
+                  <Check className="h-4 w-4 stroke-[3]" />
+                </div>
               )}
             </Card>
           );
