@@ -189,8 +189,15 @@ export default function CaregiverDashboard() {
       return;
     }
 
+    // Refresh link status from DB to catch server-side deactivations
     const myLink = linkData[0] as any;
-    setLink(myLink);
+    const { data: freshLink } = await supabase
+      .from("family_links")
+      .select("status")
+      .eq("id", myLink.id)
+      .single();
+    const currentStatus = (freshLink as any)?.status ?? myLink.status;
+    setLink({ ...myLink, status: currentStatus });
 
     // Primary user profile
     const { data: profile } = await supabase
@@ -201,7 +208,7 @@ export default function CaregiverDashboard() {
     if (profile) setPrimaryProfile(profile as any);
 
     // Patient data (only if active)
-    if (myLink.status === "active") {
+    if (currentStatus === "active") {
       const pid = myLink.primary_user_id;
       primaryUserIdRef.current = pid;
 
