@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.suggest-medication]
 verify_jwt = false
+
+[functions.anvisa-bulario]
+verify_jwt = false
