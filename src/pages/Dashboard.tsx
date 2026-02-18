@@ -233,15 +233,7 @@ export default function Dashboard() {
 
       {/* Premium shortcuts */}
       {plan === "premium" && (
-        <div className="grid grid-cols-3 gap-3">
-          <Link to="/cuidadores">
-            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex flex-col items-center gap-2 text-center">
-              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-              <p className="text-[10px] font-bold text-foreground leading-tight">Familiares</p>
-            </Card>
-          </Link>
+        <div className="grid grid-cols-2 gap-3">
           <Link to="/exames">
             <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex flex-col items-center gap-2 text-center">
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
@@ -251,11 +243,11 @@ export default function Dashboard() {
             </Card>
           </Link>
           <Link to="/vinculos">
-            <Card className="p-4 rounded-2xl border-primary/20 card-hover flex flex-col items-center gap-2 text-center">
-              <div className="bg-gradient-to-br from-primary to-primary/80 rounded-xl p-2 shrink-0">
-                <Link2 className="h-4 w-4 text-white" />
+            <Card className="p-4 rounded-2xl border-amber-500/20 card-hover flex flex-col items-center gap-2 text-center">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-2 shrink-0">
+                <Users className="h-4 w-4 text-white" />
               </div>
-              <p className="text-[10px] font-bold text-foreground leading-tight">Vínculos</p>
+              <p className="text-[10px] font-bold text-foreground leading-tight">Familiares</p>
             </Card>
           </Link>
         </div>
