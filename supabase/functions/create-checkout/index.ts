@@ -63,7 +63,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      payment_method_types: ["card", "link"],
+      payment_method_types: ["card"],
       payment_method_options: {
         card: {
           request_three_d_secure: "automatic",
