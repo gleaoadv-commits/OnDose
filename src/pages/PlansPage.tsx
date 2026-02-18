@@ -20,23 +20,22 @@ const TIERS = {
 };
 
 const features = [
-  { label: "Cadastro de medicamentos", free: true, pro: true, premium: true },
-  { label: "Agenda diária", free: true, pro: true, premium: true },
-  { label: "Calendário visual", free: false, pro: true, premium: true },
-  { label: "Notificações no app", free: true, pro: true, premium: true },
-  { label: "Até 2 medicamentos", free: true, pro: false, premium: false },
-  { label: "Medicamentos ilimitados", free: false, pro: true, premium: true },
-  { label: "Notificações por WhatsApp", free: false, pro: true, premium: true },
-  { label: "Notificações por e-mail", free: false, pro: true, premium: true },
-  { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true },
-  { label: "Relatórios de adesão", free: false, pro: true, premium: true },
-  { label: "Histórico completo", free: false, pro: true, premium: true },
-  { label: "Bulário eletrônico ANVISA", free: false, pro: false, premium: true },
-  { label: "Até 2 familiares inclusos", free: false, pro: false, premium: true },
-  { label: "Familiares extras (R$19,90/mês cada)", free: false, pro: false, premium: true },
-  { label: "Relatórios para familiares", free: false, pro: false, premium: true },
-  { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true },
-  { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true },
+  { label: "Cadastro de medicamentos",                    free: true,  pro: true,  premium: true,  freeOnly: false },
+  { label: "Agenda diária",                               free: true,  pro: true,  premium: true,  freeOnly: false },
+  { label: "Calendário visual",                           free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Notificações no app",                         free: true,  pro: true,  premium: true,  freeOnly: false },
+  { label: "Até 2 medicamentos",                          free: true,  pro: false, premium: false, freeOnly: true  },
+  { label: "Medicamentos ilimitados",                     free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Notificações por WhatsApp",                   free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Reconhecimento por foto (IA)",                free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Relatórios de adesão",                        free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Histórico completo de medicamentos",          free: false, pro: true,  premium: true,  freeOnly: false },
+  { label: "Bulário eletrônico ANVISA",                   free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Gestão de informações de até 2 familiares",   free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Familiares extras (R$19,90/mês cada)",        free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Relatórios para familiares",                  free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Acompanhamento de exames (IA)",               free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Gráficos de evolução de saúde",               free: false, pro: false, premium: true,  freeOnly: false },
 ];
 
 export default function PlansPage() {
@@ -218,7 +217,7 @@ export default function PlansPage() {
 
             <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
             <ul className="space-y-2.5 mb-5">
-              {[...features].sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
+              {[...features].filter(f => !f.freeOnly).sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
                   {f.pro ? (
                     <div className="bg-success/10 rounded-full p-0.5">
@@ -302,7 +301,7 @@ export default function PlansPage() {
 
             <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
             <ul className="space-y-2.5 mb-5">
-              {features.map(f => (
+              {features.filter(f => !f.freeOnly).map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
                   <div className="bg-success/10 rounded-full p-0.5">
                     <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
