@@ -22,6 +22,8 @@ interface AppState {
   deleteMedication: (id: string) => void;
   markDoseTaken: (eventId: string) => void;
   unmarkDoseTaken: (eventId: string) => void;
+  deleteScheduleEvent: (eventId: string) => Promise<void>;
+  updateScheduleEventTime: (eventId: string, newTime: string) => Promise<void>;
   markNotificationRead: (id: string) => void;
   canAddMedication: () => boolean;
   markAllPastDosesTaken: (medicationId: string) => Promise<void>;
@@ -436,6 +438,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, schedule, recalculateStock]);
 
+  const deleteScheduleEvent = useCallback(async (eventId: string) => {
+    if (!user) return;
+    await supabase.from("schedule_events").delete().eq("id", eventId).eq("user_id", user.id);
+    setSchedule(prev => prev.filter(e => e.id !== eventId));
+    setNotifications(prev => prev.filter(n => n.eventId !== eventId));
+  }, [user]);
+
+  const updateScheduleEventTime = useCallback(async (eventId: string, newTime: string) => {
+    if (!user) return;
+    await supabase.from("schedule_events").update({ scheduled_time: newTime }).eq("id", eventId).eq("user_id", user.id);
+    setSchedule(prev => prev.map(e => e.id === eventId ? { ...e, scheduledTime: newTime } : e));
+  }, [user]);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }, []);
@@ -475,6 +490,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
       stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
+      deleteScheduleEvent, updateScheduleEventTime,
       markNotificationRead, canAddMedication, markAllPastDosesTaken,
     }}>
       {children}
