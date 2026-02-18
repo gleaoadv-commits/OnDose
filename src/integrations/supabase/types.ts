@@ -368,6 +368,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_caregiver_id_by_code: {
+        Args: { p_user_code: string }
+        Returns: string
+      }
       get_user_id_by_code: { Args: { p_user_code: string }; Returns: string }
       has_role: {
         Args: {
