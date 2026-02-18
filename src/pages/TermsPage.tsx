@@ -6,11 +6,19 @@ import OnDoseLogo from "@/components/OnDoseLogo";
 export default function TermsPage() {
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    if (window.history.length <= 1) {
+      navigate("/auth");
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="rounded-xl">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <OnDoseLogo size="sm" variant="full" />
@@ -131,8 +139,8 @@ export default function TermsPage() {
         </div>
 
         <div className="pt-4 pb-8">
-          <Button onClick={() => navigate(-1)} className="w-full h-12 rounded-2xl font-bold">
-            Voltar ao Cadastro
+          <Button onClick={handleBack} className="w-full h-12 rounded-2xl font-bold">
+            Voltar
           </Button>
         </div>
       </div>

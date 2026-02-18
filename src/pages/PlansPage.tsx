@@ -8,11 +8,13 @@ import { toast } from "sonner";
 
 const TIERS = {
   pro: {
-    price_id: "price_1T1gulDG7KKNrw1gSZ5BjB4f",
+    monthly: { price_id: "price_1T1gulDG7KKNrw1gSZ5BjB4f", amount: 12.9 },
+    yearly:  { price_id: "price_1T22VgDG7KKNrw1g9bQ2NOHe", amount: 118.8, monthly_equiv: 9.9 },
     product_id: "prod_TzgHE734N3eI9w",
   },
   premium: {
-    price_id: "price_1T1gvNDG7KKNrw1gxHZ4ZRQC",
+    monthly: { price_id: "price_1T1gvNDG7KKNrw1gxHZ4ZRQC", amount: 34.9 },
+    yearly:  { price_id: "price_1T22VyDG7KKNrw1gw3RJSGxf", amount: 298.8, monthly_equiv: 24.9 },
     product_id: "prod_TzgHpjEhcgv0gi",
   },
 };
@@ -38,14 +40,16 @@ const features = [
 
 export default function PlansPage() {
   const { plan, subscriptionEnd, refreshSubscription } = useApp();
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
   const handleCheckout = async (tier: "pro" | "premium") => {
     setLoadingCheckout(tier);
     try {
+      const priceId = TIERS[tier][billingCycle].price_id;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: TIERS[tier].price_id },
+        body: { priceId },
       });
       if (error) throw error;
       if (data?.url) {
@@ -84,6 +88,9 @@ export default function PlansPage() {
     toast.success("Status atualizado!");
   };
 
+  const proSavings = Math.round((1 - TIERS.pro.yearly.monthly_equiv / TIERS.pro.monthly.amount) * 100);
+  const premiumSavings = Math.round((1 - TIERS.premium.yearly.monthly_equiv / TIERS.premium.monthly.amount) * 100);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -101,6 +108,41 @@ export default function PlansPage() {
       {subscriptionEnd && plan !== "free" && (
         <p className="text-xs text-muted-foreground">
           Sua assinatura renova em {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
+        </p>
+      )}
+
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-center bg-muted rounded-2xl p-1 gap-1 relative">
+          <button
+            onClick={() => setBillingCycle("monthly")}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              billingCycle === "monthly"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Mensal
+          </button>
+          <button
+            onClick={() => setBillingCycle("yearly")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              billingCycle === "yearly"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Anual
+            <span className="text-xs font-extrabold text-success bg-success/10 px-1.5 py-0.5 rounded-full">
+              -{proSavings}%
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {billingCycle === "yearly" && (
+        <p className="text-center text-xs text-muted-foreground">
+          💡 Cobrado anualmente — economize comparado ao plano mensal
         </p>
       )}
 
@@ -146,13 +188,33 @@ export default function PlansPage() {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">PRO</h3>
+              {billingCycle === "yearly" && plan !== "pro" && (
+                <span className="text-xs font-extrabold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                  Economize {proSavings}%
+                </span>
+              )}
               {plan === "pro" && (
                 <span className="text-xs font-bold text-pro bg-pro/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
               )}
             </div>
-            <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-              R$ 12,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-            </p>
+
+            {billingCycle === "yearly" ? (
+              <div className="mb-1">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-elder-2xl font-extrabold text-foreground">
+                    R$ {TIERS.pro.yearly.monthly_equiv.toFixed(2).replace(".", ",")}
+                    <span className="text-sm text-muted-foreground font-normal">/mês</span>
+                  </p>
+                  <span className="text-sm text-muted-foreground line-through">R$ 12,90</span>
+                </div>
+                <p className="text-xs text-muted-foreground">R$ {TIERS.pro.yearly.amount.toFixed(2).replace(".", ",")} cobrado por ano</p>
+              </div>
+            ) : (
+              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+                R$ 12,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              </p>
+            )}
+
             <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
             <ul className="space-y-2.5 mb-5">
               {features.map(f => (
@@ -182,7 +244,7 @@ export default function PlansPage() {
                 ) : (
                   <Crown className="h-5 w-5 mr-2" />
                 )}
-                Assinar PRO
+                Assinar PRO {billingCycle === "yearly" ? "Anual" : "Mensal"}
               </Button>
             )}
             {plan === "pro" && (
@@ -210,13 +272,33 @@ export default function PlansPage() {
                 <Star className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">Premium</h3>
+              {billingCycle === "yearly" && plan !== "premium" && (
+                <span className="text-xs font-extrabold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                  Economize {premiumSavings}%
+                </span>
+              )}
               {plan === "premium" && (
                 <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
               )}
             </div>
-            <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-              R$ 34,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-            </p>
+
+            {billingCycle === "yearly" ? (
+              <div className="mb-1">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-elder-2xl font-extrabold text-foreground">
+                    R$ {TIERS.premium.yearly.monthly_equiv.toFixed(2).replace(".", ",")}
+                    <span className="text-sm text-muted-foreground font-normal">/mês</span>
+                  </p>
+                  <span className="text-sm text-muted-foreground line-through">R$ 34,90</span>
+                </div>
+                <p className="text-xs text-muted-foreground">R$ {TIERS.premium.yearly.amount.toFixed(2).replace(".", ",")} cobrado por ano</p>
+              </div>
+            ) : (
+              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+                R$ 34,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              </p>
+            )}
+
             <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
             <ul className="space-y-2.5 mb-5">
               {features.map(f => (
@@ -240,7 +322,7 @@ export default function PlansPage() {
                 ) : (
                   <Star className="h-5 w-5 mr-2" />
                 )}
-                Assinar Premium
+                Assinar Premium {billingCycle === "yearly" ? "Anual" : "Mensal"}
               </Button>
             )}
             {plan === "premium" && (
