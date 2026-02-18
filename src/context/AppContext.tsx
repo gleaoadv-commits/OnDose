@@ -91,8 +91,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.error("Error checking subscription:", error);
         return;
       }
-      if (data?.plan) {
+        if (data?.plan) {
         const newPlan = data.plan as UserPlan;
+        const previousPlan = plan;
         setPlan(newPlan);
         setSubscriptionEnd(data.subscription_end ?? null);
 
@@ -108,11 +109,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ));
           }
         }
+
+        // Deactivate family links when downgrading from premium to free/pro
+        if (previousPlan === "premium" && newPlan !== "premium") {
+          await supabase
+            .from("family_links")
+            .update({ status: "inactive" })
+            .eq("primary_user_id", user.id)
+            .eq("status", "active");
+        }
       }
     } catch (err) {
       console.error("Error refreshing subscription:", err);
     }
-  }, [user, medications]);
+  }, [user, medications, plan]);
 
   // Load data from DB on mount
   useEffect(() => {
