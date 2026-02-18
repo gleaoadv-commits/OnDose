@@ -111,37 +111,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Check Stripe subscription
         await refreshSubscription();
 
-        if (medsRes.data) {
-          setMedications(medsRes.data.map((row: any) => ({
-            id: row.id,
-            name: row.name,
-            dosage: row.dosage,
-            quantity: row.quantity,
-            frequency: row.frequency as MedicationFrequency,
-            customFrequencyHours: row.custom_frequency_hours ?? undefined,
-            startDate: row.start_date,
-            endDate: row.end_date ?? undefined,
-            times: row.times,
-            status: row.status as Medication["status"],
-            notes: row.notes ?? undefined,
-            color: row.color,
-            stockTotal: row.stock_total ?? undefined,
-            stockCurrent: row.stock_current ?? undefined,
-          })));
+        const loadedMeds: Medication[] = (medsRes.data ?? []).map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          dosage: row.dosage,
+          quantity: row.quantity,
+          frequency: row.frequency as MedicationFrequency,
+          customFrequencyHours: row.custom_frequency_hours ?? undefined,
+          startDate: row.start_date,
+          endDate: row.end_date ?? undefined,
+          times: row.times,
+          status: row.status as Medication["status"],
+          notes: row.notes ?? undefined,
+          color: row.color,
+          stockTotal: row.stock_total ?? undefined,
+          stockCurrent: row.stock_current ?? undefined,
+        }));
+
+        const loadedEvents: ScheduleEvent[] = (eventsRes.data ?? []).map(row => ({
+          id: row.id,
+          medicationId: row.medication_id,
+          medicationName: row.medication_name,
+          dosage: row.dosage,
+          scheduledTime: row.scheduled_time,
+          taken: row.taken,
+          takenAt: row.taken_at ?? undefined,
+          color: row.color,
+        }));
+
+        // Recalculate stockCurrent based on actual taken events for each medication
+        const recalcMeds = loadedMeds.map(med => {
+          if (med.stockTotal == null) return med;
+          const takenCount = loadedEvents.filter(e => e.medicationId === med.id && e.taken).length;
+          const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
+          return { ...med, stockCurrent: newStock };
+        });
+
+        // Persist recalculated values if they differ
+        for (const med of recalcMeds) {
+          const orig = loadedMeds.find(m => m.id === med.id);
+          if (orig && orig.stockTotal != null && orig.stockCurrent !== med.stockCurrent) {
+            supabase.from("medications").update({ stock_current: med.stockCurrent } as any).eq("id", med.id).eq("user_id", user.id);
+          }
         }
 
-        if (eventsRes.data) {
-          setSchedule(eventsRes.data.map(row => ({
-            id: row.id,
-            medicationId: row.medication_id,
-            medicationName: row.medication_name,
-            dosage: row.dosage,
-            scheduledTime: row.scheduled_time,
-            taken: row.taken,
-            takenAt: row.taken_at ?? undefined,
-            color: row.color,
-          })));
-        }
+        setMedications(recalcMeds);
+        setSchedule(loadedEvents);
       } catch (err) {
         console.error("Error loading data:", err);
       } finally {
@@ -369,37 +384,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => prev.filter(n => n.medicationId !== id));
   }, [user]);
 
+  // Helper: recalculate stockCurrent for a medication based on taken events
+  const recalculateStock = useCallback(async (medId: string, updatedSchedule: ScheduleEvent[]) => {
+    const med = medications.find(m => m.id === medId);
+    if (!med || med.stockTotal == null) return;
+
+    const takenCount = updatedSchedule.filter(
+      e => e.medicationId === medId && e.taken
+    ).length;
+
+    const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
+    await supabase.from("medications").update({ stock_current: newStock } as any).eq("id", medId).eq("user_id", user!.id);
+    setMedications(prev => prev.map(m => m.id === medId ? { ...m, stockCurrent: newStock } : m));
+  }, [medications, user]);
+
   const markDoseTaken = useCallback(async (eventId: string) => {
     if (!user) return;
     const now = new Date().toISOString();
     await supabase.from("schedule_events").update({ taken: true, taken_at: now }).eq("id", eventId).eq("user_id", user.id);
-    
-    // Decrement stock for the medication
+
+    const updatedSchedule = schedule.map(e =>
+      e.id === eventId ? { ...e, taken: true, takenAt: now } : e
+    );
+    setSchedule(updatedSchedule);
+
+    // Recalculate stock from total taken doses
     const event = schedule.find(e => e.id === eventId);
     if (event) {
-      const med = medications.find(m => m.id === event.medicationId);
-      if (med && med.stockCurrent != null && med.stockCurrent > 0) {
-        const newStock = Math.max(0, med.stockCurrent - med.quantity);
-        await supabase.from("medications").update({ stock_current: newStock } as any).eq("id", med.id).eq("user_id", user.id);
-        setMedications(prev => prev.map(m => m.id === med.id ? { ...m, stockCurrent: newStock } : m));
-      }
+      await recalculateStock(event.medicationId, updatedSchedule);
     }
 
-    setSchedule(prev => prev.map(e =>
-      e.id === eventId ? { ...e, taken: true, takenAt: now } : e
-    ));
     setNotifications(prev => prev.map(n =>
       n.eventId === eventId ? { ...n, read: true } : n
     ));
-  }, [user]);
+  }, [user, schedule, recalculateStock]);
 
   const unmarkDoseTaken = useCallback(async (eventId: string) => {
     if (!user) return;
     await supabase.from("schedule_events").update({ taken: false, taken_at: null }).eq("id", eventId).eq("user_id", user.id);
-    setSchedule(prev => prev.map(e =>
+
+    const updatedSchedule = schedule.map(e =>
       e.id === eventId ? { ...e, taken: false, takenAt: undefined } : e
-    ));
-  }, [user]);
+    );
+    setSchedule(updatedSchedule);
+
+    // Recalculate stock from total taken doses
+    const event = schedule.find(e => e.id === eventId);
+    if (event) {
+      await recalculateStock(event.medicationId, updatedSchedule);
+    }
+  }, [user, schedule, recalculateStock]);
 
   const markNotificationRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));

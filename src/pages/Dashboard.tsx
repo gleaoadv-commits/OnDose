@@ -130,18 +130,21 @@ export default function Dashboard() {
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
 
-      {/* Low stock alerts (Pro+ only) */}
-      {(plan === "pro" || plan === "premium") && medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent / m.stockTotal) <= 0.2).map(med => (
-        <Link key={med.id} to={`/medicamento/${med.id}`}>
-          <Card className="p-3 rounded-2xl border-destructive/20 bg-destructive/5 flex items-center gap-3 card-hover mb-2">
-            <Package className="h-5 w-5 text-destructive shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-destructive">{med.name} — estoque baixo!</p>
-              <p className="text-xs text-muted-foreground">{med.stockCurrent} de {med.stockTotal} cápsulas restantes</p>
-            </div>
-          </Card>
-        </Link>
-      ))}
+      {/* Low stock alerts (all plans) */}
+      {medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent / m.stockTotal) <= 0.2).map(med => {
+        const pct = med.stockTotal ? Math.round((med.stockCurrent! / med.stockTotal) * 100) : 0;
+        return (
+          <Link key={med.id} to={`/medicamento/${med.id}`}>
+            <Card className="p-3 rounded-2xl border-destructive/20 bg-destructive/5 flex items-center gap-3 card-hover mb-2">
+              <Package className="h-5 w-5 text-destructive shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-destructive">{med.name} — estoque baixo!</p>
+                <p className="text-xs text-muted-foreground">{med.stockCurrent} de {med.stockTotal} cápsulas restantes ({pct}%)</p>
+              </div>
+            </Card>
+          </Link>
+        );
+      })}
 
       {/* Today's schedule */}
       <TodaySchedule />
