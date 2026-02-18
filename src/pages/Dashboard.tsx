@@ -1,25 +1,27 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, X, Trash2 } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, X, Trash2, Crown, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FREQUENCY_LABELS, Medication } from "@/types/medication";
 import TodaySchedule from "@/components/TodaySchedule";
 import OverdueDoseAlert from "@/components/OverdueDoseAlert";
+import PlanDowngradeModal from "@/components/PlanDowngradeModal";
 
 function MedicationCard({ med, index }: { med: Medication; index: number }) {
   const { pauseMedication, resumeMedication, stopMedication, deleteMedication } = useApp();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const statusConfig = {
+  const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
     ativo: { label: "Ativo", className: "bg-success/15 text-success border-success/30", dot: "bg-success" },
     pausado: { label: "Pausado", className: "bg-warning/15 text-warning border-warning/30", dot: "bg-warning" },
     encerrado: { label: "Encerrado", className: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" },
+    inativo_plano: { label: "Inabilitado", className: "bg-destructive/10 text-destructive border-destructive/30", dot: "bg-destructive" },
   };
 
-  const status = statusConfig[med.status];
+  const status = statusConfig[med.status] ?? statusConfig.encerrado;
 
   return (
     <Card
@@ -58,7 +60,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
             </div>
           </div>
 
-          {med.status !== "encerrado" && (
+          {med.status !== "encerrado" && med.status !== "inativo_plano" && (
             <div className="flex gap-2 mt-3 ml-[60px]">
               {med.status === "ativo" ? (
                 <Button variant="outline" size="sm" onClick={() => pauseMedication(med.id)} className="text-xs rounded-xl border-border/50 h-8">
@@ -72,6 +74,18 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
               <Button variant="outline" size="sm" onClick={() => stopMedication(med.id)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
                 <Square className="h-3 w-3 mr-1" /> Encerrar
               </Button>
+            </div>
+          )}
+
+          {med.status === "inativo_plano" && (
+            <div className="flex gap-2 mt-3 ml-[60px] items-center">
+              <Ban className="h-3.5 w-3.5 text-destructive shrink-0" />
+              <p className="text-xs text-destructive font-semibold flex-1">Inabilitado — plano gratuito</p>
+              <Link to="/planos">
+                <Button size="sm" variant="outline" className="text-xs rounded-xl h-8 border-pro/40 text-pro hover:bg-pro/5 gap-1">
+                  <Crown className="h-3 w-3" /> Reativar
+                </Button>
+              </Link>
             </div>
           )}
 
@@ -104,8 +118,15 @@ export default function Dashboard() {
   const { medications, canAddMedication, plan, devPlanOverride, setDevPlanOverride, loading } = useApp();
   const [showDevPanel, setShowDevPanel] = useState(false);
 
-  const activeMeds = medications.filter(m => m.status !== "encerrado");
+  const FREE_LIMIT = 2;
+  const activeMeds = medications.filter(m => m.status === "ativo" || m.status === "pausado");
+  const inactivePlanMeds = medications.filter(m => m.status === "inativo_plano");
   const endedMeds = medications.filter(m => m.status === "encerrado");
+
+  // Show downgrade modal when: free plan AND more than FREE_LIMIT active/paused meds AND none already inabilitado
+  const showDowngradeModal = plan === "free" && activeMeds.length > FREE_LIMIT;
+  // Candidates to inabilitar = only "ativo" ones (not paused)
+  const downgradeCandidates = activeMeds.filter(m => m.status === "ativo");
 
   // Show skeleton while loading data from server
   if (loading) {
@@ -127,6 +148,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Downgrade modal */}
+      <PlanDowngradeModal
+        open={showDowngradeModal}
+        activeMeds={downgradeCandidates}
+        freeLimit={FREE_LIMIT}
+      />
+
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
 
@@ -250,6 +278,19 @@ export default function Dashboard() {
             {activeMeds.map((med, i) => (
               <MedicationCard key={med.id} med={med} index={i} />
             ))}
+          </div>
+        )}
+
+        {inactivePlanMeds.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-xs font-bold text-destructive/70 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <Ban className="h-3.5 w-3.5" /> Inabilitados (plano gratuito)
+            </h3>
+            <div className="space-y-2 opacity-70">
+              {inactivePlanMeds.map((med, i) => (
+                <MedicationCard key={med.id} med={med} index={i} />
+              ))}
+            </div>
           </div>
         )}
 

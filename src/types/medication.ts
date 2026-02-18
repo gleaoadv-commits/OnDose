@@ -13,7 +13,7 @@ export type MedicationFrequency =
   | "mensal"
   | "personalizado";
 
-export type MedicationStatus = "ativo" | "pausado" | "encerrado";
+export type MedicationStatus = "ativo" | "pausado" | "encerrado" | "inativo_plano";
 
 export type UserPlan = "free" | "pro" | "premium";
 

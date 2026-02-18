@@ -84,13 +84,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (data?.plan) {
-        setPlan(data.plan as UserPlan);
+        const newPlan = data.plan as UserPlan;
+        setPlan(newPlan);
         setSubscriptionEnd(data.subscription_end ?? null);
+
+        // Auto-reactivate medications disabled due to free plan limit
+        if (newPlan !== "free") {
+          const inactivePlanMeds = medications.filter(m => m.status === "inativo_plano");
+          for (const med of inactivePlanMeds) {
+            await supabase.from("medications").update({ status: "ativo" }).eq("id", med.id).eq("user_id", user.id);
+          }
+          if (inactivePlanMeds.length > 0) {
+            setMedications(prev => prev.map(m =>
+              m.status === "inativo_plano" ? { ...m, status: "ativo" as const } : m
+            ));
+          }
+        }
       }
     } catch (err) {
       console.error("Error refreshing subscription:", err);
     }
-  }, [user]);
+  }, [user, medications]);
 
   // Load data from DB on mount
   useEffect(() => {
