@@ -552,6 +552,19 @@ export default function CaregiverDashboard() {
                   ? new Date(nextEvent.scheduled_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
                   : null;
 
+                const nextDoseDay = (() => {
+                  if (!nextEvent) return null;
+                  const eventDate = new Date(nextEvent.scheduled_time);
+                  const today = new Date();
+                  const tomorrow = new Date();
+                  tomorrow.setDate(today.getDate() + 1);
+                  const isSameDay = (a: Date, b: Date) =>
+                    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+                  if (isSameDay(eventDate, today)) return "hoje";
+                  if (isSameDay(eventDate, tomorrow)) return "amanhã";
+                  return eventDate.toLocaleDateString("pt-BR");
+                })();
+
                 return (
                   <Card key={m.id} className="p-4 rounded-2xl border-border/40">
                     <div className="flex items-center gap-3">
@@ -568,9 +581,14 @@ export default function CaregiverDashboard() {
                           </p>
                         )}
                         {nextDoseTime && (
-                          <p className="text-[10px] font-bold mt-0.5" style={{ color: m.color }}>
-                            Próxima dose: {nextDoseTime}
-                          </p>
+                          <div className="mt-0.5">
+                            <p className="text-[10px] font-bold" style={{ color: m.color }}>
+                              Próxima dose: {nextDoseTime}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {nextDoseDay}
+                            </p>
+                          </div>
                         )}
                       </div>
                       <Badge variant="outline" className={`text-[10px] font-bold shrink-0 ${m.status === "pausado" ? "bg-warning/10 text-warning border-warning/30" : "bg-success/10 text-success border-success/30"}`}>
