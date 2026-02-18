@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.medication-tips]
 verify_jwt = false
+
+[functions.verify-link-status]
+verify_jwt = false
