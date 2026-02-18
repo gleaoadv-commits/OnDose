@@ -127,8 +127,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setPlan("pro");
         }
 
-        // Check Stripe subscription
-        await refreshSubscription();
+        // Check Stripe subscription in parallel (non-blocking for UI)
+        refreshSubscription();
 
         const loadedMeds: Medication[] = (medsRes.data ?? []).map((row: any) => ({
           id: row.id,
