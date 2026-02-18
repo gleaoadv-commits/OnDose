@@ -37,13 +37,15 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    const origin = req.headers.get("origin") || "https://ondose.lovable.app";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/planos?success=true`,
-      cancel_url: `${req.headers.get("origin")}/planos?canceled=true`,
+      payment_method_types: ["card"],
+      success_url: `${origin}/planos?success=true`,
+      cancel_url: `${origin}/planos?canceled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
