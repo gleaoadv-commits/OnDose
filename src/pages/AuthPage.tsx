@@ -51,13 +51,10 @@ export default function AuthPage() {
             setLoading(false);
             return;
           }
-          // Verify the code exists
-          const { data: primaryProfile } = await supabase
-            .from("profiles")
-            .select("user_id, user_code")
-            .eq("user_code", primaryCode.trim().toUpperCase())
-            .single();
-          if (!primaryProfile) {
+          // Verify the code exists using a security-definer RPC (works without auth session)
+          const { data: primaryUserId } = await supabase
+            .rpc("get_user_id_by_code", { p_user_code: primaryCode.trim().toUpperCase() });
+          if (!primaryUserId) {
             toast({ title: "Erro", description: "ID do usuário principal não encontrado. Verifique o código.", variant: "destructive" });
             setLoading(false);
             return;
@@ -80,15 +77,12 @@ export default function AuthPage() {
 
         // If caregiver, create the family link after signup
         if (isCaregiver && signUpData.user) {
-          const { data: primaryProfile } = await supabase
-            .from("profiles")
-            .select("user_id")
-            .eq("user_code", primaryCode.trim().toUpperCase())
-            .single();
+          const { data: primaryUserId } = await supabase
+            .rpc("get_user_id_by_code", { p_user_code: primaryCode.trim().toUpperCase() });
 
-          if (primaryProfile) {
+          if (primaryUserId) {
             await supabase.from("family_links").insert({
-              primary_user_id: (primaryProfile as any).user_id,
+              primary_user_id: primaryUserId as string,
               caregiver_user_id: signUpData.user.id,
               status: "pending",
             });
