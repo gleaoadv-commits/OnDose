@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Sparkles, Heart, Camera, Users, FileText, ArrowRight, Link2, Package, MapPin, X } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,8 @@ import TodaySchedule from "@/components/TodaySchedule";
 import OverdueDoseAlert from "@/components/OverdueDoseAlert";
 
 function MedicationCard({ med, index }: { med: Medication; index: number }) {
-  const { pauseMedication, resumeMedication, stopMedication } = useApp();
+  const { pauseMedication, resumeMedication, stopMedication, deleteMedication } = useApp();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const statusConfig = {
     ativo: { label: "Ativo", className: "bg-success/15 text-success border-success/30", dot: "bg-success" },
@@ -56,6 +57,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
               </div>
             </div>
           </div>
+
           {med.status !== "encerrado" && (
             <div className="flex gap-2 mt-3 ml-[60px]">
               {med.status === "ativo" ? (
@@ -70,6 +72,26 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
               <Button variant="outline" size="sm" onClick={() => stopMedication(med.id)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
                 <Square className="h-3 w-3 mr-1" /> Encerrar
               </Button>
+            </div>
+          )}
+
+          {med.status === "encerrado" && (
+            <div className="flex gap-2 mt-3 ml-[60px]">
+              {confirmDelete ? (
+                <>
+                  <span className="text-xs text-destructive font-semibold self-center">Confirmar exclusão?</span>
+                  <Button variant="outline" size="sm" onClick={() => deleteMedication(med.id)} className="text-xs rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10 h-8">
+                    <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)} className="text-xs rounded-xl border-border/50 h-8">
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
+                  <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                </Button>
+              )}
             </div>
           )}
         </div>
