@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertTriangle, Clock, Heart, User, LogOut, CheckCircle2, Shield,
@@ -48,6 +49,12 @@ interface Medication {
   times: string[];
   status: string;
   added_by_name?: string | null;
+  stock_current?: number | null;
+  stock_total?: number | null;
+  start_date?: string;
+  end_date?: string | null;
+  pause_until?: string | null;
+  notes?: string | null;
 }
 
 interface ScheduleEvent {
@@ -130,6 +137,18 @@ export default function CaregiverDashboard() {
   const [addMedFrequency, setAddMedFrequency] = useState("1x-dia");
   const [addMedNotes, setAddMedNotes] = useState("");
   const [addMedSaving, setAddMedSaving] = useState(false);
+
+  // Edit medication modal state
+  const [editMed, setEditMed] = useState<Medication | null>(null);
+  const [editMedName, setEditMedName] = useState("");
+  const [editMedDosage, setEditMedDosage] = useState("");
+  const [editMedFrequency, setEditMedFrequency] = useState("1x-dia");
+  const [editMedTimes, setEditMedTimes] = useState("");
+  const [editMedStartDate, setEditMedStartDate] = useState("");
+  const [editMedEndDate, setEditMedEndDate] = useState("");
+  const [editMedPauseUntil, setEditMedPauseUntil] = useState("");
+  const [editMedNotes, setEditMedNotes] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const primaryUserIdRef = useRef<string | null>(null);
 
@@ -333,6 +352,45 @@ export default function CaregiverDashboard() {
       toast.error("Erro ao adicionar medicamento: " + err.message);
     } finally {
       setAddMedSaving(false);
+    }
+  };
+
+  // ── Open edit medication modal ──
+  const openEditMed = (m: Medication) => {
+    setEditMed(m);
+    setEditMedName(m.name);
+    setEditMedDosage(m.dosage);
+    setEditMedFrequency(m.frequency);
+    setEditMedTimes(m.times.join(", "));
+    setEditMedStartDate(m.start_date || "");
+    setEditMedEndDate(m.end_date || "");
+    setEditMedPauseUntil(m.pause_until || "");
+    setEditMedNotes(m.notes || "");
+  };
+
+  const handleSaveMedEdit = async () => {
+    if (!editMed) return;
+    setEditSaving(true);
+    try {
+      const updates: Record<string, any> = {
+        name: editMedName.trim(),
+        dosage: editMedDosage.trim(),
+        frequency: editMedFrequency,
+        times: editMedTimes.split(",").map(t => t.trim()).filter(Boolean),
+        start_date: editMedStartDate || null,
+        end_date: editMedEndDate || null,
+        pause_until: editMedPauseUntil || null,
+        notes: editMedNotes.trim() || null,
+        status: editMedPauseUntil ? "pausado" : "ativo",
+      };
+      const { error } = await supabase.from("medications").update(updates).eq("id", editMed.id);
+      if (error) throw error;
+      toast.success("Medicamento atualizado!");
+      setEditMed(null);
+    } catch (err: any) {
+      toast.error("Erro ao atualizar: " + err.message);
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -681,10 +739,10 @@ export default function CaregiverDashboard() {
                 // Sort by next upcoming dose time
                 const now = new Date();
                 const nextA = scheduleEvents
-                  .filter(e => e.medication_id === a.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .filter(e => e.medication_id === a.id && !e.taken && new Date(e.scheduled_time).getTime() - now.getTime() > -1)
                   .sort((x, y) => new Date(x.scheduled_time).getTime() - new Date(y.scheduled_time).getTime())[0];
                 const nextB = scheduleEvents
-                  .filter(e => e.medication_id === b.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .filter(e => e.medication_id === b.id && !e.taken && new Date(e.scheduled_time).getTime() - now.getTime() > -1)
                   .sort((x, y) => new Date(x.scheduled_time).getTime() - new Date(y.scheduled_time).getTime())[0];
                 if (!nextA && !nextB) return 0;
                 if (!nextA) return 1;
@@ -695,7 +753,7 @@ export default function CaregiverDashboard() {
                 // Next dose: find the next upcoming scheduled event for this medication
                 const now = new Date();
                 const nextEvent = scheduleEvents
-                  .filter(e => e.medication_id === m.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .filter(e => e.medication_id === m.id && !e.taken && new Date(e.scheduled_time).getTime() - now.getTime() > -1)
                   .sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0];
 
                 const nextDoseTime = nextEvent
@@ -717,18 +775,30 @@ export default function CaregiverDashboard() {
                 })();
 
                 return (
-                  <Card key={m.id} className="p-4 rounded-2xl border-border/40">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: m.color + "20" }}>
+                  <Card key={m.id} className={["p-4 rounded-2xl border-border/40", m.stock_current != null && m.stock_total != null && m.stock_current - Math.ceil(m.stock_total * 0.2) < 1 ? "border-l-4 border-l-destructive" : ""].join(" ")}>
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                           style={{ background: m.color + "20" }}>
                         <Pill className="h-5 w-5" style={{ color: m.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
+                          {m.stock_current != null && m.stock_total != null && m.stock_current - Math.ceil(m.stock_total * 0.2) < 1 && (
+                            <span className="text-[9px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full shrink-0">
+                              ⚠ Cartela acabando ({m.stock_current} rest.)
+                            </span>
+                          )}
+                          {m.pause_until && new Date(m.pause_until).getTime() - new Date().getTime() > 0 && (
+                            <span className="text-[9px] font-bold bg-amber-500/15 text-amber-600 px-1.5 py-0.5 rounded-full shrink-0">
+                              ⏸ Suspenso até {new Date(m.pause_until).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">{m.dosage} · {frequencyLabel(m.frequency)}</p>
                         {m.times.length > 0 && (
                           <p className="text-[10px] text-muted-foreground mt-0.5">
-                            🕐 Horários: {m.times.join(" · ")}
+                            🕐 {m.times.join(" · ")}
                           </p>
                         )}
                         {nextDoseTime && (
@@ -736,9 +806,7 @@ export default function CaregiverDashboard() {
                             <p className="text-[10px] font-bold" style={{ color: m.color }}>
                               Próxima dose: {nextDoseTime}
                             </p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {nextDoseDay}
-                            </p>
+                            <p className="text-[10px] text-muted-foreground">{nextDoseDay}</p>
                             {m.added_by_name && (
                               <p className="text-[10px] text-primary font-semibold mt-0.5">
                                 ✦ Adicionado por {m.added_by_name}
@@ -747,15 +815,20 @@ export default function CaregiverDashboard() {
                           </div>
                         )}
                       </div>
-                      <Badge variant="outline" className={`text-[10px] font-bold shrink-0 ${m.status === "pausado" ? "bg-warning/10 text-warning border-warning/30" : "bg-success/10 text-success border-success/30"}`}>
-                        {m.status === "pausado" ? "Pausado" : "Ativo"}
-                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 rounded-xl shrink-0 self-start text-muted-foreground hover:text-foreground"
+                        onClick={() => openEditMed(m)}
+                        title="Editar medicamento"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
                     </div>
                   </Card>
                 );
-              })
-            )}
-          </TabsContent>
+              })}
+            </TabsContent>
 
           {/* ── ABA: Adesão ───────────────────────────────────────────────────── */}
           <TabsContent value="adherence" className="space-y-4">
