@@ -152,8 +152,9 @@ export default function Dashboard() {
   const inactivePlanMeds = medications.filter(m => m.status === "inativo_plano");
   const endedMeds = medications.filter(m => m.status === "encerrado");
 
-  // Show downgrade modal when: free plan AND more than FREE_LIMIT active/paused meds AND none already inabilitado
-  const showDowngradeModal = plan === "free" && activeMeds.length > FREE_LIMIT;
+  // Show downgrade modal when: free plan AND more than FREE_LIMIT active/paused meds
+  // AND user hasn't already made a selection (no inativo_plano meds exist yet)
+  const showDowngradeModal = plan === "free" && activeMeds.length > FREE_LIMIT && inactivePlanMeds.length === 0 && !loading;
   // Candidates to inabilitar = only "ativo" ones (not paused)
   const downgradeCandidates = activeMeds.filter(m => m.status === "ativo");
 
