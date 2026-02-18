@@ -75,7 +75,20 @@ Deno.serve(async (req) => {
       }
 
       const userName = profile.display_name || "Usuário";
-      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${event.medication_name}*\n💊 Dose: ${event.dosage}\n\nCuide-se! 😊`;
+      const closings = [
+        "Cuide-se! Você está indo muito bem! 💪",
+        "Saúde é o seu maior bem. Vamos juntos! 🌱",
+        "Cada dose é um passo para uma vida mais saudável! ✨",
+        "Você não está sozinho nessa jornada. Continue! 🤝",
+        "Pequenos hábitos fazem grandes diferenças. Parabéns! 🏆",
+        "Seu bem-estar importa. Continue firme! 💙",
+        "Um passo de cada vez. Você consegue! 🌟",
+        "Cuidar de si mesmo é o maior ato de amor! ❤️",
+        "A consistência é o segredo da saúde. Continue assim! 🎯",
+        "Hoje é mais um dia de autocuidado. Orgulhe-se! 🌸",
+      ];
+      const closing = closings[Math.floor(Math.random() * closings.length)];
+      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${event.medication_name}*\n💊 Dose: ${event.dosage}\n\n${closing}`;
 
       console.log(`Sending UltraMsg to ${phone} for ${event.medication_name}`);
 
