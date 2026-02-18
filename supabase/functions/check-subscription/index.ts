@@ -26,10 +26,9 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
-    const supabaseClient = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
     const token = authHeader.replace("Bearer ", "");
@@ -40,10 +39,6 @@ serve(async (req) => {
     logStep("User authenticated", { email: user.email });
 
     // Check for plan_override in profiles (for testing purposes)
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
     const { data: profileData } = await supabaseAdmin
       .from("profiles")
       .select("plan_override")
