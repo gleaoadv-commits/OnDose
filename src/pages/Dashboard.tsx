@@ -101,10 +101,29 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 }
 
 export default function Dashboard() {
-  const { medications, canAddMedication, plan, devPlanOverride, setDevPlanOverride } = useApp();
+  const { medications, canAddMedication, plan, devPlanOverride, setDevPlanOverride, loading } = useApp();
+  const [showDevPanel, setShowDevPanel] = useState(false);
+
   const activeMeds = medications.filter(m => m.status !== "encerrado");
   const endedMeds = medications.filter(m => m.status === "encerrado");
-  const [showDevPanel, setShowDevPanel] = useState(false);
+
+  // Show skeleton while loading data from server
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <div className="h-5 w-40 bg-muted rounded-lg animate-pulse" />
+          <div className="h-24 w-full bg-muted rounded-2xl animate-pulse" />
+          <div className="h-24 w-full bg-muted rounded-2xl animate-pulse opacity-60" />
+        </div>
+        <div className="space-y-3">
+          <div className="h-5 w-32 bg-muted rounded-lg animate-pulse" />
+          <div className="h-24 w-full bg-muted rounded-2xl animate-pulse" />
+          <div className="h-24 w-full bg-muted rounded-2xl animate-pulse opacity-60" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
