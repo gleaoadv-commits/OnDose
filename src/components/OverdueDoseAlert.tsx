@@ -65,11 +65,10 @@ export default function OverdueDoseAlert() {
   };
 
   const handleConfirmTaken = (onTime: boolean) => {
-    if (selectedEvent) {
-      markDoseTaken(selectedEvent);
-    } else {
-      markDoseTaken(currentEvent.id);
-    }
+    const idToMark = selectedEvent ?? currentEvent.id;
+    markDoseTaken(idToMark);
+    // Dismiss immediately from the alert so it disappears right away
+    setDismissedIds((prev) => new Set(prev).add(idToMark));
     setShowTimePicker(false);
     setSelectedEvent(null);
   };
