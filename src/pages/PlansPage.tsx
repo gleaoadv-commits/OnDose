@@ -163,7 +163,7 @@ export default function PlansPage() {
             R$ 0<span className="text-sm text-muted-foreground font-normal">/mês</span>
           </p>
           <ul className="space-y-2.5">
-            {features.map(f => (
+            {[...features].sort((a, b) => Number(b.free) - Number(a.free)).map(f => (
               <li key={f.label} className="flex items-center gap-2.5 text-sm">
                 {f.free ? (
                   <div className="bg-success/10 rounded-full p-0.5">
@@ -218,7 +218,7 @@ export default function PlansPage() {
 
             <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
             <ul className="space-y-2.5 mb-5">
-              {features.map(f => (
+              {[...features].sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
                 <li key={f.label} className="flex items-center gap-2.5 text-sm">
                   {f.pro ? (
                     <div className="bg-success/10 rounded-full p-0.5">
