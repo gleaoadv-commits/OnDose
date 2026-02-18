@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Crown, X, Sparkles, Shield, Star, Loader2, Settings } from "lucide-react";
+import { Check, Crown, X, Sparkles, Shield, Star, Loader2, Settings, AlertTriangle, CalendarClock, TrendingUp, Info } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const TIERS = {
   pro: {
@@ -106,11 +107,66 @@ export default function PlansPage() {
         )}
       </div>
 
-      {subscriptionEnd && plan !== "free" && (
-        <p className="text-xs text-muted-foreground">
-          Sua assinatura renova em {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
-        </p>
+      {/* Subscription management card */}
+      {plan !== "free" && (
+        <Card className="p-4 rounded-2xl border-border/40 bg-muted/30 space-y-3">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-bold text-foreground">Gerenciamento da assinatura</h3>
+          </div>
+
+          {subscriptionEnd && (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <CalendarClock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span>
+                Plano {plan === "pro" ? "PRO" : "Premium"} ativo até{" "}
+                <strong className="text-foreground">
+                  {new Date(subscriptionEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                </strong>
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <TrendingUp className="h-3.5 w-3.5 mt-0.5 shrink-0 text-success" />
+            <span>
+              <strong className="text-foreground">Upgrade:</strong> Ao mudar para um plano superior, cobraremos apenas o valor proporcional ao período restante.
+            </span>
+          </div>
+
+          <Alert className="border-amber-500/30 bg-amber-500/5 py-2.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <AlertDescription className="text-xs text-muted-foreground ml-1">
+              <strong className="text-foreground">Cancelamento:</strong> Não implica devolução de valores pagos.
+              {subscriptionEnd && (
+                <span> Ao cancelar, você mantém o acesso até{" "}
+                  <strong className="text-amber-600">
+                    {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
+                  </strong>
+                  {" "}e retorna ao plano Gratuito automaticamente.
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full rounded-xl text-sm font-semibold"
+            onClick={handleManageSubscription}
+            disabled={loadingPortal}
+          >
+            {loadingPortal ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Settings className="h-4 w-4 mr-2" />}
+            Gerenciar / Cancelar assinatura
+          </Button>
+
+          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Info className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>O cancelamento é processado pelo portal seguro do Stripe.</span>
+          </div>
+        </Card>
       )}
+
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center">
@@ -248,18 +304,6 @@ export default function PlansPage() {
                 Assinar PRO {billingCycle === "yearly" ? "Anual" : "Mensal"}
               </Button>
             )}
-            {plan === "pro" && (
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full rounded-2xl text-elder-base font-bold"
-                onClick={handleManageSubscription}
-                disabled={loadingPortal}
-              >
-                {loadingPortal ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Settings className="h-5 w-5 mr-2" />}
-                Gerenciar assinatura
-              </Button>
-            )}
           </div>
         </Card>
 
@@ -327,16 +371,9 @@ export default function PlansPage() {
               </Button>
             )}
             {plan === "premium" && (
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full rounded-2xl text-elder-base font-bold"
-                onClick={handleManageSubscription}
-                disabled={loadingPortal}
-              >
-                {loadingPortal ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Settings className="h-5 w-5 mr-2" />}
-                Gerenciar assinatura
-              </Button>
+              <p className="text-center text-xs text-muted-foreground py-2">
+                ✅ Você já está no plano mais completo. Gerencie sua assinatura acima.
+              </p>
             )}
           </div>
         </Card>
