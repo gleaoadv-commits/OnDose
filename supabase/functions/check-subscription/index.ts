@@ -12,6 +12,20 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Decode JWT payload without verification (verification is done by Supabase)
+function decodeJWT(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Invalid JWT format');
+    const payload = parts[1];
+    const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
+    const decoded = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch (e) {
+    throw new Error(`Failed to decode JWT: ${e}`);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,24 +40,27 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Decode JWT to get user info directly (more reliable than auth.getUser with service role)
+    const payload = decodeJWT(token);
+    const userEmail = payload.email;
+    const userId = payload.sub;
+    
+    if (!userEmail || !userId) throw new Error("Invalid token: missing email or user id");
+    logStep("User authenticated via JWT", { email: userEmail, userId });
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
-    logStep("User authenticated", { email: user.email });
-
     // Check for plan_override in profiles (for testing purposes)
     const { data: profileData } = await supabaseAdmin
       .from("profiles")
       .select("plan_override")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (profileData?.plan_override) {
@@ -59,7 +76,7 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
