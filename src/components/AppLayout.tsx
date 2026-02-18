@@ -61,9 +61,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <div className="bg-white/15 rounded-full p-1.5">
                 <User className="h-4 w-4 text-white/80" />
               </div>
-              <p className="text-sm text-white/70 font-semibold">
-                Olá, <span className="text-white font-bold">{displayName}</span> 👋
-              </p>
+              <div>
+                <p className="text-sm text-white/70 font-semibold leading-tight">
+                  Olá, <span className="text-white font-bold">{displayName}</span> 👋
+                </p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 inline-block ${
+                  plan === "premium"
+                    ? "bg-amber-400/25 text-amber-200"
+                    : plan === "pro"
+                    ? "bg-white/20 text-white/80"
+                    : "bg-white/10 text-white/50"
+                }`}>
+                  {plan === "premium" ? "✦ Premium" : plan === "pro" ? "⚡ Pro" : "Free"}
+                </span>
+              </div>
             </div>
           )}
         </div>
