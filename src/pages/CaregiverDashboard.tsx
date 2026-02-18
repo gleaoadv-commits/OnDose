@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -121,6 +121,8 @@ export default function CaregiverDashboard() {
   const [notifyApp, setNotifyApp] = useState(true);
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(false);
 
+  const primaryUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (user) loadAll();
   }, [user]);
@@ -170,8 +172,10 @@ export default function CaregiverDashboard() {
     // Patient data (only if active)
     if (myLink.status === "active") {
       const pid = myLink.primary_user_id;
+      primaryUserIdRef.current = pid;
+
       const [medsRes, eventsRes, examsRes, indRes] = await Promise.all([
-        supabase.from("medications").select("*").eq("user_id", pid).eq("status", "ativo"),
+        supabase.from("medications").select("*").eq("user_id", pid).neq("status", "encerrado"),
         supabase.from("schedule_events").select("*").eq("user_id", pid).order("scheduled_time", { ascending: false }),
         supabase.from("exam_results").select("*").eq("user_id", pid).order("exam_date", { ascending: false }),
         supabase.from("exam_indicators").select("*").eq("user_id", pid),
@@ -184,6 +188,44 @@ export default function CaregiverDashboard() {
 
     setLoading(false);
   };
+
+  // ── Realtime: sincronizar dados do usuário principal automaticamente ──
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("caregiver-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "medications" }, async (payload: any) => {
+        const pid = primaryUserIdRef.current;
+        if (!pid) return;
+        // Reload medications when primary user changes anything
+        if (payload.new?.user_id === pid || payload.old?.user_id === pid) {
+          const { data } = await supabase
+            .from("medications")
+            .select("*")
+            .eq("user_id", pid)
+            .neq("status", "encerrado");
+          if (data) setMedications(data as any);
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "schedule_events" }, async (payload: any) => {
+        const pid = primaryUserIdRef.current;
+        if (!pid) return;
+        if (payload.new?.user_id === pid || payload.old?.user_id === pid) {
+          const { data } = await supabase
+            .from("schedule_events")
+            .select("*")
+            .eq("user_id", pid)
+            .order("scheduled_time", { ascending: false });
+          if (data) setScheduleEvents(data as any);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // ── Adherence calculations ──
   const adherenceByPeriod = useMemo(() => {
