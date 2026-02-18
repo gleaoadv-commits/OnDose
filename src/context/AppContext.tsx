@@ -143,6 +143,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           color: row.color,
           stockTotal: row.stock_total ?? undefined,
           stockCurrent: row.stock_current ?? undefined,
+          pauseUntil: row.pause_until ?? undefined,
         }));
 
         const loadedEvents: ScheduleEvent[] = (eventsRes.data ?? []).map(row => ({
@@ -324,6 +325,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
     if (updates.stockTotal !== undefined) dbUpdates.stock_total = updates.stockTotal ?? null;
     if (updates.stockCurrent !== undefined) dbUpdates.stock_current = updates.stockCurrent ?? null;
+    if (updates.pauseUntil !== undefined) dbUpdates.pause_until = updates.pauseUntil || null;
 
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("medications").update(dbUpdates).eq("id", id).eq("user_id", user.id);

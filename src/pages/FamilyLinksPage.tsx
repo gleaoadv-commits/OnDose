@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Check, X, UserX, Clock, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Users, Check, X, UserX, Clock, ArrowLeft, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -14,7 +14,7 @@ interface FamilyLink {
   status: string;
   created_at: string;
   caregiver_name?: string;
-  caregiver_email?: string;
+  caregiver_whatsapp?: string;
 }
 
 export default function FamilyLinksPage() {
@@ -38,17 +38,17 @@ export default function FamilyLinksPage() {
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Fetch caregiver profile info
       const enriched = await Promise.all(
         data.map(async (link: any) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("display_name")
+            .select("display_name, whatsapp_number")
             .eq("user_id", link.caregiver_user_id)
             .single();
           return {
             ...link,
             caregiver_name: profile?.display_name || "Sem nome",
+            caregiver_whatsapp: profile?.whatsapp_number || null,
           };
         })
       );
@@ -63,27 +63,14 @@ export default function FamilyLinksPage() {
       .update({ status })
       .eq("id", linkId);
 
-    if (error) {
-      toast.error("Erro ao atualizar vínculo");
-      return;
-    }
-
-    const msg = status === "active" ? "Vínculo ativado!" : "Vínculo desativado.";
-    toast.success(msg);
+    if (error) { toast.error("Erro ao atualizar vínculo"); return; }
+    toast.success(status === "active" ? "Vínculo ativado!" : "Vínculo desativado.");
     loadLinks();
   };
 
   const deleteLink = async (linkId: string) => {
-    const { error } = await supabase
-      .from("family_links")
-      .delete()
-      .eq("id", linkId);
-
-    if (error) {
-      toast.error("Erro ao remover vínculo");
-      return;
-    }
-
+    const { error } = await supabase.from("family_links").delete().eq("id", linkId);
+    if (error) { toast.error("Erro ao remover vínculo"); return; }
     toast.success("Vínculo removido");
     setLinks((prev) => prev.filter((l) => l.id !== linkId));
   };
@@ -114,7 +101,7 @@ export default function FamilyLinksPage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Gerencie os familiares que solicitaram acesso ao seu perfil de medicamentos.
+        Familiares vinculados recebem um relatório semanal de adesão via WhatsApp (quando disponível).
       </p>
 
       {loading ? (
@@ -139,55 +126,40 @@ export default function FamilyLinksPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground">{link.caregiver_name}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {statusBadge(link.status)}
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(link.created_at).toLocaleDateString("pt-BR")}
                     </span>
                   </div>
+                  {/* WhatsApp info (read-only) */}
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Phone className="h-3 w-3 text-muted-foreground shrink-0" />
+                    {link.caregiver_whatsapp ? (
+                      <span className="text-xs text-muted-foreground font-mono">{link.caregiver_whatsapp}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">WhatsApp não cadastrado pelo familiar</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {link.status === "pending" && (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => updateLinkStatus(link.id, "active")}
-                        className="h-8 w-8 rounded-lg text-success hover:bg-success/10"
-                        title="Aprovar"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => updateLinkStatus(link.id, "active")} className="h-8 w-8 rounded-lg text-success hover:bg-success/10" title="Aprovar">
                         <Check className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => updateLinkStatus(link.id, "inactive")}
-                        className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                        title="Rejeitar"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => updateLinkStatus(link.id, "inactive")} className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10" title="Rejeitar">
                         <X className="h-4 w-4" />
                       </Button>
                     </>
                   )}
                   {link.status === "active" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => updateLinkStatus(link.id, "inactive")}
-                      className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                      title="Desativar"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => updateLinkStatus(link.id, "inactive")} className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10" title="Desativar">
                       <UserX className="h-4 w-4" />
                     </Button>
                   )}
                   {link.status === "inactive" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => updateLinkStatus(link.id, "active")}
-                      className="h-8 w-8 rounded-lg text-success hover:bg-success/10"
-                      title="Reativar"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => updateLinkStatus(link.id, "active")} className="h-8 w-8 rounded-lg text-success hover:bg-success/10" title="Reativar">
                       <Check className="h-4 w-4" />
                     </Button>
                   )}
