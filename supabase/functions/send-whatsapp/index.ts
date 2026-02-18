@@ -10,10 +10,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const ZAPIER_WEBHOOK_URL = Deno.env.get("ZAPIER_WEBHOOK_URL");
+    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
+    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
 
-    if (!ZAPIER_WEBHOOK_URL) {
-      throw new Error("ZAPIER_WEBHOOK_URL not configured");
+    if (!ULTRAMSG_INSTANCE_ID) {
+      throw new Error("ULTRAMSG_INSTANCE_ID not configured");
+    }
+    if (!ULTRAMSG_TOKEN) {
+      throw new Error("ULTRAMSG_TOKEN not configured");
     }
 
     const { to, userName, medicationName, dosage } = await req.json();
@@ -25,26 +29,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    const phone = to.replace(/\D/g, "").replace(/^0+/, "");
+    // Format phone: remove non-digits, ensure country code (Brazil 55 default)
+    let phone = to.replace(/\D/g, "").replace(/^0+/, "");
+    if (!phone.startsWith("55") && phone.length <= 11) {
+      phone = "55" + phone;
+    }
 
-    console.log(`Sending to Zapier webhook for ${phone} (${medicationName})`);
+    const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\nCuide-se! 😊`;
 
-    const response = await fetch(ZAPIER_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone,
-        userName,
-        medicationName,
-        dosage,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+    console.log(`Sending UltraMsg to ${phone} (${medicationName})`);
 
-    const text = await response.text();
-    console.log(`Zapier response: ${response.status} - ${text}`);
+    const response = await fetch(
+      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          token: ULTRAMSG_TOKEN,
+          to: phone,
+          body: message,
+        }).toString(),
+      }
+    );
 
-    return new Response(JSON.stringify({ success: true, zapierStatus: response.status }), {
+    const result = await response.json();
+    console.log(`UltraMsg response: ${response.status}`, result);
+
+    if (!response.ok || result.error) {
+      throw new Error(`UltraMsg error: ${result.error || response.status}`);
+    }
+
+    return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -16,11 +16,11 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const ZAPIER_WEBHOOK_URL = Deno.env.get("ZAPIER_WEBHOOK_URL");
+    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
+    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
 
-    if (!ZAPIER_WEBHOOK_URL) {
-      throw new Error("ZAPIER_WEBHOOK_URL not configured");
-    }
+    if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID not configured");
+    if (!ULTRAMSG_TOKEN) throw new Error("ULTRAMSG_TOKEN not configured");
 
     const now = new Date();
     const windowStart = new Date(now.getTime() - 2 * 60 * 1000);
@@ -68,31 +68,39 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
-      console.log(`Sending via Zapier to ${phone} for ${event.medication_name}`);
+      // Format phone: remove non-digits, add Brazil country code if needed
+      let phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
+      if (!phone.startsWith("55") && phone.length <= 11) {
+        phone = "55" + phone;
+      }
+
+      const userName = profile.display_name || "Usuário";
+      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${event.medication_name}*\n💊 Dose: ${event.dosage}\n\nCuide-se! 😊`;
+
+      console.log(`Sending UltraMsg to ${phone} for ${event.medication_name}`);
 
       try {
-        const response = await fetch(ZAPIER_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone,
-            userName: profile.display_name || "Usuário",
-            medicationName: event.medication_name,
-            dosage: event.dosage,
-            scheduledTime: event.scheduled_time,
-            timestamp: new Date().toISOString(),
-          }),
-        });
+        const response = await fetch(
+          `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              token: ULTRAMSG_TOKEN,
+              to: phone,
+              body: message,
+            }).toString(),
+          }
+        );
 
-        const text = await response.text();
+        const result = await response.json();
 
-        if (response.ok || response.status === 0) {
+        if (response.ok && !result.error) {
           sent++;
-          console.log(`Zapier triggered for ${phone}: ${response.status}`);
+          console.log(`UltraMsg sent to ${phone}: ${response.status}`);
         } else {
-          console.error(`Zapier error for user ${event.user_id}: ${response.status} - ${text}`);
-          errors.push(`User ${event.user_id}: Zapier ${response.status}`);
+          console.error(`UltraMsg error for user ${event.user_id}:`, result);
+          errors.push(`User ${event.user_id}: ${result.error || response.status}`);
         }
       } catch (err) {
         console.error(`Exception for user ${event.user_id}:`, err.message);
@@ -100,7 +108,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Zapier reminders: sent=${sent}, errors=${errors.length}`);
+    console.log(`UltraMsg reminders: sent=${sent}, errors=${errors.length}`);
 
     return new Response(
       JSON.stringify({ sent, errors: errors.length, errorDetails: errors }),
