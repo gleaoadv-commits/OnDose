@@ -3,8 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Clock, Pill, User, LogOut } from "lucide-react";
+import { AlertTriangle, Clock, Heart, User, LogOut, CheckCircle2, Shield } from "lucide-react";
 import { toast } from "sonner";
+import OnDoseLogo from "@/components/OnDoseLogo";
 
 interface LinkedProfile {
   display_name: string | null;
@@ -21,8 +22,7 @@ export default function CaregiverDashboard() {
   const { user, signOut } = useAuth();
   const [link, setLink] = useState<LinkInfo | null>(null);
   const [primaryProfile, setPrimaryProfile] = useState<LinkedProfile | null>(null);
-  const [medications, setMedications] = useState<any[]>([]);
-  const [schedule, setSchedule] = useState<any[]>([]);
+  const [caregiverName, setCaregiverName] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +32,14 @@ export default function CaregiverDashboard() {
   const loadLinkData = async () => {
     if (!user) return;
     setLoading(true);
+
+    // Load own profile for display name
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .single();
+    if (myProfile) setCaregiverName((myProfile as any).display_name || user.email?.split("@")[0] || "");
 
     // Find the family link for this caregiver
     const { data: linkData } = await supabase
@@ -50,27 +58,22 @@ export default function CaregiverDashboard() {
     const myLink = linkData[0] as any;
     setLink(myLink);
 
-    if (myLink.status === "active") {
-      // Load the primary user's profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name, user_code")
-        .eq("user_id", myLink.primary_user_id)
-        .single();
+    // Load primary user's profile (now allowed by RLS policy for linked caregivers)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, user_code")
+      .eq("user_id", myLink.primary_user_id)
+      .single();
 
-      if (profile) setPrimaryProfile(profile as any);
-
-      // Load primary user's medications (via RLS bypass won't work - need edge function or different approach)
-      // For now, we show that they're linked
-    }
+    if (profile) setPrimaryProfile(profile as any);
 
     setLoading(false);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-caregiver-muted flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-caregiver border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -78,14 +81,14 @@ export default function CaregiverDashboard() {
   // No link found
   if (!link) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-        <Card className="p-8 rounded-2xl max-w-sm text-center space-y-4">
-          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
+      <div className="min-h-screen bg-caregiver-muted flex flex-col items-center justify-center px-4">
+        <Card className="p-8 rounded-3xl max-w-sm w-full text-center space-y-4 border-caregiver/20 shadow-lg">
+          <AlertTriangle className="h-12 w-12 text-warning mx-auto" />
           <h2 className="text-elder-xl font-bold text-foreground">Nenhum vínculo encontrado</h2>
           <p className="text-sm text-muted-foreground">
-            Sua conta de familiar não está vinculada a nenhum usuário principal. Verifique se inseriu o ID correto ao criar a conta.
+            Sua conta familiar não está vinculada a nenhum paciente. Verifique se inseriu o ID correto ao criar a conta.
           </p>
-          <Button variant="outline" onClick={signOut} className="rounded-xl">
+          <Button onClick={signOut} className="w-full rounded-xl bg-caregiver text-caregiver-foreground hover:opacity-90">
             <LogOut className="h-4 w-4 mr-2" /> Sair
           </Button>
         </Card>
@@ -96,20 +99,47 @@ export default function CaregiverDashboard() {
   // Pending approval
   if (link.status === "pending") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-        <Card className="p-8 rounded-2xl max-w-sm text-center space-y-4">
-          <Clock className="h-12 w-12 text-amber-500 mx-auto animate-pulse" />
-          <h2 className="text-elder-xl font-bold text-foreground">Aguardando aprovação</h2>
-          <p className="text-sm text-muted-foreground">
-            O usuário principal ainda não aprovou seu pedido de vínculo. Quando for aprovado, você terá acesso ao acompanhamento de medicamentos.
-          </p>
-          <Button variant="outline" onClick={() => { loadLinkData(); toast.info("Verificando..."); }} className="rounded-xl">
-            Verificar status
-          </Button>
-          <Button variant="ghost" onClick={signOut} className="rounded-xl text-muted-foreground">
-            <LogOut className="h-4 w-4 mr-2" /> Sair
-          </Button>
-        </Card>
+      <div className="min-h-screen bg-caregiver-muted flex flex-col">
+        {/* Header */}
+        <div className="px-5 pt-10 pb-6 flex flex-col items-center gap-3" style={{ background: "var(--gradient-caregiver)" }}>
+          <OnDoseLogo size="md" theme="light" />
+          <div className="mt-2 text-center">
+            <p className="text-caregiver-foreground/80 font-semibold text-sm">
+              Olá, <span className="text-caregiver-foreground font-bold">{caregiverName || "Familiar"}</span> 👋
+            </p>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-caregiver-foreground mt-1 inline-block">
+              👨‍👩‍👧 Conta Familiar
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-10">
+          <Card className="p-8 rounded-3xl max-w-sm w-full text-center space-y-5 border-caregiver/20 shadow-lg">
+            <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
+              <Clock className="h-8 w-8 text-warning animate-pulse" />
+            </div>
+            <div>
+              <h2 className="text-elder-xl font-bold text-foreground">Aguardando aprovação</h2>
+              {primaryProfile && (
+                <p className="text-sm text-caregiver font-semibold mt-1">
+                  Paciente: {primaryProfile.display_name || "Usuário"} · {primaryProfile.user_code}
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              O paciente ainda não aprovou seu pedido de vínculo. Quando aprovado, você terá acesso ao acompanhamento de medicamentos.
+            </p>
+            <Button
+              onClick={() => { loadLinkData(); toast.info("Verificando..."); }}
+              className="w-full rounded-xl bg-caregiver text-caregiver-foreground hover:opacity-90"
+            >
+              Verificar status
+            </Button>
+            <Button variant="ghost" onClick={signOut} className="rounded-xl text-muted-foreground w-full">
+              <LogOut className="h-4 w-4 mr-2" /> Sair
+            </Button>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -117,14 +147,12 @@ export default function CaregiverDashboard() {
   // Inactive/revoked
   if (link.status === "inactive") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-        <Card className="p-8 rounded-2xl max-w-sm text-center space-y-4 border-destructive/30">
+      <div className="min-h-screen bg-caregiver-muted flex flex-col items-center justify-center px-4">
+        <Card className="p-8 rounded-3xl max-w-sm w-full text-center space-y-4 border-destructive/20 shadow-lg">
           <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
           <h2 className="text-elder-xl font-bold text-foreground">Acesso desativado</h2>
-          <p className="text-sm text-muted-foreground">
-            O usuário principal desativou seu acesso. Entre em contato para solicitar a reativação.
-          </p>
-          <Button variant="outline" onClick={signOut} className="rounded-xl">
+          <p className="text-sm text-muted-foreground">O paciente desativou seu acesso. Entre em contato para solicitar a reativação.</p>
+          <Button onClick={signOut} className="w-full rounded-xl bg-caregiver text-caregiver-foreground hover:opacity-90">
             <LogOut className="h-4 w-4 mr-2" /> Sair
           </Button>
         </Card>
@@ -132,42 +160,83 @@ export default function CaregiverDashboard() {
     );
   }
 
-  // Active - show primary user's info
+  // Active dashboard
   return (
-    <div className="min-h-screen bg-background p-4 space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-elder-xl font-bold text-foreground flex items-center gap-2">
-          <Pill className="h-5 w-5 text-primary" />
-          Acompanhamento
-        </h2>
-        <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl">
-          <LogOut className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {primaryProfile && (
-        <Card className="p-5 rounded-2xl border-primary/20 bg-primary/5">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 rounded-xl p-2">
-              <User className="h-5 w-5 text-primary" />
+    <div className="min-h-screen bg-caregiver-muted flex flex-col">
+      {/* Header */}
+      <header className="px-5 pt-10 pb-6 sticky top-0 z-10 shadow-elevated" style={{ background: "var(--gradient-caregiver)" }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between">
+            <OnDoseLogo size="md" theme="light" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className="text-caregiver-foreground/70 hover:text-caregiver-foreground hover:bg-white/10 rounded-xl"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="bg-white/20 rounded-full p-1.5">
+              <User className="h-4 w-4 text-caregiver-foreground/90" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">
-                Acompanhando: {primaryProfile.display_name || "Usuário"}
+              <p className="text-sm text-caregiver-foreground/80 font-semibold">
+                Olá, <span className="text-caregiver-foreground font-bold">{caregiverName || "Familiar"}</span> 👋
               </p>
-              <p className="text-xs text-muted-foreground">ID: {primaryProfile.user_code}</p>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-caregiver-foreground mt-0.5 inline-block">
+                👨‍👩‍👧 Conta Familiar
+              </span>
             </div>
           </div>
-        </Card>
-      )}
+        </div>
+      </header>
 
-      <Card className="p-6 rounded-2xl border-border/40 text-center space-y-3">
-        <Pill className="h-10 w-10 text-primary mx-auto" />
-        <p className="text-sm font-bold text-foreground">Vínculo ativo!</p>
-        <p className="text-xs text-muted-foreground">
-          Você receberá notificações sobre os medicamentos do usuário principal conforme configurado.
+      {/* Content */}
+      <main className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-4 pt-5">
+        {/* Linked patient card */}
+        {primaryProfile && (
+          <Card className="p-5 rounded-3xl border-caregiver/20 bg-card shadow-card">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-caregiver/10 flex items-center justify-center shrink-0">
+                <Heart className="h-6 w-6 text-caregiver" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-caregiver-muted-foreground uppercase tracking-wider">Você acompanha</p>
+                <p className="text-base font-extrabold text-foreground mt-0.5 truncate">
+                  {primaryProfile.display_name || "Usuário"}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono tracking-widest">{primaryProfile.user_code}</p>
+              </div>
+              <div className="shrink-0">
+                <span className="flex items-center gap-1 text-xs font-bold text-success bg-success/10 px-2 py-1 rounded-full">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Ativo
+                </span>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Info card */}
+        <Card className="p-6 rounded-3xl border-caregiver/20 bg-card shadow-card text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-caregiver/10 flex items-center justify-center mx-auto">
+            <Shield className="h-7 w-7 text-caregiver" />
+          </div>
+          <div>
+            <p className="text-base font-bold text-foreground">Vínculo familiar ativo</p>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              Você receberá relatórios semanais sobre a adesão ao tratamento de{" "}
+              <strong className="text-foreground">{primaryProfile?.display_name || "seu familiar"}</strong> no WhatsApp.
+            </p>
+          </div>
+        </Card>
+
+        <p className="text-center text-xs text-caregiver-muted-foreground pb-6">
+          Para desativar este vínculo, peça ao paciente que acesse a tela de Vínculos Familiares.
         </p>
-      </Card>
+      </main>
     </div>
   );
 }
