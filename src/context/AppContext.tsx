@@ -78,6 +78,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refreshSubscription = useCallback(async () => {
     if (!user) return;
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) {
         console.error("Error checking subscription:", error);
