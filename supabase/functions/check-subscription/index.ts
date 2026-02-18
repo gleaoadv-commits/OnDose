@@ -39,6 +39,29 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
+    // Check for plan_override in profiles (for testing purposes)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles")
+      .select("plan_override")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileData?.plan_override) {
+      logStep("Plan override found", { plan: profileData.plan_override });
+      return new Response(JSON.stringify({
+        subscribed: true,
+        plan: profileData.plan_override,
+        subscription_end: null,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
