@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Save, Copy, Check, FileText } from "lucide-react";
+import { User, Phone, Save, Copy, Check, FileText, Lock, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +67,22 @@ export default function ProfilePage() {
     setCopied(true);
     toast.success("Código copiado!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast.error("Erro ao alterar senha");
+    } else {
+      toast.success("Senha alterada com sucesso!");
+      setNewPassword("");
+    }
+    setSavingPassword(false);
   };
 
   if (loading) {
@@ -140,6 +159,46 @@ export default function ProfilePage() {
         >
           <Save className="h-4 w-4 mr-2" />
           {saving ? "Salvando..." : "Salvar perfil"}
+        </Button>
+      </Card>
+
+      {/* Change Password Card */}
+      <Card className="p-5 rounded-2xl border-border/40 space-y-4">
+        <div className="flex items-center gap-2">
+          <Lock className="h-4 w-4 text-primary" />
+          <p className="text-elder-sm font-bold text-foreground">Alterar senha</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-password" className="text-elder-sm font-semibold text-foreground">
+            Nova senha
+          </Label>
+          <div className="relative">
+            <Input
+              id="new-password"
+              type={showPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              className="rounded-xl text-elder-base pr-11"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <Button
+          onClick={handleChangePassword}
+          disabled={savingPassword || newPassword.length < 6}
+          variant="outline"
+          className="w-full rounded-2xl text-elder-base font-bold"
+          size="lg"
+        >
+          <Lock className="h-4 w-4 mr-2" />
+          {savingPassword ? "Salvando..." : "Alterar senha"}
         </Button>
       </Card>
 
