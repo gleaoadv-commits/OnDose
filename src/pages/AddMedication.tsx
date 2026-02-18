@@ -8,14 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X } from "lucide-react";
-import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes, getTimeSlotsCount } from "@/types/medication";
+import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes } from "@/types/medication";
 import { toast } from "sonner";
 import MedicationAutocomplete from "@/components/MedicationAutocomplete";
+import MedicationTips from "@/components/MedicationTips";
 
 export default function AddMedication() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addMedication } = useApp();
+  const { addMedication, medications } = useApp();
+
+  // Active medications for AI tips context
+  const activeMedications = medications
+    .filter(m => m.status === "ativo")
+    .map(m => ({ name: m.name, dosage: m.dosage, times: m.times }));
 
   const prefill = (location.state as any)?.prefill;
 
@@ -109,6 +115,12 @@ export default function AddMedication() {
               className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
             />
           </div>
+
+          <MedicationTips
+            medicationName={name}
+            currentMedications={activeMedications}
+            times={times}
+          />
 
           {/* Dosagem + Quantidade side by side */}
           <div className="grid grid-cols-2 gap-3">
