@@ -25,7 +25,6 @@ import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import TermsPage from "@/pages/TermsPage";
 import NotFound from "./pages/NotFound";
-import MarketingAssetsPage from "@/pages/MarketingAssetsPage";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -110,7 +109,7 @@ const App = () => (
                           <Route path="/exames" element={<ExamsPage />} />
                           <Route path="/vinculos" element={<FamilyLinksPage />} />
                           <Route path="/farmacias" element={<PharmaciesPage />} />
-                          <Route path="/marketing" element={<MarketingAssetsPage />} />
+                          
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </AppLayout>
