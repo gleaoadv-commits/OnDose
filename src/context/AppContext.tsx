@@ -296,8 +296,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("medications").update(dbUpdates).eq("id", id).eq("user_id", user.id);
     }
+
+    // If times changed, regenerate future schedule events
+    if (updates.times !== undefined) {
+      const currentMed = medications.find(m => m.id === id);
+      if (currentMed) {
+        const updatedMed: Medication = { ...currentMed, ...updates };
+        const now = new Date().toISOString();
+
+        // Delete future untaken events for this medication
+        await supabase
+          .from("schedule_events")
+          .delete()
+          .eq("medication_id", id)
+          .eq("user_id", user.id)
+          .eq("taken", false)
+          .gte("scheduled_time", now);
+
+        // Regenerate from today
+        const newEvents = generateScheduleForMedication(updatedMed, user.id);
+        const futureEvents = newEvents.filter(e => new Date(e.scheduledTime) >= new Date(now));
+
+        const toInsert = futureEvents.map(e => ({
+          user_id: user.id,
+          medication_id: updatedMed.id,
+          medication_name: e.medicationName,
+          dosage: e.dosage,
+          scheduled_time: e.scheduledTime,
+          taken: false,
+          color: e.color,
+        }));
+
+        const inserted: ScheduleEvent[] = [];
+        for (let i = 0; i < toInsert.length; i += 500) {
+          const batch = toInsert.slice(i, i + 500);
+          const { data } = await supabase.from("schedule_events").insert(batch).select();
+          if (data) {
+            inserted.push(...data.map(row => ({
+              id: row.id,
+              medicationId: row.medication_id,
+              medicationName: row.medication_name,
+              dosage: row.dosage,
+              scheduledTime: row.scheduled_time,
+              taken: row.taken,
+              takenAt: row.taken_at ?? undefined,
+              color: row.color,
+            })));
+          }
+        }
+
+        setSchedule(prev => [
+          ...prev.filter(e => e.medicationId !== id || e.taken || new Date(e.scheduledTime) < new Date(now)),
+          ...inserted,
+        ]);
+      }
+    }
+
     setMedications(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
-  }, [user]);
+  }, [user, medications]);
 
   const pauseMedication = useCallback((id: string) => updateMedicationStatus(id, "pausado"), [updateMedicationStatus]);
   const resumeMedication = useCallback((id: string) => updateMedicationStatus(id, "ativo"), [updateMedicationStatus]);
