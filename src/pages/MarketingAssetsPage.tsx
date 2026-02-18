@@ -1,5 +1,6 @@
 import post1 from "@/assets/instagram-post-1.jpg";
 import post2 from "@/assets/instagram-post-2.jpg";
+import post3 from "@/assets/instagram-post-3.jpg";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,23 @@ Com o OnDose PRO, familiares recebem alertas em tempo real se o remédio não fo
 Conecte sua família agora. Link na bio.
 .
 #OnDose #CuidadoEmFamilia #IdososComSaude #FamiliaUnida #AppDeSaude #SaudeDigital #CuidadorDeSaude`,
+  },
+  {
+    src: post3,
+    title: "Post 3 — Comece grátis agora",
+    caption: `🆓 Sabia que o OnDose tem uma versão 100% gratuita?
+
+Sem cartão de crédito. Sem compromisso. Só saúde em dia. 💊
+
+Cadastre seus medicamentos, configure lembretes e nunca mais esqueça uma dose — tudo de graça!
+
+✅ Até 3 medicamentos cadastrados
+✅ Agenda e lembretes diários
+✅ Histórico básico de doses
+
+👇 Experimente agora. Link na bio.
+.
+#OnDose #Gratis #AppGratuito #SaudeEmDia #Medicamentos #LembreteDeMedicamento #AppDeSaude #SaudeDigital`,
   },
 ];
 
