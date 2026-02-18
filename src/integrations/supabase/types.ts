@@ -103,6 +103,39 @@ export type Database = {
           },
         ]
       }
+      exam_reminders: {
+        Row: {
+          created_at: string
+          exam_name: string
+          id: string
+          interval_months: number
+          last_exam_date: string
+          next_reminder_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_name: string
+          id?: string
+          interval_months?: number
+          last_exam_date: string
+          next_reminder_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_name?: string
+          id?: string
+          interval_months?: number
+          last_exam_date?: string
+          next_reminder_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exam_results: {
         Row: {
           created_at: string
@@ -174,6 +207,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          pause_until: string | null
           quantity: number
           start_date: string
           status: string
@@ -193,6 +227,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          pause_until?: string | null
           quantity?: number
           start_date: string
           status?: string
@@ -212,6 +247,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          pause_until?: string | null
           quantity?: number
           start_date?: string
           status?: string

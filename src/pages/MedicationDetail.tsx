@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw } from "lucide-react";
+import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw, Palmtree } from "lucide-react";
 import { FREQUENCY_LABELS, MedicationFrequency } from "@/types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -45,6 +45,10 @@ export default function MedicationDetail() {
   // Stock editing
   const [editingStock, setEditingStock] = useState(false);
   const [editStock, setEditStock] = useState("");
+
+  // Vacation/pause mode
+  const [editingPause, setEditingPause] = useState(false);
+  const [pauseUntilDate, setPauseUntilDate] = useState("");
 
   if (!med) {
     return (
@@ -378,11 +382,43 @@ export default function MedicationDetail() {
           <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Ações</h3>
           <div className="flex flex-col gap-2">
             {med.status === "ativo" ? (
-              <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => pauseMedication(med.id)}>
-                <Pause className="h-5 w-5 mr-2" /> Pausar Medicamento
-              </Button>
+              <>
+                <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => { setPauseUntilDate(""); setEditingPause(false); pauseMedication(med.id); }}>
+                  <Pause className="h-5 w-5 mr-2" /> Pausar Medicamento
+                </Button>
+                {/* Vacation mode */}
+                {!editingPause ? (
+                  <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-warning/30 text-warning hover:bg-warning/5" onClick={() => setEditingPause(true)}>
+                    <Palmtree className="h-5 w-5 mr-2" />
+                    {med.pauseUntil ? `Férias até ${new Date(med.pauseUntil).toLocaleDateString("pt-BR")}` : "Modo Férias"}
+                  </Button>
+                ) : (
+                  <div className="border border-warning/30 rounded-2xl p-4 bg-warning/5 space-y-3">
+                    <p className="text-xs font-bold text-warning">🏖️ Pausar até quando?</p>
+                    <Input
+                      type="date"
+                      value={pauseUntilDate}
+                      onChange={e => setPauseUntilDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 10)}
+                      className="rounded-xl h-10"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" className="rounded-xl text-xs flex-1 gap-1 bg-warning text-white hover:bg-warning/90" onClick={async () => {
+                        if (!pauseUntilDate) { toast.error("Selecione a data de retorno."); return; }
+                        await updateMedication(med.id, { pauseUntil: pauseUntilDate });
+                        pauseMedication(med.id);
+                        setEditingPause(false);
+                        toast.success(`Medicamento pausado até ${new Date(pauseUntilDate).toLocaleDateString("pt-BR")} 🏖️`);
+                      }}>
+                        <Check className="h-3.5 w-3.5" /> Confirmar
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setEditingPause(false)}>Cancelar</Button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
-              <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => resumeMedication(med.id)}>
+              <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => { resumeMedication(med.id); updateMedication(med.id, { pauseUntil: undefined }); }}>
                 <Play className="h-5 w-5 mr-2" /> Retomar Medicamento
               </Button>
             )}

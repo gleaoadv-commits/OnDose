@@ -32,6 +32,7 @@ export interface Medication {
   color: string;
   stockTotal?: number;
   stockCurrent?: number;
+  pauseUntil?: string; // vacation/pause mode
 }
 
 export interface ScheduleEvent {
