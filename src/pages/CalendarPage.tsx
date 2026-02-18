@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, CalendarDays, Lock, Crown, Calendar, Check, Circle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Lock, Crown, Check, Circle, Trash2, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 
 export default function CalendarPage() {
-  const { schedule, medications, markDoseTaken, unmarkDoseTaken, plan } = useApp();
+  const { schedule, medications, markDoseTaken, unmarkDoseTaken, deleteScheduleEvent, updateScheduleEventTime, plan } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingTime, setEditingTime] = useState("");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -21,36 +24,27 @@ export default function CalendarPage() {
     [medications]
   );
 
-  // Build a map: dateKey -> array of { color, taken, isPast }
   const dayDots = useMemo(() => {
     const map: Record<string, { color: string; taken: boolean; isPast: boolean }[]> = {};
     const now = new Date();
-
     schedule.forEach(e => {
       if (!activeMedIds.has(e.medicationId)) return;
       const d = new Date(e.scheduledTime);
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       if (!map[key]) map[key] = [];
-      map[key].push({
-        color: e.color,
-        taken: e.taken,
-        isPast: d < now && !e.taken,
-      });
+      map[key].push({ color: e.color, taken: e.taken, isPast: d < now && !e.taken });
     });
     return map;
   }, [schedule, activeMedIds]);
 
-  // Calendar grid
   const calendarDays = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
-    const startWeekday = firstDay.getDay(); // 0=Sun
+    const startWeekday = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-
     const cells: (number | null)[] = [];
     for (let i = 0; i < startWeekday; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-    // pad to fill last row
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
   }, [currentMonth, currentYear]);
@@ -60,20 +54,13 @@ export default function CalendarPage() {
   };
 
   const monthLabel = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const selectedDateStr = selectedDate.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
-  const selectedDateStr = selectedDate.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  // Events for selected day
   const dayEvents = useMemo(() => {
     const start = new Date(selectedDate);
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
-
     return schedule
       .filter(e => {
         const d = new Date(e.scheduledTime);
@@ -86,10 +73,22 @@ export default function CalendarPage() {
   const taken = dayEvents.filter(e => e.taken).length;
   const total = dayEvents.length;
   const now = new Date();
-
   const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
-
   const isFree = plan === "free";
+
+  const startEdit = (event: typeof dayEvents[0]) => {
+    const t = new Date(event.scheduledTime);
+    setEditingTime(`${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`);
+    setEditingEventId(event.id);
+  };
+
+  const saveEdit = async (event: typeof dayEvents[0]) => {
+    const [h, m] = editingTime.split(":").map(Number);
+    const newDt = new Date(event.scheduledTime);
+    newDt.setHours(h, m, 0, 0);
+    await updateScheduleEventTime(event.id, newDt.toISOString());
+    setEditingEventId(null);
+  };
 
   return (
     <div className="space-y-5">
@@ -102,7 +101,6 @@ export default function CalendarPage() {
       <div className="relative">
         <Card className={`p-4 rounded-2xl border-0 shadow-card ${isFree ? "select-none" : ""}`}>
           <div className={isFree ? "blur-sm pointer-events-none" : ""}>
-            {/* Month nav */}
             <div className="flex items-center justify-between mb-3">
               <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)} className="rounded-xl h-8 w-8">
                 <ChevronLeft className="h-5 w-5" />
@@ -113,20 +111,15 @@ export default function CalendarPage() {
               </Button>
             </div>
 
-            {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">
               {weekDays.map((d, i) => (
-                <div key={i} className="text-center text-xs font-bold text-muted-foreground py-1">
-                  {d}
-                </div>
+                <div key={i} className="text-center text-xs font-bold text-muted-foreground py-1">{d}</div>
               ))}
             </div>
 
-            {/* Day cells */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((day, idx) => {
                 if (day === null) return <div key={idx} />;
-
                 const cellDate = new Date(currentYear, currentMonth, day);
                 const key = `${currentYear}-${currentMonth}-${day}`;
                 const dots = dayDots[key] || [];
@@ -138,10 +131,7 @@ export default function CalendarPage() {
                 dots.forEach(dot => {
                   const status = dot.taken ? "taken" : dot.isPast ? "overdue" : "pending";
                   const dotKey = `${dot.color}-${status}`;
-                  if (!seen.has(dotKey)) {
-                    seen.add(dotKey);
-                    uniqueDots.push({ color: dot.color, status });
-                  }
+                  if (!seen.has(dotKey)) { seen.add(dotKey); uniqueDots.push({ color: dot.color, status }); }
                 });
 
                 return (
@@ -149,11 +139,9 @@ export default function CalendarPage() {
                     key={idx}
                     onClick={() => setSelectedDate(cellDate)}
                     className={`flex flex-col items-center justify-center rounded-xl py-1.5 min-h-[48px] transition-all ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground font-bold shadow-md"
-                        : isToday
-                        ? "bg-primary/10 text-primary font-bold"
-                        : "hover:bg-muted/50 text-foreground"
+                      isSelected ? "bg-primary text-primary-foreground font-bold shadow-md"
+                      : isToday ? "bg-primary/10 text-primary font-bold"
+                      : "hover:bg-muted/50 text-foreground"
                     }`}
                   >
                     <span className="text-sm leading-none">{day}</span>
@@ -163,19 +151,14 @@ export default function CalendarPage() {
                           <span
                             key={i}
                             className={`block rounded-full ${
-                              dot.status === "taken"
-                                ? "h-1.5 w-1.5 opacity-50"
-                                : dot.status === "overdue"
-                                ? "h-2 w-2 animate-pulse ring-1 ring-destructive/40"
-                                : "h-1.5 w-1.5"
+                              dot.status === "taken" ? "h-1.5 w-1.5 opacity-50"
+                              : dot.status === "overdue" ? "h-2 w-2 animate-pulse ring-1 ring-destructive/40"
+                              : "h-1.5 w-1.5"
                             }`}
                             style={{
-                              backgroundColor:
-                                dot.status === "overdue"
-                                  ? "hsl(var(--destructive))"
-                                  : isSelected
-                                  ? "hsl(var(--primary-foreground))"
-                                  : dot.color,
+                              backgroundColor: dot.status === "overdue" ? "hsl(var(--destructive))"
+                                : isSelected ? "hsl(var(--primary-foreground))"
+                                : dot.color,
                             }}
                           />
                         ))}
@@ -186,25 +169,20 @@ export default function CalendarPage() {
               })}
             </div>
 
-            {/* Legend */}
             <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/30">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="block h-2 w-2 rounded-full bg-primary" />
-                Pendente
+                <span className="block h-2 w-2 rounded-full bg-primary" />Pendente
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="block h-2 w-2 rounded-full bg-primary opacity-50" />
-                Tomado
+                <span className="block h-2 w-2 rounded-full bg-primary opacity-50" />Tomado
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="block h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                Atrasado
+                <span className="block h-2 w-2 rounded-full bg-destructive animate-pulse" />Atrasado
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Lock overlay for free users */}
         {isFree && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
             <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 text-center shadow-elevated border border-border/40 mx-4">
@@ -252,6 +230,7 @@ export default function CalendarPage() {
                 const time = new Date(event.scheduledTime);
                 const isPast = time < now && !event.taken;
                 const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                const isEditing = editingEventId === event.id;
 
                 return (
                   <Card
@@ -282,26 +261,66 @@ export default function CalendarPage() {
                           )}
                         </button>
 
-                        <div className="flex-1">
-                          <p className={`text-elder-sm font-bold ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-elder-sm font-bold truncate ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
                             {event.medicationName}
                           </p>
-                          <p className="text-sm text-muted-foreground">{event.dosage}</p>
+                          {isEditing ? (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Input
+                                type="time"
+                                value={editingTime}
+                                onChange={e => setEditingTime(e.target.value)}
+                                className="h-8 w-28 text-sm"
+                              />
+                              <Button size="sm" className="h-8 px-3 text-xs" onClick={() => saveEdit(event)}>
+                                Salvar
+                              </Button>
+                              <button
+                                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                                onClick={() => setEditingEventId(null)}
+                              >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{event.dosage}</p>
+                          )}
                         </div>
 
-                        <div className="text-right shrink-0">
-                          <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
-                            {timeStr}
-                          </p>
-                          {isPast && !event.taken && (
-                            <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
-                          )}
-                          {event.taken && event.takenAt && (
-                            <p className="text-xs text-success font-semibold">
-                              ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                        </div>
+                        {!isEditing && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <div className="text-right">
+                              <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
+                                {timeStr}
+                              </p>
+                              {isPast && !event.taken && (
+                                <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
+                              )}
+                              {event.taken && event.takenAt && (
+                                <p className="text-xs text-success font-semibold">
+                                  ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 ml-2">
+                              <button
+                                onClick={() => startEdit(event)}
+                                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                                title="Editar horário"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                              </button>
+                              <button
+                                onClick={() => deleteScheduleEvent(event.id)}
+                                className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
+                                title="Excluir dose"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </Card>

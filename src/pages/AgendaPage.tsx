@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { Check, ChevronLeft, ChevronRight, CalendarDays, Circle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CalendarDays, Circle, Trash2, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function AgendaPage() {
-  const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();
+  const { schedule, medications, markDoseTaken, unmarkDoseTaken, deleteScheduleEvent, updateScheduleEventTime } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingTime, setEditingTime] = useState("");
 
   const dateStr = currentDate.toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -45,6 +48,20 @@ export default function AgendaPage() {
   const taken = dayEvents.filter(e => e.taken).length;
   const total = dayEvents.length;
   const now = new Date();
+
+  const startEdit = (event: typeof dayEvents[0]) => {
+    const t = new Date(event.scheduledTime);
+    setEditingTime(`${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`);
+    setEditingEventId(event.id);
+  };
+
+  const saveEdit = async (event: typeof dayEvents[0]) => {
+    const [h, m] = editingTime.split(":").map(Number);
+    const newDt = new Date(event.scheduledTime);
+    newDt.setHours(h, m, 0, 0);
+    await updateScheduleEventTime(event.id, newDt.toISOString());
+    setEditingEventId(null);
+  };
 
   return (
     <div className="space-y-5">
@@ -86,6 +103,7 @@ export default function AgendaPage() {
             const time = new Date(event.scheduledTime);
             const isPast = time < now && !event.taken;
             const timeStr = time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            const isEditing = editingEventId === event.id;
 
             return (
               <Card
@@ -116,26 +134,66 @@ export default function AgendaPage() {
                       )}
                     </button>
 
-                    <div className="flex-1">
-                      <p className={`text-elder-sm font-bold ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-elder-sm font-bold truncate ${event.taken ? "line-through text-muted-foreground" : "text-foreground"}`}>
                         {event.medicationName}
                       </p>
-                      <p className="text-sm text-muted-foreground">{event.dosage}</p>
+                      {isEditing ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            type="time"
+                            value={editingTime}
+                            onChange={e => setEditingTime(e.target.value)}
+                            className="h-8 w-28 text-sm"
+                          />
+                          <Button size="sm" className="h-8 px-3 text-xs" onClick={() => saveEdit(event)}>
+                            Salvar
+                          </Button>
+                          <button
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                            onClick={() => setEditingEventId(null)}
+                          >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{event.dosage}</p>
+                      )}
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
-                        {timeStr}
-                      </p>
-                      {isPast && !event.taken && (
-                        <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
-                      )}
-                      {event.taken && event.takenAt && (
-                        <p className="text-xs text-success font-semibold">
-                          ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      )}
-                    </div>
+                    {!isEditing && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <div className="text-right">
+                          <p className="text-elder-base font-extrabold" style={{ color: event.taken ? "hsl(var(--muted-foreground))" : event.color }}>
+                            {timeStr}
+                          </p>
+                          {isPast && !event.taken && (
+                            <p className="text-xs font-bold text-destructive animate-pulse">Atrasado</p>
+                          )}
+                          {event.taken && event.takenAt && (
+                            <p className="text-xs text-success font-semibold">
+                              ✓ {new Date(event.takenAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1 ml-2">
+                          <button
+                            onClick={() => startEdit(event)}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                            title="Editar horário"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => deleteScheduleEvent(event.id)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
+                            title="Excluir dose"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
