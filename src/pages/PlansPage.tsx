@@ -64,6 +64,10 @@ export default function PlansPage() {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
+      if (data?.error === "no_customer") {
+        toast.info("Nenhuma assinatura ativa encontrada. Assine um plano para gerenciar.");
+        return;
+      }
       if (data?.url) {
         window.open(data.url, "_blank");
       }
