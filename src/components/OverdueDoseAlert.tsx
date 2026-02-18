@@ -15,7 +15,9 @@ import {
   X,
   Pill,
   Timer,
+  Star,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function OverdueDoseAlert() {
   const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();
@@ -64,6 +66,14 @@ export default function OverdueDoseAlert() {
     setShowTimePicker(true);
   };
 
+  const praiseMessages = [
+    "Parabéns! Continue assim! 🌟",
+    "Ótimo! Você está cuidando da sua saúde! 💚",
+    "Perfeito! Dose tomada no horário certo! ✨",
+    "Muito bem! Sua saúde agradece! 🏆",
+    "Excelente! Disciplina é saúde! 🎉",
+  ];
+
   const handleConfirmTaken = (onTime: boolean) => {
     const idToMark = selectedEvent ?? currentEvent.id;
     markDoseTaken(idToMark);
@@ -71,6 +81,11 @@ export default function OverdueDoseAlert() {
     setDismissedIds((prev) => new Set(prev).add(idToMark));
     setShowTimePicker(false);
     setSelectedEvent(null);
+
+    if (onTime) {
+      const msg = praiseMessages[Math.floor(Math.random() * praiseMessages.length)];
+      toast.success(msg, { duration: 3000 });
+    }
   };
 
   const handleAdiou = () => {
@@ -208,9 +223,9 @@ export default function OverdueDoseAlert() {
 
       {/* Confirm taken dialog */}
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="rounded-2xl max-w-[340px]">
-          <DialogHeader>
-            <DialogTitle className="text-center text-elder-base">
+        <DialogContent className="rounded-3xl max-w-[320px] p-0 overflow-hidden gap-0">
+          <DialogHeader className="px-6 pt-6 pb-4 text-center">
+            <DialogTitle className="text-base font-bold text-foreground">
               Quando você tomou?
             </DialogTitle>
           </DialogHeader>
@@ -228,32 +243,30 @@ export default function OverdueDoseAlert() {
             );
 
             return (
-              <div className="space-y-4 pt-2">
-                <div className="text-center">
+              <div className="px-6 pb-6 space-y-3">
+                <div className="text-center py-2 bg-muted/50 rounded-2xl">
                   <p className="text-sm text-muted-foreground">
                     Horário programado:{" "}
                     <span className="font-bold text-foreground">{evTimeStr}</span>
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => handleConfirmTaken(true)}
-                    className="w-full rounded-xl h-12 text-sm font-bold bg-success hover:bg-success/90 text-white"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Tomei na hora certa ({evTimeStr})
-                  </Button>
+                <Button
+                  onClick={() => handleConfirmTaken(true)}
+                  className="w-full rounded-2xl h-13 text-sm font-bold bg-success hover:bg-success/90 text-white shadow-sm"
+                >
+                  <Check className="h-4 w-4 mr-2 stroke-[3]" />
+                  Tomei na hora certa ({evTimeStr})
+                </Button>
 
-                  <Button
-                    onClick={() => handleConfirmTaken(false)}
-                    variant="outline"
-                    className="w-full rounded-xl h-12 text-sm font-bold border-warning/30 text-warning hover:bg-warning/5"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Tomei agora — atrasado {delayMins}min ({nowTimeStr})
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => handleConfirmTaken(false)}
+                  variant="outline"
+                  className="w-full rounded-2xl h-13 text-sm font-bold border-warning/40 text-warning hover:bg-warning/5"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Tomei agora — atrasado {delayMins}min ({nowTimeStr})
+                </Button>
               </div>
             );
           })()}
