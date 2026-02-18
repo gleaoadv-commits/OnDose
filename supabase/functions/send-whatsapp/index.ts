@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
       "Hoje é mais um dia de autocuidado. Orgulhe-se! 🌸",
     ];
     const closing = closings[Math.floor(Math.random() * closings.length)];
-    const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}`;
+    const appLink = "https://ondose.lovable.app";
+    const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
     console.log(`Sending UltraMsg to ${phone} (${medicationName})`);
 
