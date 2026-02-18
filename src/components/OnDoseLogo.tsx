@@ -59,7 +59,7 @@ export default function OnDoseLogo({
       <div className="flex flex-col">
         <LogoText />
         <span className={cn(s.sub, subColor, "font-semibold tracking-wide leading-tight")}>
-          Controle de medicamentos
+          Sua saúde em dia
         </span>
       </div>
     </div>
