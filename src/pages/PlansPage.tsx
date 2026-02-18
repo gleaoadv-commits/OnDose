@@ -31,7 +31,7 @@ const features = [
   { label: "Relatórios de adesão",                        free: false, pro: true,  premium: true,  freeOnly: false },
   { label: "Histórico completo de medicamentos",          free: false, pro: true,  premium: true,  freeOnly: false },
   { label: "Bulário eletrônico ANVISA",                   free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Gestão de informações de até 2 familiares",   free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Gestão de informações para até 2 familiares",  free: false, pro: false, premium: true,  freeOnly: false },
   { label: "Familiares extras (R$19,90/mês cada)",        free: false, pro: false, premium: true,  freeOnly: false },
   { label: "Relatórios para familiares",                  free: false, pro: false, premium: true,  freeOnly: false },
   { label: "Acompanhamento de exames (IA)",               free: false, pro: false, premium: true,  freeOnly: false },
