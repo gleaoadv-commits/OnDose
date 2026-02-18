@@ -63,9 +63,15 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "boleto"],
+      payment_method_options: {
+        boleto: {
+          expires_after_days: 3,
+        },
+      },
       success_url: `${origin}/planos?success=true`,
       cancel_url: `${origin}/planos?canceled=true`,
+      locale: "pt-BR",
     });
 
     logStep("Checkout session created", { sessionId: session.id });
