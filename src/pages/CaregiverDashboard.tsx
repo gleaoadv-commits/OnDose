@@ -541,7 +541,22 @@ export default function CaregiverDashboard() {
                 <p className="text-xs text-muted-foreground mt-1">O Usuário Principal ainda não cadastrou medicamentos.</p>
               </Card>
             ) : (
-            medications.map(m => {
+            [...medications]
+              .sort((a, b) => {
+                // Sort by next upcoming dose time
+                const now = new Date();
+                const nextA = scheduleEvents
+                  .filter(e => e.medication_id === a.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .sort((x, y) => new Date(x.scheduled_time).getTime() - new Date(y.scheduled_time).getTime())[0];
+                const nextB = scheduleEvents
+                  .filter(e => e.medication_id === b.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .sort((x, y) => new Date(x.scheduled_time).getTime() - new Date(y.scheduled_time).getTime())[0];
+                if (!nextA && !nextB) return 0;
+                if (!nextA) return 1;
+                if (!nextB) return -1;
+                return new Date(nextA.scheduled_time).getTime() - new Date(nextB.scheduled_time).getTime();
+              })
+              .map(m => {
                 // Next dose: find the next upcoming scheduled event for this medication
                 const now = new Date();
                 const nextEvent = scheduleEvents
@@ -560,8 +575,9 @@ export default function CaregiverDashboard() {
                   tomorrow.setDate(today.getDate() + 1);
                   const isSameDay = (a: Date, b: Date) =>
                     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-                  if (isSameDay(eventDate, today)) return "hoje";
-                  if (isSameDay(eventDate, tomorrow)) return "amanhã";
+                  const dateStr = eventDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+                  if (isSameDay(eventDate, today)) return `hoje, ${dateStr}`;
+                  if (isSameDay(eventDate, tomorrow)) return `amanhã, ${dateStr}`;
                   return eventDate.toLocaleDateString("pt-BR");
                 })();
 
