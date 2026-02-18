@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -12,11 +10,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const ZAPIER_WEBHOOK_URL = Deno.env.get("ZAPIER_WEBHOOK_URL");
 
-    if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
-      throw new Error("WhatsApp credentials not configured");
+    if (!ZAPIER_WEBHOOK_URL) {
+      throw new Error("ZAPIER_WEBHOOK_URL not configured");
     }
 
     const { to, userName, medicationName, dosage } = await req.json();
@@ -28,50 +25,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Format phone number — ensure it starts with country code, no +
     const phone = to.replace(/\D/g, "").replace(/^0+/, "");
 
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: phone,
-          type: "template",
-          template: {
-            name: "lembrete_medicamento",
-            language: { code: "pt_BR" },
-            components: [
-              {
-                type: "body",
-                parameters: [
-                  { type: "text", text: userName },
-                  { type: "text", text: medicationName },
-                  { type: "text", text: dosage },
-                ],
-              },
-            ],
-          },
-        }),
-      }
-    );
+    console.log(`Sending to Zapier webhook for ${phone} (${medicationName})`);
 
-    const result = await response.json();
+    const response = await fetch(ZAPIER_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        userName,
+        medicationName,
+        dosage,
+        timestamp: new Date().toISOString(),
+      }),
+    });
 
-    if (!response.ok) {
-      console.error("WhatsApp API error:", JSON.stringify(result));
-      return new Response(
-        JSON.stringify({ error: "WhatsApp API error", details: result }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const text = await response.text();
+    console.log(`Zapier response: ${response.status} - ${text}`);
 
-    return new Response(JSON.stringify({ success: true, messageId: result.messages?.[0]?.id }), {
+    return new Response(JSON.stringify({ success: true, zapierStatus: response.status }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
