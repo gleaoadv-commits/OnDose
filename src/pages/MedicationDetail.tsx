@@ -14,6 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import AnvisaBulario from "@/components/AnvisaBulario";
 
 export default function MedicationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -308,6 +309,9 @@ export default function MedicationDetail() {
               <p className="text-foreground/80 text-sm">{med.notes || "Nenhuma observação."}</p>
             )}
           </div>
+
+          {/* ANVISA Bulário */}
+          <AnvisaBulario medicationName={med.name} />
 
           {/* Stock */}
           {med.stockTotal != null && (
