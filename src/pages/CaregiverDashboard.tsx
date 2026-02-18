@@ -541,26 +541,45 @@ export default function CaregiverDashboard() {
                 <p className="text-xs text-muted-foreground mt-1">O Usuário Principal ainda não cadastrou medicamentos.</p>
               </Card>
             ) : (
-              medications.map(m => (
-                <Card key={m.id} className="p-4 rounded-2xl border-border/40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: m.color + "20" }}>
-                      <Pill className="h-5 w-5" style={{ color: m.color }} />
+            medications.map(m => {
+                // Next dose: find the next upcoming scheduled event for this medication
+                const now = new Date();
+                const nextEvent = scheduleEvents
+                  .filter(e => e.medication_id === m.id && !e.taken && new Date(e.scheduled_time) >= now)
+                  .sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0];
+
+                const nextDoseTime = nextEvent
+                  ? new Date(nextEvent.scheduled_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+                  : null;
+
+                return (
+                  <Card key={m.id} className="p-4 rounded-2xl border-border/40">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: m.color + "20" }}>
+                        <Pill className="h-5 w-5" style={{ color: m.color }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
+                        <p className="text-xs text-muted-foreground">{m.dosage} · {frequencyLabel(m.frequency)}</p>
+                        {m.times.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            🕐 Horários: {m.times.join(" · ")}
+                          </p>
+                        )}
+                        {nextDoseTime && (
+                          <p className="text-[10px] font-bold mt-0.5" style={{ color: m.color }}>
+                            Próxima dose: {nextDoseTime}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] font-bold shrink-0 ${m.status === "pausado" ? "bg-warning/10 text-warning border-warning/30" : "bg-success/10 text-success border-success/30"}`}>
+                        {m.status === "pausado" ? "Pausado" : "Ativo"}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">{m.dosage} · {frequencyLabel(m.frequency)}</p>
-                      {m.times.length > 0 && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{m.times.join(" · ")}</p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="text-[10px] font-bold shrink-0 bg-success/10 text-success border-success/30">
-                      Ativo
-                    </Badge>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
 
