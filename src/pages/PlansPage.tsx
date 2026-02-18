@@ -31,6 +31,7 @@ const features = [
   { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true },
   { label: "Relatórios de adesão", free: false, pro: true, premium: true },
   { label: "Histórico completo", free: false, pro: true, premium: true },
+  { label: "Bulário eletrônico ANVISA", free: false, pro: false, premium: true },
   { label: "Até 2 familiares inclusos", free: false, pro: false, premium: true },
   { label: "Familiares extras (R$19,90/mês cada)", free: false, pro: false, premium: true },
   { label: "Relatórios para familiares", free: false, pro: false, premium: true },
