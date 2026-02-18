@@ -135,6 +135,8 @@ export default function CaregiverDashboard() {
   const [addMedDosage, setAddMedDosage] = useState("");
   const [addMedTimes, setAddMedTimes] = useState("08:00");
   const [addMedFrequency, setAddMedFrequency] = useState("1x-dia");
+  const [addMedStartDate, setAddMedStartDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [addMedEndDate, setAddMedEndDate] = useState("");
   const [addMedNotes, setAddMedNotes] = useState("");
   const [addMedSaving, setAddMedSaving] = useState(false);
 
@@ -309,7 +311,8 @@ export default function CaregiverDashboard() {
         dosage: addMedDosage.trim(),
         frequency: addMedFrequency,
         times: [addMedTimes],
-        start_date: new Date().toISOString().split("T")[0],
+        start_date: addMedStartDate || new Date().toISOString().split("T")[0],
+        end_date: addMedEndDate || null,
         color,
         notes: addMedNotes.trim() || null,
         added_by_user_id: user.id,
@@ -317,16 +320,17 @@ export default function CaregiverDashboard() {
       } as any).select().single();
       if (error) throw error;
 
-      // Generate schedule events for the next 30 days
+      // Generate schedule events for 30 days (or until end date)
       if (newMed) {
         const events = [];
+        const startBase = addMedStartDate ? new Date(addMedStartDate + "T00:00:00") : new Date();
+        const endLimit = addMedEndDate ? new Date(addMedEndDate + "T23:59:59") : new Date(startBase.getTime() + 30 * 24 * 60 * 60 * 1000);
         const now = new Date();
-        for (let d = 0; d < 30; d++) {
-          const date = new Date(now);
-          date.setDate(now.getDate() + d);
+        for (let d = new Date(startBase); d <= endLimit; d.setDate(d.getDate() + 1)) {
           const [hh, mm] = addMedTimes.split(":").map(Number);
+          const date = new Date(d);
           date.setHours(hh, mm, 0, 0);
-          if (d === 0 && date <= now) continue;
+          if (date <= now) continue;
           events.push({
             user_id: pid,
             medication_id: newMed.id,
@@ -338,7 +342,9 @@ export default function CaregiverDashboard() {
           });
         }
         if (events.length > 0) {
-          await supabase.from("schedule_events").insert(events as any);
+          for (let i = 0; i < events.length; i += 500) {
+            await supabase.from("schedule_events").insert(events.slice(i, i + 500) as any);
+          }
         }
       }
 
@@ -347,6 +353,8 @@ export default function CaregiverDashboard() {
       setAddMedName("");
       setAddMedDosage("");
       setAddMedTimes("08:00");
+      setAddMedStartDate(new Date().toISOString().split("T")[0]);
+      setAddMedEndDate("");
       setAddMedNotes("");
     } catch (err: any) {
       toast.error("Erro ao adicionar medicamento: " + err.message);
@@ -697,16 +705,16 @@ export default function CaregiverDashboard() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs font-semibold">Horário</Label>
-                    <Input type="time" value={addMedTimes} onChange={e => setAddMedTimes(e.target.value)} className="mt-1 rounded-xl text-sm h-10 font-bold" />
+                    <Input type="time" value={addMedTimes} onChange={e => setAddMedTimes(e.target.value)} className="mt-1 rounded-xl text-sm h-10 font-bold w-full" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs font-semibold">Frequência</Label>
                     <select
                       value={addMedFrequency}
                       onChange={e => setAddMedFrequency(e.target.value)}
-                      className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring truncate"
                     >
                       <option value="1x-dia">1x ao dia</option>
                       <option value="2x-dia">2x ao dia</option>
@@ -714,6 +722,16 @@ export default function CaregiverDashboard() {
                       <option value="4x-dia">4x ao dia</option>
                       <option value="semanal">Semanal</option>
                     </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="min-w-0">
+                    <Label className="text-xs font-semibold">Data início</Label>
+                    <Input type="date" value={addMedStartDate} onChange={e => setAddMedStartDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+                  </div>
+                  <div className="min-w-0">
+                    <Label className="text-xs font-semibold">Data fim</Label>
+                    <Input type="date" value={addMedEndDate} onChange={e => setAddMedEndDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" placeholder="Opcional" />
                   </div>
                 </div>
                 <div>
@@ -827,7 +845,7 @@ export default function CaregiverDashboard() {
                     </div>
                   </Card>
                 );
-              })}
+              }))}
             </TabsContent>
 
           {/* ── ABA: Adesão ───────────────────────────────────────────────────── */}
@@ -1005,6 +1023,114 @@ export default function CaregiverDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* ── Edit Medication Dialog ─────────────────────────────────────────────── */}
+      <Dialog open={!!editMed} onOpenChange={open => { if (!open) setEditMed(null); }}>
+        <DialogContent className="rounded-3xl max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Pill className="h-4 w-4 text-primary" />
+              Editar — {editMed?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            {/* Nome + Dosagem */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Nome *</Label>
+                <Input value={editMedName} onChange={e => setEditMedName(e.target.value)} className="mt-1 rounded-xl text-sm h-10" />
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Dosagem *</Label>
+                <Input value={editMedDosage} onChange={e => setEditMedDosage(e.target.value)} className="mt-1 rounded-xl text-sm h-10" />
+              </div>
+            </div>
+
+            {/* Horário + Frequência */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Horário(s)</Label>
+                <Input
+                  value={editMedTimes}
+                  onChange={e => setEditMedTimes(e.target.value)}
+                  placeholder="08:00, 20:00"
+                  className="mt-1 rounded-xl text-sm h-10 w-full"
+                />
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Frequência</Label>
+                <select
+                  value={editMedFrequency}
+                  onChange={e => setEditMedFrequency(e.target.value)}
+                  className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="daily">1x ao dia</option>
+                  <option value="twice_daily">2x ao dia</option>
+                  <option value="three_times_daily">3x ao dia</option>
+                  <option value="every_8_hours">A cada 8h</option>
+                  <option value="every_12_hours">A cada 12h</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="1x-dia">1x ao dia</option>
+                  <option value="2x-dia">2x ao dia</option>
+                  <option value="3x-dia">3x ao dia</option>
+                  <option value="semanal">Semanal</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Data início + fim */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Data início</Label>
+                <Input type="date" value={editMedStartDate} onChange={e => setEditMedStartDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs font-semibold">Data fim</Label>
+                <Input type="date" value={editMedEndDate} onChange={e => setEditMedEndDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+              </div>
+            </div>
+
+            {/* Suspender até */}
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <span className="text-amber-500">⏸</span> Suspender até (opcional)
+              </Label>
+              <Input
+                type="date"
+                value={editMedPauseUntil}
+                onChange={e => setEditMedPauseUntil(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="mt-1 rounded-xl text-sm h-10 w-full"
+              />
+              {editMedPauseUntil && (
+                <button
+                  className="text-[10px] text-muted-foreground underline mt-1"
+                  onClick={() => setEditMedPauseUntil("")}
+                >
+                  Remover suspensão
+                </button>
+              )}
+            </div>
+
+            {/* Observações */}
+            <div>
+              <Label className="text-xs font-semibold">Observações</Label>
+              <Input value={editMedNotes} onChange={e => setEditMedNotes(e.target.value)} placeholder="Ex: Tomar em jejum" className="mt-1 rounded-xl text-sm h-10" />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 flex-col sm:flex-col">
+            <Button onClick={handleSaveMedEdit} disabled={editSaving} className="w-full rounded-xl font-bold">
+              <Save className="h-4 w-4 mr-2" />
+              {editSaving ? "Salvando..." : "Salvar alterações"}
+            </Button>
+            <Button variant="outline" onClick={() => setEditMed(null)} className="w-full rounded-xl">
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
