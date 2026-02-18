@@ -13,7 +13,7 @@ import {
   AlertTriangle, Clock, Heart, User, LogOut, CheckCircle2, Shield,
   Copy, Share2, X, Pill, BarChart3, FileText, Phone, Save, Bell, Plus,
   Check, TrendingUp, TrendingDown, Minus, FileDown, History,
-  ChevronRight, Activity,
+  ChevronRight, Activity, Hash, UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import OnDoseLogo from "@/components/OnDoseLogo";
@@ -104,6 +104,131 @@ const frequencyLabel = (f: string) => {
 
 const adherenceColor = (r: number) =>
   r >= 80 ? "text-success" : r >= 50 ? "text-amber-500" : "text-destructive";
+
+// ─── InactiveScreen Component ─────────────────────────────────────────────────
+function InactiveScreen({
+  myProfile,
+  onSignOut,
+  onRelink,
+  userId,
+}: {
+  myProfile: { user_code: string; display_name: string | null } | null;
+  onSignOut: () => void;
+  onRelink: () => void;
+  userId: string;
+}) {
+  const [primaryCode, setPrimaryCode] = useState("");
+  const [linking, setLinking] = useState(false);
+
+  const handleRelink = async () => {
+    const code = primaryCode.trim().toUpperCase();
+    if (!code) {
+      toast.error("Informe o código do usuário principal");
+      return;
+    }
+    setLinking(true);
+    try {
+      // Resolve primary user ID by code
+      const { data: primaryId, error: rpcErr } = await supabase
+        .rpc("get_user_id_by_code", { p_user_code: code });
+
+      if (rpcErr || !primaryId) {
+        toast.error("Código não encontrado. Verifique e tente novamente.");
+        return;
+      }
+
+      // Check if there's already an inactive link to reactivate (request re-approval)
+      const { data: existingLinks } = await supabase
+        .from("family_links")
+        .select("id, status")
+        .eq("caregiver_user_id", userId)
+        .eq("primary_user_id", primaryId as string);
+
+      if (existingLinks && existingLinks.length > 0) {
+        // Update existing link back to pending so primary user can approve again
+        const { error } = await supabase
+          .from("family_links")
+          .update({ status: "pending" })
+          .eq("id", existingLinks[0].id);
+        if (error) throw error;
+      } else {
+        // Create a new link request
+        const { error } = await supabase.from("family_links").insert({
+          caregiver_user_id: userId,
+          primary_user_id: primaryId as string,
+          status: "pending",
+        });
+        if (error) throw error;
+      }
+
+      toast.success("Solicitação enviada! Aguarde aprovação do usuário principal.");
+      setPrimaryCode("");
+      onRelink();
+    } catch (err: any) {
+      toast.error("Erro ao solicitar vínculo: " + err.message);
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: CAREGIVER_BG }}>
+      <div className="max-w-sm w-full space-y-4">
+        <Card className="p-8 rounded-3xl text-center space-y-4 border-destructive/20 shadow-lg">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+            <X className="h-8 w-8 text-destructive" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Acesso desativado</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              O plano do usuário vinculado foi alterado ou o vínculo foi desativado.
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-5 rounded-3xl shadow-lg space-y-4">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-primary" />
+            <p className="text-sm font-bold text-foreground">Vincular a outro usuário</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Informe o código do usuário principal (Premium) para solicitar um novo vínculo.
+          </p>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={primaryCode}
+                onChange={e => setPrimaryCode(e.target.value.toUpperCase())}
+                placeholder="Ex: DC-A1B2C3"
+                className="pl-9 rounded-xl font-mono tracking-widest font-bold uppercase"
+              />
+            </div>
+            <Button
+              onClick={handleRelink}
+              disabled={linking || !primaryCode.trim()}
+              className="rounded-xl font-bold px-5 text-white border-0"
+              style={{ background: CAREGIVER_GRADIENT }}
+            >
+              {linking ? "..." : "Vincular"}
+            </Button>
+          </div>
+
+          {myProfile?.user_code && (
+            <div className="bg-muted/50 rounded-xl px-4 py-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Seu código</p>
+              <p className="font-mono font-bold text-base tracking-widest">{myProfile.user_code}</p>
+            </div>
+          )}
+        </Card>
+
+        <Button variant="ghost" onClick={onSignOut} className="w-full rounded-xl text-muted-foreground">
+          <LogOut className="h-4 w-4 mr-2" /> Sair
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function CaregiverDashboard() {
@@ -198,6 +323,12 @@ export default function CaregiverDashboard() {
       .single();
     const currentStatus = (freshLink as any)?.status ?? myLink.status;
     setLink({ ...myLink, status: currentStatus });
+
+    // If inactive, don't load primary user data
+    if (currentStatus === "inactive") {
+      setLoading(false);
+      return;
+    }
 
     // Primary user profile
     const { data: profile } = await supabase
@@ -613,18 +744,12 @@ export default function CaregiverDashboard() {
   // ── INATIVO ───────────────────────────────────────────────────────────────────
   if (link.status === "inactive") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: CAREGIVER_BG }}>
-        <Card className="p-8 rounded-3xl max-w-sm w-full text-center space-y-4 border-destructive/20 shadow-lg">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
-            <X className="h-8 w-8 text-destructive" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground">Acesso desativado</h2>
-          <p className="text-sm text-muted-foreground">O Usuário Principal desativou seu vínculo. Entre em contato para solicitar a reativação.</p>
-          <Button onClick={signOut} className="w-full rounded-xl text-white border-0" style={{ background: CAREGIVER_GRADIENT }}>
-            <LogOut className="h-4 w-4 mr-2" /> Sair
-          </Button>
-        </Card>
-      </div>
+      <InactiveScreen
+        myProfile={myProfile}
+        onSignOut={signOut}
+        onRelink={() => loadAll()}
+        userId={user?.id || ""}
+      />
     );
   }
 
