@@ -36,6 +36,7 @@ const features = [
   { label: "Relatórios para familiares",                  free: false, pro: false, premium: true,  freeOnly: false },
   { label: "Acompanhamento de exames (IA)",               free: false, pro: false, premium: true,  freeOnly: false },
   { label: "Gráficos de evolução de saúde",               free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Lembrete de exames recorrentes (IA)",         free: false, pro: false, premium: true,  freeOnly: false },
 ];
 
 export default function PlansPage() {

@@ -9,6 +9,7 @@ import { FREQUENCY_LABELS, Medication } from "@/types/medication";
 import TodaySchedule from "@/components/TodaySchedule";
 import OverdueDoseAlert from "@/components/OverdueDoseAlert";
 import PlanDowngradeModal from "@/components/PlanDowngradeModal";
+import AdherenceStats from "@/components/AdherenceStats";
 
 function MedicationCard({ med, index }: { med: Medication; index: number }) {
   const { pauseMedication, resumeMedication, stopMedication, deleteMedication } = useApp();
@@ -130,7 +131,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 }
 
 export default function Dashboard() {
-  const { medications, canAddMedication, plan, devPlanOverride, setDevPlanOverride, loading } = useApp();
+  const { medications, schedule, canAddMedication, plan, devPlanOverride, setDevPlanOverride, loading } = useApp();
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   const FREE_LIMIT = 2;
@@ -172,6 +173,9 @@ export default function Dashboard() {
 
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
+
+      {/* Adherence streak + weekly summary */}
+      {schedule.length > 0 && <AdherenceStats schedule={schedule} />}
 
       {/* Low stock alerts (all plans) */}
       {medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent / m.stockTotal) <= 0.2).map(med => {
