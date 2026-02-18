@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,28 +18,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  ArrowLeft,
-  FileText,
-  Plus,
-  Camera,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Sparkles,
-  Trash2,
-  Loader2,
+  ArrowLeft, FileText, Plus, Camera, TrendingUp, TrendingDown, Minus,
+  Sparkles, Trash2, Loader2, Bell, BellRing,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
+
 import { toast } from "sonner";
+
+interface ExamReminder {
+  id: string;
+  exam_name: string;
+  interval_months: number;
+  last_exam_date: string;
+  next_reminder_date: string;
+}
 
 interface ExamResult {
   id: string;
@@ -422,6 +417,9 @@ export default function ExamsPage() {
             <TabsTrigger value="history" className="flex-1 rounded-xl text-xs font-bold">
               <FileText className="h-3.5 w-3.5 mr-1" /> Histórico
             </TabsTrigger>
+            <TabsTrigger value="reminders" className="flex-1 rounded-xl text-xs font-bold">
+              <Bell className="h-3.5 w-3.5 mr-1" /> Lembretes
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="charts">
@@ -548,12 +546,157 @@ export default function ExamsPage() {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="reminders" className="space-y-4">
+            <ExamRemindersTab user={user} />
+          </TabsContent>
         </Tabs>
       )}
 
       <p className="text-[10px] text-muted-foreground text-center px-4">
         ⚠️ Os dados são apenas informativos e não substituem avaliação médica profissional.
       </p>
+    </div>
+  );
+}
+
+// ---- Exam Reminders sub-component ----
+function ExamRemindersTab({ user }: { user: any }) {
+  const [reminders, setReminders] = useState<ExamReminder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [examName, setExamName] = useState("");
+  const [intervalMonths, setIntervalMonths] = useState("6");
+  const [lastExamDate, setLastExamDate] = useState("");
+
+  useEffect(() => { if (user) loadReminders(); }, [user]);
+
+  const loadReminders = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("exam_reminders" as any).select("*").eq("user_id", user.id).order("next_reminder_date");
+    if (data) setReminders(data as unknown as ExamReminder[]);
+    setLoading(false);
+  };
+
+  const saveReminder = async () => {
+    if (!examName.trim() || !lastExamDate || !intervalMonths) {
+      toast.error("Preencha todos os campos"); return;
+    }
+    const months = Number(intervalMonths);
+    const last = new Date(lastExamDate);
+    const next = new Date(last);
+    next.setMonth(next.getMonth() + months);
+
+    const { error } = await supabase.from("exam_reminders" as any).insert({
+      user_id: user.id,
+      exam_name: examName.trim(),
+      interval_months: months,
+      last_exam_date: lastExamDate,
+      next_reminder_date: next.toISOString().slice(0, 10),
+    });
+
+    if (error) { toast.error("Erro ao salvar lembrete"); return; }
+    toast.success("Lembrete criado! 🔔");
+    setDialogOpen(false);
+    setExamName(""); setLastExamDate(""); setIntervalMonths("6");
+    loadReminders();
+  };
+
+  const deleteReminder = async (id: string) => {
+    await supabase.from("exam_reminders" as any).delete().eq("id", id);
+    toast.success("Lembrete removido");
+    setReminders(prev => prev.filter(r => r.id !== id));
+  };
+
+  const today = new Date();
+
+  if (loading) return <div className="text-center py-8"><div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Alertas para refazer exames periodicamente.</p>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="rounded-xl text-xs gap-1">
+              <Plus className="h-3.5 w-3.5" /> Novo
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="rounded-2xl max-w-[380px]">
+            <DialogHeader><DialogTitle>Novo lembrete de exame</DialogTitle></DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label className="text-xs font-bold">Nome do exame *</Label>
+                <Input value={examName} onChange={e => setExamName(e.target.value)} placeholder="Ex: Hemograma completo" className="rounded-xl mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs font-bold">Data do último exame *</Label>
+                <Input type="date" value={lastExamDate} onChange={e => setLastExamDate(e.target.value)} className="rounded-xl mt-1" max={today.toISOString().slice(0, 10)} />
+              </div>
+              <div>
+                <Label className="text-xs font-bold">Repetir a cada</Label>
+                <Select value={intervalMonths} onValueChange={setIntervalMonths}>
+                  <SelectTrigger className="rounded-xl mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mês</SelectItem>
+                    <SelectItem value="2">2 meses</SelectItem>
+                    <SelectItem value="3">3 meses</SelectItem>
+                    <SelectItem value="6">6 meses</SelectItem>
+                    <SelectItem value="12">12 meses (anual)</SelectItem>
+                    <SelectItem value="24">24 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={saveReminder} className="w-full rounded-xl font-bold">Criar lembrete</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {reminders.length === 0 ? (
+        <Card className="p-8 text-center rounded-2xl border-dashed border-2 border-border/50">
+          <BellRing className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm font-bold text-foreground">Nenhum lembrete cadastrado</p>
+          <p className="text-xs text-muted-foreground mt-1">Configure lembretes para não esquecer de refazer exames.</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {reminders.map(r => {
+            const nextDate = new Date(r.next_reminder_date);
+            const daysLeft = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const isDue = daysLeft <= 0;
+            const isSoon = daysLeft > 0 && daysLeft <= 30;
+
+            return (
+              <Card key={r.id} className={`p-4 rounded-2xl border ${isDue ? "border-destructive/30 bg-destructive/5" : isSoon ? "border-warning/30 bg-warning/5" : "border-border/40"}`}>
+                <div className="flex items-start gap-3">
+                  <div className={`rounded-xl p-2 ${isDue ? "bg-destructive/10" : isSoon ? "bg-warning/10" : "bg-primary/10"}`}>
+                    <BellRing className={`h-4 w-4 ${isDue ? "text-destructive" : isSoon ? "text-warning" : "text-primary"}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground">{r.exam_name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      A cada {r.interval_months} {r.interval_months === 1 ? "mês" : "meses"} • Último: {new Date(r.last_exam_date).toLocaleDateString("pt-BR")}
+                    </p>
+                    <p className={`text-xs font-bold mt-1 ${isDue ? "text-destructive" : isSoon ? "text-warning" : "text-success"}`}>
+                      {isDue
+                        ? `⚠️ Vencido há ${Math.abs(daysLeft)} ${Math.abs(daysLeft) === 1 ? "dia" : "dias"}!`
+                        : isSoon
+                        ? `🔔 Vence em ${daysLeft} ${daysLeft === 1 ? "dia" : "dias"}`
+                        : `✅ Próximo em ${nextDate.toLocaleDateString("pt-BR")}`}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => deleteReminder(r.id)} className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/5 shrink-0">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
