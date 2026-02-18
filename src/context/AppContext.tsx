@@ -282,6 +282,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateMedication = useCallback(async (id: string, updates: Partial<Medication>) => {
     if (!user) return;
     const dbUpdates: Record<string, any> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.dosage !== undefined) dbUpdates.dosage = updates.dosage;
+    if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+    if (updates.frequency !== undefined) dbUpdates.frequency = updates.frequency;
+    if (updates.customFrequencyHours !== undefined) dbUpdates.custom_frequency_hours = updates.customFrequencyHours ?? null;
     if (updates.times !== undefined) dbUpdates.times = updates.times;
     if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
