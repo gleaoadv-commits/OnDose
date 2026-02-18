@@ -42,9 +42,9 @@ Conecte sua família agora. Link na bio.
 
 Sem cartão de crédito. Sem compromisso. Só saúde em dia. 💊
 
-Cadastre seus medicamentos, configure lembretes e nunca mais esqueça uma dose — tudo de graça!
+Organize seus medicamentos, configure lembretes e nunca mais esqueça uma dose — tudo de graça!
 
-✅ Até 3 medicamentos cadastrados
+✅ Até 2 medicamentos cadastrados
 ✅ Agenda e lembretes diários
 ✅ Histórico básico de doses
 
