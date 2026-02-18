@@ -328,6 +328,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (updates.dosage !== undefined) dbUpdates.dosage = updates.dosage;
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
     if (updates.frequency !== undefined) dbUpdates.frequency = updates.frequency;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.customFrequencyHours !== undefined) dbUpdates.custom_frequency_hours = updates.customFrequencyHours ?? null;
     if (updates.times !== undefined) dbUpdates.times = updates.times;
     if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
