@@ -11,6 +11,7 @@ interface BulaResult {
   numeroRegistro: string;
   expediente: string;
   matchedQuery?: string;
+  totalRegistros?: number;
   anvisaUrl: string;
   registroUrl: string | null;
 }
@@ -151,12 +152,19 @@ export default function AnvisaBulario({ medicationName }: Props) {
                     Encontrado como: {result.matchedQuery}
                   </p>
                 )}
-                {result.numeroRegistro && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <Shield className="h-3 w-3 text-success" />
-                    <p className="text-xs text-muted-foreground">Registro: {result.numeroRegistro}</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {result.numeroRegistro && (
+                    <div className="flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-success" />
+                      <p className="text-xs text-muted-foreground">Registro: {result.numeroRegistro}</p>
+                    </div>
+                  )}
+                  {result.totalRegistros && result.totalRegistros > 1 && (
+                    <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                      +{result.totalRegistros - 1} outro{result.totalRegistros - 1 > 1 ? "s" : ""} registro{result.totalRegistros - 1 > 1 ? "s" : ""} com este nome
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button

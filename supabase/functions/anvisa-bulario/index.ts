@@ -110,22 +110,33 @@ Deno.serve(async (req) => {
 
     // Collect unique results (by idProduto), prioritizing exact matches first
     const seen = new Set<number>();
-    const results: any[] = [];
+    const allResults: any[] = [];
 
     for (const { variant, items } of searches) {
       for (const item of items) {
         if (!seen.has(item.idProduto)) {
           seen.add(item.idProduto);
-          results.push(mapResult(item, variant));
+          allResults.push(mapResult(item, variant));
         }
       }
-      // If first search (original name) returned results, stop and return them
-      // to avoid too many unrelated results
-      if (variant === variations[0] && results.length > 0) break;
+      // If first search (original name) returned results, stop
+      if (variant === variations[0] && allResults.length > 0) break;
     }
 
-    // Limit to 8 results
-    const finalResults = results.slice(0, 8);
+    // Group by normalized nomeProduto — keep first, count duplicates
+    const grouped = new Map<string, { result: any; count: number }>();
+    for (const result of allResults) {
+      const key = result.nomeProduto.trim().toUpperCase();
+      if (!grouped.has(key)) {
+        grouped.set(key, { result, count: 1 });
+      } else {
+        grouped.get(key)!.count++;
+      }
+    }
+
+    const finalResults = Array.from(grouped.values())
+      .slice(0, 5)
+      .map(({ result, count }) => ({ ...result, totalRegistros: count }));
 
     console.log(`Found ${finalResults.length} results for "${nomeProduto}"`);
 
