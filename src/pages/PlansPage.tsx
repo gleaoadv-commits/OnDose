@@ -49,17 +49,27 @@ export default function PlansPage() {
   const handleCheckout = async (tier: "pro" | "premium") => {
     setLoadingCheckout(tier);
     try {
+      // Verify session is active before calling checkout
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        return;
+      }
+
       const priceId = TIERS[tier][billingCycle].price_id;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.url) {
         window.open(data.url, "_blank");
+      } else {
+        throw new Error("URL de checkout não retornada");
       }
     } catch (err: any) {
+      console.error("[Checkout error]", err);
       toast.error("Erro ao iniciar pagamento. Tente novamente.");
-      console.error(err);
     } finally {
       setLoadingCheckout(null);
     }
