@@ -33,6 +33,7 @@ export interface Medication {
   stockTotal?: number;
   stockCurrent?: number;
   pauseUntil?: string; // vacation/pause mode
+  addedByName?: string | null; // caregiver who added this medication
 }
 
 export interface ScheduleEvent {

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertTriangle, Clock, Heart, User, LogOut, CheckCircle2, Shield,
-  Copy, Share2, X, Pill, BarChart3, FileText, Phone, Save, Bell,
+  Copy, Share2, X, Pill, BarChart3, FileText, Phone, Save, Bell, Plus,
   Check, TrendingUp, TrendingDown, Minus, FileDown, History,
   ChevronRight, Activity,
 } from "lucide-react";
@@ -47,6 +47,7 @@ interface Medication {
   color: string;
   times: string[];
   status: string;
+  added_by_name?: string | null;
 }
 
 interface ScheduleEvent {
@@ -120,6 +121,15 @@ export default function CaregiverDashboard() {
   const [copied, setCopied] = useState(false);
   const [notifyApp, setNotifyApp] = useState(true);
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(false);
+
+  // Add medication form state
+  const [showAddMed, setShowAddMed] = useState(false);
+  const [addMedName, setAddMedName] = useState("");
+  const [addMedDosage, setAddMedDosage] = useState("");
+  const [addMedTimes, setAddMedTimes] = useState("08:00");
+  const [addMedFrequency, setAddMedFrequency] = useState("1x-dia");
+  const [addMedNotes, setAddMedNotes] = useState("");
+  const [addMedSaving, setAddMedSaving] = useState(false);
 
   const primaryUserIdRef = useRef<string | null>(null);
 
@@ -259,6 +269,72 @@ export default function CaregiverDashboard() {
     // Sort chronologically (oldest → newest = left → right)
     return Array.from(map.values()).sort((a, b) => a.ts - b.ts);
   }, [scheduleEvents]);
+
+
+  // ── Add medication for primary user (as caregiver) ──
+  const MEDICATION_COLORS = ["#6C63FF","#FF6584","#43B89C","#FFA94D","#4DABF7","#F06595","#74C0FC","#69DB7C"];
+
+  const handleAddMedForPrimary = async () => {
+    const pid = primaryUserIdRef.current;
+    if (!pid || !user) return;
+    if (!addMedName.trim() || !addMedDosage.trim()) {
+      toast.error("Preencha nome e dosagem");
+      return;
+    }
+    setAddMedSaving(true);
+    try {
+      const color = MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
+      const { data: newMed, error } = await supabase.from("medications").insert({
+        user_id: pid,
+        name: addMedName.trim(),
+        dosage: addMedDosage.trim(),
+        frequency: addMedFrequency,
+        times: [addMedTimes],
+        start_date: new Date().toISOString().split("T")[0],
+        color,
+        notes: addMedNotes.trim() || null,
+        added_by_user_id: user.id,
+        added_by_name: myProfile?.display_name || user.email || "Familiar",
+      } as any).select().single();
+      if (error) throw error;
+
+      // Generate schedule events for the next 30 days
+      if (newMed) {
+        const events = [];
+        const now = new Date();
+        for (let d = 0; d < 30; d++) {
+          const date = new Date(now);
+          date.setDate(now.getDate() + d);
+          const [hh, mm] = addMedTimes.split(":").map(Number);
+          date.setHours(hh, mm, 0, 0);
+          if (d === 0 && date <= now) continue;
+          events.push({
+            user_id: pid,
+            medication_id: newMed.id,
+            medication_name: newMed.name,
+            dosage: newMed.dosage,
+            color,
+            scheduled_time: date.toISOString(),
+            taken: false,
+          });
+        }
+        if (events.length > 0) {
+          await supabase.from("schedule_events").insert(events as any);
+        }
+      }
+
+      toast.success(`${addMedName} adicionado para ${primaryProfile?.display_name}!`);
+      setShowAddMed(false);
+      setAddMedName("");
+      setAddMedDosage("");
+      setAddMedTimes("08:00");
+      setAddMedNotes("");
+    } catch (err: any) {
+      toast.error("Erro ao adicionar medicamento: " + err.message);
+    } finally {
+      setAddMedSaving(false);
+    }
+  };
 
   // ── Profile save ──
   const handleSaveProfile = async () => {
@@ -531,14 +607,73 @@ export default function CaregiverDashboard() {
 
           {/* ── ABA: Remédios ─────────────────────────────────────────────────── */}
           <TabsContent value="meds" className="space-y-3">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              {medications.length} medicamento{medications.length !== 1 ? "s" : ""} cadastrado{medications.length !== 1 ? "s" : ""}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                {medications.length} medicamento{medications.length !== 1 ? "s" : ""} cadastrado{medications.length !== 1 ? "s" : ""}
+              </p>
+              <Button
+                size="sm"
+                variant={showAddMed ? "outline" : "default"}
+                className="rounded-xl text-xs h-8"
+                onClick={() => setShowAddMed(v => !v)}
+              >
+                {showAddMed ? <X className="h-3.5 w-3.5 mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                {showAddMed ? "Cancelar" : "Adicionar"}
+              </Button>
+            </div>
+
+            {/* Inline add medication form */}
+            {showAddMed && (
+              <Card className="p-4 rounded-2xl border-primary/30 bg-primary/5 space-y-3">
+                <p className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                  <Pill className="h-3.5 w-3.5" /> Novo medicamento para {primaryProfile?.display_name}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs font-semibold">Nome *</Label>
+                    <Input value={addMedName} onChange={e => setAddMedName(e.target.value)} placeholder="Ex: Losartana" className="mt-1 rounded-xl text-sm h-10" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Dosagem *</Label>
+                    <Input value={addMedDosage} onChange={e => setAddMedDosage(e.target.value)} placeholder="Ex: 50mg" className="mt-1 rounded-xl text-sm h-10" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs font-semibold">Horário</Label>
+                    <Input type="time" value={addMedTimes} onChange={e => setAddMedTimes(e.target.value)} className="mt-1 rounded-xl text-sm h-10 font-bold" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Frequência</Label>
+                    <select
+                      value={addMedFrequency}
+                      onChange={e => setAddMedFrequency(e.target.value)}
+                      className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="1x-dia">1x ao dia</option>
+                      <option value="2x-dia">2x ao dia</option>
+                      <option value="3x-dia">3x ao dia</option>
+                      <option value="4x-dia">4x ao dia</option>
+                      <option value="semanal">Semanal</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Observações</Label>
+                  <Input value={addMedNotes} onChange={e => setAddMedNotes(e.target.value)} placeholder="Ex: Tomar em jejum" className="mt-1 rounded-xl text-sm h-10" />
+                </div>
+                <Button onClick={handleAddMedForPrimary} disabled={addMedSaving} className="w-full rounded-xl font-bold" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {addMedSaving ? "Salvando..." : "Salvar medicamento"}
+                </Button>
+              </Card>
+            )}
+
             {medications.length === 0 ? (
               <Card className="p-8 text-center rounded-2xl border-dashed border-2 border-border/50">
                 <Pill className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-sm font-bold text-foreground">Nenhum medicamento ativo</p>
-                <p className="text-xs text-muted-foreground mt-1">O Usuário Principal ainda não cadastrou medicamentos.</p>
+                <p className="text-xs text-muted-foreground mt-1">Adicione um medicamento usando o botão acima.</p>
               </Card>
             ) : (
             [...medications]
@@ -604,6 +739,11 @@ export default function CaregiverDashboard() {
                             <p className="text-[10px] text-muted-foreground">
                               {nextDoseDay}
                             </p>
+                            {m.added_by_name && (
+                              <p className="text-[10px] text-primary font-semibold mt-0.5">
+                                ✦ Adicionado por {m.added_by_name}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>

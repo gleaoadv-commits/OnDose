@@ -144,6 +144,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           stockTotal: row.stock_total ?? undefined,
           stockCurrent: row.stock_current ?? undefined,
           pauseUntil: row.pause_until ?? undefined,
+          addedByName: (row as any).added_by_name ?? null,
         }));
 
         const loadedEvents: ScheduleEvent[] = (eventsRes.data ?? []).map(row => ({

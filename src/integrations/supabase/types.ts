@@ -198,6 +198,8 @@ export type Database = {
       }
       medications: {
         Row: {
+          added_by_name: string | null
+          added_by_user_id: string | null
           color: string
           created_at: string
           custom_frequency_hours: number | null
@@ -218,6 +220,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          added_by_name?: string | null
+          added_by_user_id?: string | null
           color: string
           created_at?: string
           custom_frequency_hours?: number | null
@@ -238,6 +242,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          added_by_name?: string | null
+          added_by_user_id?: string | null
           color?: string
           created_at?: string
           custom_frequency_hours?: number | null
