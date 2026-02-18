@@ -38,7 +38,13 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("No authorization header - returning free plan");
+      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const token = authHeader.replace("Bearer ", "");
     
@@ -47,7 +53,13 @@ serve(async (req) => {
     const userEmail = payload.email;
     const userId = payload.sub;
     
-    if (!userEmail || !userId) throw new Error("Invalid token: missing email or user id");
+    if (!userEmail || !userId) {
+      logStep("Invalid token - returning free plan");
+      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     logStep("User authenticated via JWT", { email: userEmail, userId });
 
     const supabaseAdmin = createClient(
