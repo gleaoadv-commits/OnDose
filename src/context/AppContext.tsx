@@ -79,8 +79,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (!sessionData?.session?.access_token) return;
+
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
+
       if (error) {
         console.error("Error checking subscription:", error);
         return;
