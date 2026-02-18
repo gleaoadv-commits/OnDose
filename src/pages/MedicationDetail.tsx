@@ -314,6 +314,15 @@ export default function MedicationDetail() {
             )}
           </div>
 
+          {/* Added by caregiver log */}
+          {med.addedByName && (
+            <div className="pt-3 border-t border-border/40">
+              <p className="text-xs text-primary font-semibold flex items-center gap-1.5">
+                <span>✦</span> Adicionado por familiar: <span className="font-bold">{med.addedByName}</span>
+              </p>
+            </div>
+          )}
+
           {/* ANVISA Bulário */}
           <AnvisaBulario medicationName={med.name} />
 
