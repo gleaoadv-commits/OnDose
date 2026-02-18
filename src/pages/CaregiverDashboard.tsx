@@ -468,23 +468,22 @@ export default function CaregiverDashboard() {
         </button>
 
         <Tabs defaultValue="meds" className="space-y-4">
-          <TabsList className="w-full rounded-2xl grid grid-cols-4">
-            <TabsTrigger value="meds" className="rounded-xl text-[10px] font-bold flex flex-col gap-0.5 h-12">
-              <Pill className="h-3.5 w-3.5" />
-              Remédios
-            </TabsTrigger>
-            <TabsTrigger value="adherence" className="rounded-xl text-[10px] font-bold flex flex-col gap-0.5 h-12">
-              <Activity className="h-3.5 w-3.5" />
-              Adesão
-            </TabsTrigger>
-            <TabsTrigger value="exams" className="rounded-xl text-[10px] font-bold flex flex-col gap-0.5 h-12">
-              <FileText className="h-3.5 w-3.5" />
-              Exames
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="rounded-xl text-[10px] font-bold flex flex-col gap-0.5 h-12">
-              <User className="h-3.5 w-3.5" />
-              Perfil
-            </TabsTrigger>
+          <TabsList className="w-full rounded-2xl grid grid-cols-4 h-auto p-1 gap-0.5">
+            {([
+              { value: "meds", icon: <Pill className="h-4 w-4" />, label: "Remédios" },
+              { value: "adherence", icon: <Activity className="h-4 w-4" />, label: "Adesão" },
+              { value: "exams", icon: <FileText className="h-4 w-4" />, label: "Exames" },
+              { value: "profile", icon: <User className="h-4 w-4" />, label: "Perfil" },
+            ] as const).map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[10px] font-bold leading-none"
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* ── ABA: Remédios ─────────────────────────────────────────────────── */}
