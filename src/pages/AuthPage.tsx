@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, User, Eye, EyeOff, Users, Hash, Crown } from "lucide-react";
 import OnDoseLogo from "@/components/OnDoseLogo";
 import { useToast } from "@/hooks/use-toast";
@@ -19,11 +20,22 @@ export default function AuthPage() {
   const [primaryCode, setPrimaryCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLogin && !acceptedTerms) {
+      toast({
+        title: "Termos não aceitos",
+        description: "Você precisa aceitar os Termos e Condições de Uso para criar uma conta.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -280,7 +292,34 @@ export default function AuthPage() {
               </button>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full h-13 text-elder-sm font-bold rounded-2xl shadow-glow" size="lg">
+            {!isLogin && (
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-muted/40 border border-border/40">
+                <Checkbox
+                  id="acceptTerms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  className="mt-0.5 shrink-0"
+                />
+                <label htmlFor="acceptTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer select-none">
+                  Li e aceito os{" "}
+                  <Link
+                    to="/termos"
+                    target="_blank"
+                    className="text-primary font-semibold hover:underline underline-offset-2"
+                  >
+                    Termos e Condições de Uso
+                  </Link>
+                  {" "}do OnDose.
+                </label>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading || (!isLogin && !acceptedTerms)}
+              className="w-full h-13 text-elder-sm font-bold rounded-2xl shadow-glow"
+              size="lg"
+            >
               {loading ? "Carregando..." : isLogin ? "Entrar" : "Criar conta"}
             </Button>
           </form>
@@ -325,7 +364,7 @@ export default function AuthPage() {
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => { setIsLogin(!isLogin); setAcceptedTerms(false); }}
               className="text-primary font-bold hover:underline underline-offset-2"
             >
               {isLogin ? "Criar conta" : "Entrar"}
