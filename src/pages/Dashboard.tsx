@@ -135,11 +135,11 @@ export default function Dashboard() {
         const pct = med.stockTotal ? Math.round((med.stockCurrent! / med.stockTotal) * 100) : 0;
         return (
           <Link key={med.id} to={`/medicamento/${med.id}`}>
-            <Card className="p-3 rounded-2xl border-destructive/20 bg-destructive/5 flex items-center gap-3 card-hover mb-2">
-              <Package className="h-5 w-5 text-destructive shrink-0" />
+            <Card className="p-2.5 rounded-xl border-destructive/20 bg-destructive/5 flex items-center gap-2.5 card-hover mb-1.5">
+              <Package className="h-4 w-4 text-destructive shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-destructive">{med.name} — estoque baixo!</p>
-                <p className="text-xs text-muted-foreground">{med.stockCurrent} de {med.stockTotal} cápsulas restantes ({pct}%)</p>
+                <p className="text-xs font-bold text-destructive">{med.name} — estoque baixo!</p>
+                <p className="text-[11px] text-muted-foreground">{med.stockCurrent} de {med.stockTotal} cápsulas ({pct}%)</p>
               </div>
             </Card>
           </Link>
