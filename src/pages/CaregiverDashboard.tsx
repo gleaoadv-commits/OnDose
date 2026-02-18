@@ -203,18 +203,19 @@ export default function CaregiverDashboard() {
 
   const dailyChartData = useMemo(() => {
     const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const map = new Map<string, { date: string; taken: number; missed: number }>();
+    const from = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const map = new Map<string, { date: string; taken: number; missed: number; ts: number }>();
     scheduleEvents.forEach(e => {
       const t = new Date(e.scheduled_time);
       if (t < from || t > now) return;
       const label = t.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-      const entry = map.get(label) || { date: label, taken: 0, missed: 0 };
+      const entry = map.get(label) || { date: label, taken: 0, missed: 0, ts: t.getTime() };
       if (e.taken) entry.taken++;
       else entry.missed++;
       map.set(label, entry);
     });
-    return Array.from(map.values()).slice(-14);
+    // Sort chronologically (oldest → newest = left → right)
+    return Array.from(map.values()).sort((a, b) => a.ts - b.ts);
   }, [scheduleEvents]);
 
   // ── Profile save ──
@@ -354,7 +355,7 @@ export default function CaregiverDashboard() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Compartilhe este código com o <strong className="text-foreground">paciente</strong>. Ele deve acessar <strong className="text-foreground">Familiares → Adicionar Familiar</strong> e inserir seu código.
+              Compartilhe este código com o <strong className="text-foreground">Usuário Principal</strong>. Ele deve acessar <strong className="text-foreground">Familiares → Adicionar Familiar</strong> e inserir seu código.
             </p>
             <div className="flex gap-2">
               <Button onClick={copyCode} variant="outline" className="flex-1 rounded-xl font-bold">
@@ -367,7 +368,7 @@ export default function CaregiverDashboard() {
           </Card>
           <Card className="p-4 rounded-2xl max-w-sm w-full border-amber-500/20 bg-amber-500/5">
             <p className="text-xs text-center text-amber-700 leading-relaxed">
-              ⏳ Após o paciente te vincular, esta tela será atualizada. O paciente precisa ter o plano <strong>Premium</strong> ativo.
+              ⏳ Após o Usuário Principal te vincular, esta tela será atualizada. Ele precisa ter o plano <strong>Premium</strong> ativo.
             </p>
           </Card>
           <Button variant="ghost" onClick={signOut} className="rounded-xl text-muted-foreground">
@@ -392,12 +393,12 @@ export default function CaregiverDashboard() {
               <h2 className="text-xl font-bold text-foreground">Aguardando aprovação</h2>
               {primaryProfile && (
                 <p className="text-sm font-semibold mt-1" style={{ color: "hsl(152,60%,32%)" }}>
-                  Paciente: {primaryProfile.display_name || "Usuário"} · {primaryProfile.user_code}
+                  Usuário Principal: {primaryProfile.display_name || "Usuário"} · {primaryProfile.user_code}
                 </p>
               )}
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              O paciente ainda não aprovou seu vínculo. Assim que ele aprovar, você terá acesso ao acompanhamento.
+              O Usuário Principal ainda não aprovou seu vínculo. Assim que ele aprovar, você terá acesso ao acompanhamento.
             </p>
             {myProfile?.user_code && (
               <div className="bg-muted/50 rounded-xl px-4 py-3 text-center">
@@ -427,7 +428,7 @@ export default function CaregiverDashboard() {
             <X className="h-8 w-8 text-destructive" />
           </div>
           <h2 className="text-xl font-bold text-foreground">Acesso desativado</h2>
-          <p className="text-sm text-muted-foreground">O paciente desativou seu vínculo. Entre em contato para solicitar a reativação.</p>
+          <p className="text-sm text-muted-foreground">O Usuário Principal desativou seu vínculo. Entre em contato para solicitar a reativação.</p>
           <Button onClick={signOut} className="w-full rounded-xl text-white border-0" style={{ background: CAREGIVER_GRADIENT }}>
             <LogOut className="h-4 w-4 mr-2" /> Sair
           </Button>
@@ -495,7 +496,7 @@ export default function CaregiverDashboard() {
               <Card className="p-8 text-center rounded-2xl border-dashed border-2 border-border/50">
                 <Pill className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-sm font-bold text-foreground">Nenhum medicamento ativo</p>
-                <p className="text-xs text-muted-foreground mt-1">O paciente ainda não cadastrou medicamentos.</p>
+                <p className="text-xs text-muted-foreground mt-1">O Usuário Principal ainda não cadastrou medicamentos.</p>
               </Card>
             ) : (
               medications.map(m => (
@@ -566,7 +567,7 @@ export default function CaregiverDashboard() {
               <Card className="p-8 text-center rounded-2xl border-dashed border-2 border-border/50">
                 <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-sm font-bold text-foreground">Nenhum exame registrado</p>
-                <p className="text-xs text-muted-foreground mt-1">O paciente ainda não registrou exames.</p>
+                <p className="text-xs text-muted-foreground mt-1">O Usuário Principal ainda não registrou exames.</p>
               </Card>
             ) : (
               exams.map(exam => {
@@ -627,7 +628,7 @@ export default function CaregiverDashboard() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Compartilhe este código com o paciente que deseja te vincular.
+                Compartilhe este código com o Usuário Principal que deseja te vincular.
               </p>
               <Badge variant="outline" className="text-xs">Conta Familiar</Badge>
             </Card>
