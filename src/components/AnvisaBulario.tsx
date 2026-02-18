@@ -10,6 +10,7 @@ interface BulaResult {
   nomeEmpresa: string;
   numeroRegistro: string;
   expediente: string;
+  matchedQuery?: string;
   anvisaUrl: string;
   registroUrl: string | null;
 }
@@ -144,6 +145,11 @@ export default function AnvisaBulario({ medicationName }: Props) {
                 <p className="font-bold text-sm text-foreground">{result.nomeProduto}</p>
                 {result.nomeEmpresa && (
                   <p className="text-xs text-muted-foreground">{result.nomeEmpresa}</p>
+                )}
+                {result.matchedQuery && result.matchedQuery.toUpperCase() !== medicationName.toUpperCase() && (
+                  <p className="text-[10px] text-primary/70 mt-0.5 italic">
+                    Encontrado como: {result.matchedQuery}
+                  </p>
                 )}
                 {result.numeroRegistro && (
                   <div className="flex items-center gap-1 mt-1">
