@@ -136,6 +136,16 @@ serve(async (req) => {
 
     logStep("Subscription result", { plan, subscriptionEnd });
 
+    // If not premium, deactivate any active family links (caregiver access)
+    if (plan !== "premium") {
+      await supabaseAdmin
+        .from("family_links")
+        .update({ status: "inactive" })
+        .eq("primary_user_id", userId)
+        .eq("status", "active");
+      logStep("Deactivated family links for non-premium user");
+    }
+
     return new Response(JSON.stringify({
       subscribed: plan !== "free",
       plan,
@@ -144,6 +154,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
