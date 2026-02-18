@@ -440,10 +440,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteScheduleEvent = useCallback(async (eventId: string) => {
     if (!user) return;
+    const event = schedule.find(e => e.id === eventId);
     await supabase.from("schedule_events").delete().eq("id", eventId).eq("user_id", user.id);
-    setSchedule(prev => prev.filter(e => e.id !== eventId));
+
+    const updatedSchedule = schedule.filter(e => e.id !== eventId);
+    setSchedule(updatedSchedule);
     setNotifications(prev => prev.filter(n => n.eventId !== eventId));
-  }, [user]);
+
+    // If the deleted event was taken, recalculate stock and notify
+    if (event?.taken) {
+      const med = medications.find(m => m.id === event.medicationId);
+      if (med && med.stockTotal != null) {
+        const takenCount = updatedSchedule.filter(e => e.medicationId === event.medicationId && e.taken).length;
+        const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
+        await supabase.from("medications").update({ stock_current: newStock } as any).eq("id", med.id).eq("user_id", user.id);
+        setMedications(prev => prev.map(m => m.id === med.id ? { ...m, stockCurrent: newStock } : m));
+        // In-app notification informing the updated stock
+        setNotifications(prev => [
+          {
+            id: crypto.randomUUID(),
+            medicationId: med.id,
+            message: `📦 Dose de ${med.name} excluída. Estoque atualizado: você tem aproximadamente ${newStock} comprimido(s) restante(s).`,
+            time: new Date().toISOString(),
+            read: false,
+            type: "info" as const,
+          },
+          ...prev,
+        ]);
+      }
+    }
+  }, [user, schedule, medications]);
 
   const updateScheduleEventTime = useCallback(async (eventId: string, newTime: string) => {
     if (!user) return;

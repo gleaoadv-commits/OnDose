@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, Lock, Crown, Check, Circle, Tr
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export default function CalendarPage() {
   const { schedule, medications, markDoseTaken, unmarkDoseTaken, deleteScheduleEvent, updateScheduleEventTime, plan } = useApp();
@@ -88,6 +89,20 @@ export default function CalendarPage() {
     newDt.setHours(h, m, 0, 0);
     await updateScheduleEventTime(event.id, newDt.toISOString());
     setEditingEventId(null);
+  };
+
+  const handleDelete = async (event: typeof dayEvents[0]) => {
+    const med = medications.find(m => m.id === event.medicationId);
+    await deleteScheduleEvent(event.id);
+    if (med && med.stockTotal != null && event.taken) {
+      const takenCount = schedule.filter(e => e.medicationId === med.id && e.taken && e.id !== event.id).length;
+      const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
+      toast.success(`Dose excluída`, {
+        description: `Estoque de ${med.name} atualizado: ~${newStock} comprimido(s) restante(s).`,
+      });
+    } else {
+      toast.success(`Dose excluída com sucesso.`);
+    }
   };
 
   return (
@@ -312,7 +327,7 @@ export default function CalendarPage() {
                                 <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                               </button>
                               <button
-                                onClick={() => deleteScheduleEvent(event.id)}
+                                onClick={() => handleDelete(event)}
                                 className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
                                 title="Excluir dose"
                               >
