@@ -300,7 +300,19 @@ export default function CaregiverDashboard() {
       setEditWhatsapp(p.whatsapp_number || "");
     }
 
-    // Family link
+    // ── Call server-side check: verifies primary user's plan and deactivates link if needed ──
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await supabase.functions.invoke("verify-link-status", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    } catch (_) {
+      // Non-blocking — continue loading even if this fails
+    }
+
+    // Family link — read fresh status AFTER server-side check above
     const { data: linkData } = await supabase
       .from("family_links")
       .select("*")
@@ -314,14 +326,8 @@ export default function CaregiverDashboard() {
       return;
     }
 
-    // Refresh link status from DB to catch server-side deactivations
     const myLink = linkData[0] as any;
-    const { data: freshLink } = await supabase
-      .from("family_links")
-      .select("status")
-      .eq("id", myLink.id)
-      .single();
-    const currentStatus = (freshLink as any)?.status ?? myLink.status;
+    const currentStatus = myLink.status;
     setLink({ ...myLink, status: currentStatus });
 
     // If inactive, don't load primary user data
