@@ -187,6 +187,10 @@ export default function AnvisaBulario({ medicationName }: Props) {
               Fonte: Bulário Eletrônico ANVISA — gov.br
             </p>
           )}
+
+          <p className="text-[10px] text-muted-foreground/60 text-center leading-relaxed pt-1 border-t border-border/20">
+            As informações do Bulário Eletrônico são fornecidas diretamente pela ANVISA. O OnDose não se responsabiliza por eventuais erros, desatualizações ou indisponibilidades neste serviço.
+          </p>
         </div>
       )}
     </div>

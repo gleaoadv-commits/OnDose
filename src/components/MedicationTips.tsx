@@ -104,6 +104,12 @@ export default function MedicationTips({ medicationName, currentMedications, tim
           </button>
         </div>
       ))}
+
+      {visibleTips.length > 0 && !loading && (
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed px-1">
+          ⚠️ As dicas acima são geradas por IA e têm caráter informativo. O OnDose não se responsabiliza por decisões tomadas com base nelas. Consulte sempre um profissional de saúde.
+        </p>
+      )}
     </div>
   );
 }

@@ -194,6 +194,10 @@ export default function PharmaciesPage() {
           ))}
         </div>
       )}
+
+      <p className="text-[10px] text-muted-foreground/50 text-center leading-relaxed pt-2 pb-4 px-2">
+        Os dados de farmácias próximas são fornecidos por serviços de mapeamento externos. O OnDose não se responsabiliza por informações desatualizadas, incorretas ou indisponibilidade deste serviço.
+      </p>
     </div>
   );
 }
