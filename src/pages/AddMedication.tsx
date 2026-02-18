@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X } from "lucide-react";
+import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X, CalendarDays } from "lucide-react";
 import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes } from "@/types/medication";
 import { toast } from "sonner";
 import MedicationAutocomplete from "@/components/MedicationAutocomplete";
 import MedicationTips from "@/components/MedicationTips";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function AddMedication() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addMedication, medications } = useApp();
+  const { addMedication, medications, markAllPastDosesTaken } = useApp();
 
   // Active medications for AI tips context
   const activeMedications = medications
@@ -56,6 +57,8 @@ export default function AddMedication() {
   };
 
   const [saving, setSaving] = useState(false);
+  const [savedMedId, setSavedMedId] = useState<string | null>(null);
+  const [pastDosesDialog, setPastDosesDialog] = useState<{ open: boolean; name: string }>({ open: false, name: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +72,7 @@ export default function AddMedication() {
     }
     setSaving(true);
     try {
-      const success = await addMedication({
+      const result = await addMedication({
         name: name.trim(),
         dosage: dosage.trim(),
         quantity,
@@ -82,9 +85,17 @@ export default function AddMedication() {
         stockTotal: stockTotal ? Number(stockTotal) : undefined,
         stockCurrent: stockTotal ? Number(stockTotal) : undefined,
       });
-      if (success) {
-        toast.success(`${name} cadastrado com sucesso!`);
-        navigate("/");
+      if (result) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(startDate + "T00:00:00");
+        if (start < today) {
+          setSavedMedId(result);
+          setPastDosesDialog({ open: true, name: name.trim() });
+        } else {
+          toast.success(`${name} cadastrado com sucesso!`);
+          navigate("/");
+        }
       } else {
         toast.error("Limite de medicamentos atingido no plano gratuito.");
       }
@@ -92,6 +103,28 @@ export default function AddMedication() {
       setSaving(false);
     }
   };
+
+
+
+
+  const handlePastDosesYes = async () => {
+    if (savedMedId) {
+      await markAllPastDosesTaken(savedMedId);
+      toast.success("Doses anteriores marcadas como tomadas e estoque atualizado!");
+    }
+    setPastDosesDialog({ open: false, name: "" });
+    navigate("/");
+  };
+
+  const handlePastDosesNo = () => {
+    setPastDosesDialog({ open: false, name: "" });
+    toast.info("Vá ao Calendário para marcar manualmente cada dose passada.", { duration: 6000 });
+    navigate("/");
+  };
+
+
+
+
 
   return (
     <div className="space-y-5">
@@ -274,6 +307,32 @@ export default function AddMedication() {
           <Save className="h-5 w-5 mr-2" /> {saving ? "Salvando..." : "Cadastrar Medicamento"}
         </Button>
       </form>
+
+      {/* Dialog: past doses */}
+      <Dialog open={pastDosesDialog.open} onOpenChange={() => {}}>
+        <DialogContent className="rounded-2xl mx-4" onInteractOutside={e => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-primary" />
+              Doses anteriores
+            </DialogTitle>
+            <DialogDescription className="text-left pt-1">
+              <span className="font-semibold text-foreground">{pastDosesDialog.name}</span> foi cadastrado com uma data de início no passado.
+              <br /><br />
+              Deseja marcar <span className="font-bold text-primary">todas as doses passadas como já tomadas</span>? O estoque será atualizado automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button onClick={handlePastDosesYes} className="w-full rounded-xl font-bold shadow-glow">
+              ✅ Sim, já tomei todas
+            </Button>
+            <Button variant="outline" onClick={handlePastDosesNo} className="w-full rounded-xl font-bold border-border/60">
+              Não, vou marcar manualmente no Calendário
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
