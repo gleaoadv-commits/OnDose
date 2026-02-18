@@ -14,7 +14,7 @@ interface AppState {
   devPlanOverride: UserPlan | null;
   setDevPlanOverride: (plan: UserPlan | null) => void;
   refreshSubscription: () => Promise<void>;
-  addMedication: (med: Omit<Medication, "id" | "status" | "color">) => Promise<boolean>;
+  addMedication: (med: Omit<Medication, "id" | "status" | "color">) => Promise<string | false>;
   updateMedication: (id: string, updates: Partial<Medication>) => void;
   pauseMedication: (id: string) => void;
   resumeMedication: (id: string) => void;
@@ -24,6 +24,7 @@ interface AppState {
   unmarkDoseTaken: (eventId: string) => void;
   markNotificationRead: (id: string) => void;
   canAddMedication: () => boolean;
+  markAllPastDosesTaken: (medicationId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -172,7 +173,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return medications.filter(m => m.status !== "encerrado").length < 2;
   }, [medications, effectivePlan]);
 
-  const addMedication = useCallback(async (med: Omit<Medication, "id" | "status" | "color">): Promise<boolean> => {
+  const addMedication = useCallback(async (med: Omit<Medication, "id" | "status" | "color">): Promise<string | false> => {
     if (!canAddMedication() || !user) return false;
 
     const color = MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
@@ -285,7 +286,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setNotifications(prev => [...doseNotifs, ...prev]);
     }
 
-    return true;
+    return newMed.id;
   }, [canAddMedication, medications.length, user]);
 
   const updateMedicationStatus = useCallback(async (id: string, status: string) => {
@@ -439,6 +440,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }, []);
 
+  const markAllPastDosesTaken = useCallback(async (medicationId: string) => {
+    if (!user) return;
+    const now = new Date().toISOString();
+
+    // Get all past untaken events for this medication
+    const pastEvents = schedule.filter(
+      e => e.medicationId === medicationId && !e.taken && e.scheduledTime < now
+    );
+    if (pastEvents.length === 0) return;
+
+    const ids = pastEvents.map(e => e.id);
+
+    // Batch update in DB
+    await supabase
+      .from("schedule_events")
+      .update({ taken: true, taken_at: now })
+      .in("id", ids)
+      .eq("user_id", user.id);
+
+    const updatedSchedule = schedule.map(e =>
+      ids.includes(e.id) ? { ...e, taken: true, takenAt: now } : e
+    );
+    setSchedule(updatedSchedule);
+
+    // Recalculate stock
+    await recalculateStock(medicationId, updatedSchedule);
+  }, [user, schedule, recalculateStock]);
+
   return (
     <AppContext.Provider value={{
       medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, loading, isAdmin,
@@ -446,7 +475,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
       stopMedication, deleteMedication, markDoseTaken, unmarkDoseTaken,
-      markNotificationRead, canAddMedication,
+      markNotificationRead, canAddMedication, markAllPastDosesTaken,
     }}>
       {children}
     </AppContext.Provider>
