@@ -72,6 +72,12 @@ export default {
           DEFAULT: "hsl(var(--pro))",
           foreground: "hsl(var(--pro-foreground))",
         },
+        caregiver: {
+          DEFAULT: "hsl(var(--caregiver))",
+          foreground: "hsl(var(--caregiver-foreground))",
+          muted: "hsl(var(--caregiver-muted))",
+          "muted-foreground": "hsl(var(--caregiver-muted-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
