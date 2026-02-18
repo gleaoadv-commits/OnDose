@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Save, Copy, Check } from "lucide-react";
+import { User, Phone, Save, Copy, Check, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -140,6 +141,17 @@ export default function ProfilePage() {
           <Save className="h-4 w-4 mr-2" />
           {saving ? "Salvando..." : "Salvar perfil"}
         </Button>
+      </Card>
+
+      {/* Terms link */}
+      <Card className="p-4 rounded-2xl border-border/40">
+        <Link to="/termos" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
+          <FileText className="h-5 w-5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Termos e Condições de Uso</p>
+            <p className="text-xs text-muted-foreground">Leia os termos do OnDose</p>
+          </div>
+        </Link>
       </Card>
     </div>
   );
