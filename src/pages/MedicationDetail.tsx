@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw } from "lucide-react";
-import { FREQUENCY_LABELS } from "@/types/medication";
+import { FREQUENCY_LABELS, MedicationFrequency } from "@/types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -21,16 +22,26 @@ export default function MedicationDetail() {
 
   const med = medications.find(m => m.id === id);
 
-  // Edit states
+  // Basic info editing
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDosage, setEditDosage] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editFrequency, setEditFrequency] = useState<MedicationFrequency>("1x-dia");
+
+  // Times editing
   const [editingTimes, setEditingTimes] = useState(false);
   const [editTimes, setEditTimes] = useState<string[]>([]);
 
+  // End date editing
   const [editingEndDate, setEditingEndDate] = useState(false);
   const [editEndDate, setEditEndDate] = useState("");
 
+  // Notes editing
   const [editingNotes, setEditingNotes] = useState(false);
   const [editNotes, setEditNotes] = useState("");
 
+  // Stock editing
   const [editingStock, setEditingStock] = useState(false);
   const [editStock, setEditStock] = useState("");
 
@@ -55,32 +66,39 @@ export default function MedicationDetail() {
     navigate("/");
   };
 
-  // Times editing
-  const startEditTimes = () => {
-    setEditTimes([...med.times]);
-    setEditingTimes(true);
+  // Basic info editing
+  const startEditInfo = () => {
+    setEditName(med.name);
+    setEditDosage(med.dosage);
+    setEditQuantity(String(med.quantity));
+    setEditFrequency(med.frequency);
+    setEditingInfo(true);
   };
+  const saveInfo = async () => {
+    if (!editName.trim()) { toast.error("Informe o nome do medicamento."); return; }
+    if (!editDosage.trim()) { toast.error("Informe a dosagem."); return; }
+    const qty = Number(editQuantity);
+    if (isNaN(qty) || qty < 1) { toast.error("Quantidade inválida."); return; }
+    await updateMedication(med.id, { name: editName.trim(), dosage: editDosage.trim(), quantity: qty, frequency: editFrequency });
+    setEditingInfo(false);
+    toast.success("Medicamento atualizado!");
+  };
+
+  // Times editing
+  const startEditTimes = () => { setEditTimes([...med.times]); setEditingTimes(true); };
   const saveTimes = () => {
     const valid = editTimes.filter(t => /^\d{2}:\d{2}$/.test(t));
-    if (valid.length === 0) {
-      toast.error("Informe ao menos um horário válido.");
-      return;
-    }
+    if (valid.length === 0) { toast.error("Informe ao menos um horário válido."); return; }
     updateMedication(med.id, { times: valid.sort() });
     setEditingTimes(false);
     toast.success("Horários atualizados!");
   };
-  const updateTime = (idx: number, value: string) => {
-    setEditTimes(prev => prev.map((t, i) => i === idx ? value : t));
-  };
+  const updateTime = (idx: number, value: string) => setEditTimes(prev => prev.map((t, i) => i === idx ? value : t));
   const addTime = () => setEditTimes(prev => [...prev, "12:00"]);
   const removeTime = (idx: number) => setEditTimes(prev => prev.filter((_, i) => i !== idx));
 
   // End date editing
-  const startEditEndDate = () => {
-    setEditEndDate(med.endDate || "");
-    setEditingEndDate(true);
-  };
+  const startEditEndDate = () => { setEditEndDate(med.endDate || ""); setEditingEndDate(true); };
   const saveEndDate = () => {
     updateMedication(med.id, { endDate: editEndDate || undefined });
     setEditingEndDate(false);
@@ -88,10 +106,7 @@ export default function MedicationDetail() {
   };
 
   // Notes editing
-  const startEditNotes = () => {
-    setEditNotes(med.notes || "");
-    setEditingNotes(true);
-  };
+  const startEditNotes = () => { setEditNotes(med.notes || ""); setEditingNotes(true); };
   const saveNotes = () => {
     updateMedication(med.id, { notes: editNotes || undefined });
     setEditingNotes(false);
@@ -99,16 +114,10 @@ export default function MedicationDetail() {
   };
 
   // Stock editing
-  const startEditStock = () => {
-    setEditStock(String(med.stockCurrent ?? med.stockTotal ?? ""));
-    setEditingStock(true);
-  };
+  const startEditStock = () => { setEditStock(String(med.stockCurrent ?? med.stockTotal ?? "")); setEditingStock(true); };
   const saveStock = () => {
     const val = Number(editStock);
-    if (isNaN(val) || val < 0) {
-      toast.error("Informe um número válido.");
-      return;
-    }
+    if (isNaN(val) || val < 0) { toast.error("Informe um número válido."); return; }
     updateMedication(med.id, { stockCurrent: val, stockTotal: med.stockTotal ?? val });
     setEditingStock(false);
     toast.success("Estoque atualizado!");
@@ -131,6 +140,7 @@ export default function MedicationDetail() {
         <ArrowLeft className="h-5 w-5 mr-1" /> Voltar
       </Button>
 
+      {/* Main info card */}
       <Card className="p-6 rounded-2xl border-border/40">
         <div className="flex items-start gap-4">
           <div className="pill-icon p-4" style={{ backgroundColor: med.color + "15", color: med.color }}>
@@ -145,7 +155,53 @@ export default function MedicationDetail() {
             </div>
             <p className="text-elder-lg text-muted-foreground mt-1">{med.dosage} — {med.quantity} comprimido(s)</p>
           </div>
+          {!editingInfo && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl shrink-0" onClick={startEditInfo}>
+              <Pencil className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
         </div>
+
+        {/* Editable basic info */}
+        {editingInfo && (
+          <div className="mt-4 space-y-3 border-t border-border/40 pt-4">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Nome</label>
+              <Input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl h-10" placeholder="Nome do medicamento" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Dosagem</label>
+                <Input value={editDosage} onChange={e => setEditDosage(e.target.value)} className="rounded-xl h-10" placeholder="Ex: 50mg" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Comprimidos/dose</label>
+                <Input type="number" value={editQuantity} onChange={e => setEditQuantity(e.target.value)} min={1} className="rounded-xl h-10" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Frequência</label>
+              <Select value={editFrequency} onValueChange={v => setEditFrequency(v as MedicationFrequency)}>
+                <SelectTrigger className="rounded-xl h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(FREQUENCY_LABELS) as MedicationFrequency[]).map(f => (
+                    <SelectItem key={f} value={f}>{FREQUENCY_LABELS[f]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveInfo}>
+                <Check className="h-3.5 w-3.5" /> Salvar
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setEditingInfo(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 space-y-4">
           {/* Times */}
@@ -166,12 +222,7 @@ export default function MedicationDetail() {
               <div className="mt-3 space-y-2">
                 {editTimes.map((t, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <Input
-                      type="time"
-                      value={t}
-                      onChange={e => updateTime(i, e.target.value)}
-                      className="rounded-xl h-10 flex-1"
-                    />
+                    <Input type="time" value={t} onChange={e => updateTime(i, e.target.value)} className="rounded-xl h-10 flex-1" />
                     {editTimes.length > 1 && (
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => removeTime(i)}>
                         <X className="h-4 w-4" />
@@ -213,13 +264,7 @@ export default function MedicationDetail() {
             {editingEndDate ? (
               <div className="mt-3 space-y-2 ml-8">
                 <label className="text-sm font-semibold text-foreground">Data de término</label>
-                <Input
-                  type="date"
-                  value={editEndDate}
-                  onChange={e => setEditEndDate(e.target.value)}
-                  className="rounded-xl h-10"
-                  min={med.startDate}
-                />
+                <Input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)} className="rounded-xl h-10" min={med.startDate} />
                 <div className="flex gap-2">
                   <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveEndDate}>
                     <Check className="h-3.5 w-3.5" /> Salvar
@@ -231,9 +276,7 @@ export default function MedicationDetail() {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm ml-8">
-                {med.endDate
-                  ? `Término: ${new Date(med.endDate).toLocaleDateString("pt-BR")}`
-                  : "Sem data de término definida"}
+                {med.endDate ? `Término: ${new Date(med.endDate).toLocaleDateString("pt-BR")}` : "Sem data de término definida"}
               </p>
             )}
           </div>
@@ -251,12 +294,7 @@ export default function MedicationDetail() {
 
             {editingNotes ? (
               <div className="space-y-2 mt-2">
-                <Textarea
-                  value={editNotes}
-                  onChange={e => setEditNotes(e.target.value)}
-                  placeholder="Ex: Tomar com água, após refeição..."
-                  className="rounded-xl min-h-[80px] resize-none"
-                />
+                <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} placeholder="Ex: Tomar com água, após refeição..." className="rounded-xl min-h-[80px] resize-none" />
                 <div className="flex gap-2">
                   <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveNotes}>
                     <Check className="h-3.5 w-3.5" /> Salvar
@@ -267,9 +305,7 @@ export default function MedicationDetail() {
                 </div>
               </div>
             ) : (
-              <p className="text-foreground/80 text-sm">
-                {med.notes || "Nenhuma observação."}
-              </p>
+              <p className="text-foreground/80 text-sm">{med.notes || "Nenhuma observação."}</p>
             )}
           </div>
 
@@ -297,14 +333,7 @@ export default function MedicationDetail() {
 
               {editingStock ? (
                 <div className="space-y-2 ml-8">
-                  <Input
-                    type="number"
-                    value={editStock}
-                    onChange={e => setEditStock(e.target.value)}
-                    min={0}
-                    className="rounded-xl h-10"
-                    placeholder="Quantidade atual"
-                  />
+                  <Input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} min={0} className="rounded-xl h-10" placeholder="Quantidade atual" />
                   <div className="flex gap-2">
                     <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveStock}>
                       <Check className="h-3.5 w-3.5" /> Salvar
@@ -324,9 +353,7 @@ export default function MedicationDetail() {
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        stockLow ? "bg-destructive" : "bg-primary"
-                      }`}
+                      className={`h-full rounded-full transition-all duration-500 ${stockLow ? "bg-destructive" : "bg-primary"}`}
                       style={{ width: `${stockPercentage ?? 0}%` }}
                     />
                   </div>
