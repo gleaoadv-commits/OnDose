@@ -23,20 +23,27 @@ Deno.serve(async (req) => {
       throw new Error("WhatsApp credentials not configured");
     }
 
-    // Find upcoming doses in the next 5 minutes that haven't been taken
     const now = new Date();
-    const fiveMinLater = new Date(now.getTime() + 5 * 60 * 1000);
+
+    // Look for events in a ±2 minute window around "now" that haven't been taken
+    // This handles timezone drift and cron timing imprecision
+    const windowStart = new Date(now.getTime() - 2 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + 2 * 60 * 1000);
+
+    console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
 
     const { data: events, error: eventsError } = await supabase
       .from("schedule_events")
       .select("*")
       .eq("taken", false)
-      .gte("scheduled_time", now.toISOString())
-      .lte("scheduled_time", fiveMinLater.toISOString());
+      .gte("scheduled_time", windowStart.toISOString())
+      .lte("scheduled_time", windowEnd.toISOString());
 
     if (eventsError) {
       throw new Error(`Error fetching events: ${eventsError.message}`);
     }
+
+    console.log(`Found ${events?.length ?? 0} events in window`);
 
     if (!events || events.length === 0) {
       return new Response(
@@ -68,9 +75,13 @@ Deno.serve(async (req) => {
 
     for (const event of events) {
       const profile = profileMap.get(event.user_id);
-      if (!profile || !profile.whatsapp_number) continue;
+      if (!profile || !profile.whatsapp_number) {
+        console.log(`No WhatsApp number for user ${event.user_id}`);
+        continue;
+      }
 
       const phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
+      console.log(`Sending WhatsApp to ${phone} for event ${event.id} (${event.medication_name} at ${event.scheduled_time})`);
 
       try {
         const response = await fetch(
@@ -103,13 +114,17 @@ Deno.serve(async (req) => {
           }
         );
 
+        const result = await response.json();
+
         if (response.ok) {
           sent++;
+          console.log(`WhatsApp sent successfully to ${phone}, messageId: ${result.messages?.[0]?.id}`);
         } else {
-          const errBody = await response.json();
-          errors.push(`User ${event.user_id}: ${JSON.stringify(errBody)}`);
+          console.error(`WhatsApp API error for user ${event.user_id}:`, JSON.stringify(result));
+          errors.push(`User ${event.user_id}: ${JSON.stringify(result)}`);
         }
       } catch (err) {
+        console.error(`Exception for user ${event.user_id}:`, err.message);
         errors.push(`User ${event.user_id}: ${err.message}`);
       }
     }
