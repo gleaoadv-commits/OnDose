@@ -704,17 +704,19 @@ export default function CaregiverDashboard() {
                     <Input value={addMedDosage} onChange={e => setAddMedDosage(e.target.value)} placeholder="Ex: 50mg" className="mt-1 rounded-xl text-sm h-10" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="min-w-0">
+                <div className="grid grid-cols-2 gap-2 overflow-hidden">
+                  <div className="min-w-0 overflow-hidden">
                     <Label className="text-xs font-semibold">Horário</Label>
-                    <Input type="time" value={addMedTimes} onChange={e => setAddMedTimes(e.target.value)} className="mt-1 rounded-xl text-sm h-10 font-bold w-full" />
+                    <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                      <input type="time" value={addMedTimes} onChange={e => setAddMedTimes(e.target.value)} className="w-full h-full px-3 text-sm font-bold bg-transparent outline-none min-w-0" />
+                    </div>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <Label className="text-xs font-semibold">Frequência</Label>
                     <select
                       value={addMedFrequency}
                       onChange={e => setAddMedFrequency(e.target.value)}
-                      className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring truncate"
+                      className="mt-1 w-full h-10 rounded-xl border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value="1x-dia">1x ao dia</option>
                       <option value="2x-dia">2x ao dia</option>
@@ -724,14 +726,18 @@ export default function CaregiverDashboard() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="min-w-0">
+                <div className="grid grid-cols-2 gap-2 overflow-hidden">
+                  <div className="min-w-0 overflow-hidden">
                     <Label className="text-xs font-semibold">Data início</Label>
-                    <Input type="date" value={addMedStartDate} onChange={e => setAddMedStartDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+                    <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                      <input type="date" value={addMedStartDate} onChange={e => setAddMedStartDate(e.target.value)} className="w-full h-full px-3 text-sm bg-transparent outline-none min-w-0" />
+                    </div>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <Label className="text-xs font-semibold">Data fim</Label>
-                    <Input type="date" value={addMedEndDate} onChange={e => setAddMedEndDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" placeholder="Opcional" />
+                    <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                      <input type="date" value={addMedEndDate} onChange={e => setAddMedEndDate(e.target.value)} className="w-full h-full px-3 text-sm bg-transparent outline-none min-w-0" />
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -1048,8 +1054,8 @@ export default function CaregiverDashboard() {
             </div>
 
             {/* Horário + Frequência */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="min-w-0">
+            <div className="grid grid-cols-2 gap-2 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">
                 <Label className="text-xs font-semibold">Horário(s)</Label>
                 <Input
                   value={editMedTimes}
@@ -1058,7 +1064,7 @@ export default function CaregiverDashboard() {
                   className="mt-1 rounded-xl text-sm h-10 w-full"
                 />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 overflow-hidden">
                 <Label className="text-xs font-semibold">Frequência</Label>
                 <select
                   value={editMedFrequency}
@@ -1080,14 +1086,18 @@ export default function CaregiverDashboard() {
             </div>
 
             {/* Data início + fim */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="min-w-0">
+            <div className="grid grid-cols-2 gap-2 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">
                 <Label className="text-xs font-semibold">Data início</Label>
-                <Input type="date" value={editMedStartDate} onChange={e => setEditMedStartDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+                <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                  <input type="date" value={editMedStartDate} onChange={e => setEditMedStartDate(e.target.value)} className="w-full h-full px-3 text-sm bg-transparent outline-none min-w-0" />
+                </div>
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 overflow-hidden">
                 <Label className="text-xs font-semibold">Data fim</Label>
-                <Input type="date" value={editMedEndDate} onChange={e => setEditMedEndDate(e.target.value)} className="mt-1 rounded-xl text-sm h-10 w-full" />
+                <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                  <input type="date" value={editMedEndDate} onChange={e => setEditMedEndDate(e.target.value)} className="w-full h-full px-3 text-sm bg-transparent outline-none min-w-0" />
+                </div>
               </div>
             </div>
 
@@ -1096,13 +1106,15 @@ export default function CaregiverDashboard() {
               <Label className="text-xs font-semibold flex items-center gap-1.5">
                 <span className="text-amber-500">⏸</span> Suspender até (opcional)
               </Label>
-              <Input
-                type="date"
-                value={editMedPauseUntil}
-                onChange={e => setEditMedPauseUntil(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="mt-1 rounded-xl text-sm h-10 w-full"
-              />
+              <div className="mt-1 overflow-hidden rounded-xl border border-input bg-background h-10 flex items-center">
+                <input
+                  type="date"
+                  value={editMedPauseUntil}
+                  onChange={e => setEditMedPauseUntil(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full h-full px-3 text-sm bg-transparent outline-none min-w-0"
+                />
+              </div>
               {editMedPauseUntil && (
                 <button
                   className="text-[10px] text-muted-foreground underline mt-1"
