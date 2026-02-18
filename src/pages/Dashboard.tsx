@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, X, Trash2, Crown, Ban } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, X, Trash2, Crown, Ban, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +134,19 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 
 export default function Dashboard() {
   const { medications, schedule, canAddMedication, plan, devPlanOverride, setDevPlanOverride, loading } = useApp();
+  const { user } = useAuth();
   const [showDevPanel, setShowDevPanel] = useState(false);
+  const [pendingLinks, setPendingLinks] = useState(0);
+
+  useEffect(() => {
+    if (!user || plan !== "premium") return;
+    supabase
+      .from("family_links")
+      .select("id", { count: "exact", head: true })
+      .eq("primary_user_id", user.id)
+      .eq("status", "pending")
+      .then(({ count }) => setPendingLinks(count ?? 0));
+  }, [user, plan]);
 
   const FREE_LIMIT = 2;
   const activeMeds = medications.filter(m => m.status === "ativo" || m.status === "pausado");
@@ -173,6 +187,27 @@ export default function Dashboard() {
 
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
+
+      {/* Pending family link notifications */}
+      {pendingLinks > 0 && (
+        <Link to="/vinculos">
+          <Card className="p-3 rounded-xl border-amber-500/30 bg-amber-500/8 flex items-center gap-3 card-hover">
+            <div className="relative shrink-0">
+              <Bell className="h-5 w-5 text-amber-500" />
+              <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {pendingLinks}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">
+                {pendingLinks === 1 ? "1 familiar aguarda aprovação" : `${pendingLinks} familiares aguardam aprovação`}
+              </p>
+              <p className="text-xs text-muted-foreground">Toque para aprovar ou rejeitar</p>
+            </div>
+            <Users className="h-4 w-4 text-amber-500 shrink-0" />
+          </Card>
+        </Link>
+      )}
 
       {/* Adherence streak + weekly summary */}
       {schedule.length > 0 && <AdherenceStats schedule={schedule} />}

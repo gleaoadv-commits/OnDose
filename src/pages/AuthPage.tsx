@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, User, Eye, EyeOff, Users, Hash, Crown } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Users } from "lucide-react";
 import OnDoseLogo from "@/components/OnDoseLogo";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,7 +17,6 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [primaryCode, setPrimaryCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -44,25 +43,8 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/");
       } else {
-        // If caregiver signup, validate the primary code first
-        if (isCaregiver) {
-          if (!primaryCode.trim()) {
-            toast({ title: "Erro", description: "Informe o ID do usuário principal.", variant: "destructive" });
-            setLoading(false);
-            return;
-          }
-          // Verify the code exists using a security-definer RPC (works without auth session)
-          const { data: primaryUserId } = await supabase
-            .rpc("get_user_id_by_code", { p_user_code: primaryCode.trim().toUpperCase() });
-          if (!primaryUserId) {
-            toast({ title: "Erro", description: "ID do usuário principal não encontrado. Verifique o código.", variant: "destructive" });
-            setLoading(false);
-            return;
-          }
-        }
-
         const redirectUrl = window.location.origin;
-        const { data: signUpData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -75,24 +57,10 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // If caregiver, create the family link after signup
-        if (isCaregiver && signUpData.user) {
-          const { data: primaryUserId } = await supabase
-            .rpc("get_user_id_by_code", { p_user_code: primaryCode.trim().toUpperCase() });
-
-          if (primaryUserId) {
-            await supabase.from("family_links").insert({
-              primary_user_id: primaryUserId as string,
-              caregiver_user_id: signUpData.user.id,
-              status: "pending",
-            });
-          }
-        }
-
         toast({
           title: "Conta criada!",
           description: isCaregiver
-            ? "Verifique seu e-mail. Após confirmar, aguarde o usuário principal aprovar o vínculo."
+            ? "Verifique seu e-mail para confirmar o cadastro. Após confirmar, faça login para obter seu código de familiar."
             : "Verifique seu e-mail para confirmar o cadastro.",
         });
       }
@@ -186,6 +154,13 @@ export default function AuthPage() {
                   </Button>
                 </div>
 
+                {isCaregiver && (
+                  <div className="p-3 rounded-2xl bg-primary/5 border border-primary/20 text-sm text-muted-foreground leading-relaxed">
+                    <p className="font-semibold text-foreground mb-1">Como funciona?</p>
+                    <p>Após criar sua conta, você receberá um código único. Compartilhe-o com o paciente para que ele possa te vincular.</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-sm font-bold">Nome</Label>
                   <div className="relative">
@@ -200,39 +175,6 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
-
-                {isCaregiver && (
-                  <div className="space-y-3">
-                    <Card className="p-4 border-amber-500/30 bg-amber-500/5 rounded-2xl">
-                      <div className="flex items-start gap-2.5">
-                        <Crown className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-bold text-foreground">Recurso Premium</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            O paciente principal precisa ter o plano <span className="font-bold text-amber-600">Premium</span> ativo para vincular familiares.
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                    <div className="space-y-2">
-                      <Label htmlFor="primaryCode" className="text-sm font-bold">ID do Paciente Principal</Label>
-                      <div className="relative">
-                        <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
-                        <Input
-                          id="primaryCode"
-                          placeholder="Ex: DC-A1B2C3"
-                          value={primaryCode}
-                          onChange={e => setPrimaryCode(e.target.value.toUpperCase())}
-                          className="pl-11 h-13 text-elder-sm rounded-2xl border-border/60 focus:border-primary uppercase tracking-widest font-bold"
-                          required
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Peça ao paciente o código ID que aparece no perfil dele.
-                      </p>
-                    </div>
-                  </div>
-                )}
               </>
             )}
 
