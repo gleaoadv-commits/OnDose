@@ -65,6 +65,9 @@ serve(async (req) => {
       mode: "subscription",
       payment_method_types: ["card", "boleto"],
       payment_method_options: {
+        card: {
+          request_three_d_secure: "automatic",
+        },
         boleto: {
           expires_after_days: 3,
         },
