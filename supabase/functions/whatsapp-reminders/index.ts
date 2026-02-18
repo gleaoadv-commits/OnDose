@@ -123,7 +123,8 @@ Deno.serve(async (req) => {
       }
 
       const plural = group.meds.length > 1 ? "seus medicamentos" : "seu medicamento";
-      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar ${plural}:\n\n${medsText}\n\n${closing}`;
+      const appLink = "https://ondose.lovable.app";
+      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar ${plural}:\n\n${medsText}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
       console.log(`Sending UltraMsg to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
 
