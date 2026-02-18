@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,9 @@ function roundToMinute(dateStr: string): string {
   return d.toISOString();
 }
 
+const PRO_PRODUCT = "prod_U0EtzwCBMSlt6o";
+const PREMIUM_PRODUCT = "prod_U0Eub1bzRh41Dc";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,9 +29,13 @@ Deno.serve(async (req) => {
 
     const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
     const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
+    const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
     if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID not configured");
     if (!ULTRAMSG_TOKEN) throw new Error("ULTRAMSG_TOKEN not configured");
+    if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
+
+    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
     const windowStart = new Date(now.getTime() - 2 * 60 * 1000);
@@ -57,21 +65,80 @@ Deno.serve(async (req) => {
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("user_id, display_name, whatsapp_number")
+      .select("user_id, display_name, whatsapp_number, plan_override")
       .in("user_id", userIds)
       .not("whatsapp_number", "is", null);
 
     if (profilesError) throw new Error(`Error fetching profiles: ${profilesError.message}`);
 
-    const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+    // Build a set of paid user IDs (PRO or Premium)
+    const paidUserIds = new Set<string>();
+
+    for (const profile of (profiles || [])) {
+      // Check plan_override first (fast path)
+      if (profile.plan_override === "pro" || profile.plan_override === "premium") {
+        paidUserIds.add(profile.user_id);
+        console.log(`User ${profile.user_id} (${profile.display_name}) is paid via plan_override: ${profile.plan_override}`);
+        continue;
+      }
+
+      // No override — check Stripe subscription
+      try {
+        const { data: authUser } = await supabase.auth.admin.getUserById(profile.user_id);
+        const email = authUser?.user?.email;
+        if (!email) {
+          console.log(`No email for user ${profile.user_id}, skipping`);
+          continue;
+        }
+
+        const customers = await stripe.customers.list({ email, limit: 1 });
+        if (customers.data.length === 0) {
+          console.log(`No Stripe customer for ${email} — free plan, skipping WhatsApp`);
+          continue;
+        }
+
+        const customerId = customers.data[0].id;
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "active",
+          limit: 10,
+        });
+
+        let hasPaidPlan = false;
+        for (const sub of subscriptions.data) {
+          const productId = sub.items.data[0]?.price?.product;
+          if (productId === PRO_PRODUCT || productId === PREMIUM_PRODUCT) {
+            hasPaidPlan = true;
+            break;
+          }
+        }
+
+        if (hasPaidPlan) {
+          paidUserIds.add(profile.user_id);
+          console.log(`User ${profile.user_id} (${profile.display_name}) is paid via Stripe`);
+        } else {
+          console.log(`User ${profile.user_id} (${profile.display_name}) has no active paid plan — skipping`);
+        }
+      } catch (err) {
+        console.error(`Error checking plan for user ${profile.user_id}:`, err.message);
+      }
+    }
+
+    // Only include profiles of paid users with whatsapp
+    const profileMap = new Map(
+      (profiles || [])
+        .filter((p: any) => paidUserIds.has(p.user_id) && p.whatsapp_number)
+        .map((p: any) => [p.user_id, p])
+    );
+
+    console.log(`Paid users with WhatsApp eligible for reminders: ${profileMap.size}`);
 
     // Group events by user_id + rounded scheduled_time
-    // Key: "userId::roundedMinute"
     const groups = new Map<string, { userId: string; roundedTime: string; meds: { name: string; dosage: string }[] }>();
 
     for (const event of events) {
       const profile = profileMap.get(event.user_id);
-      if (!profile || !profile.whatsapp_number) continue;
+      if (!profile) continue;
 
       const roundedTime = roundToMinute(event.scheduled_time);
       const key = `${event.user_id}::${roundedTime}`;
@@ -112,13 +179,11 @@ Deno.serve(async (req) => {
 
       let medsText: string;
       if (group.meds.length === 1) {
-        // Single medication
         const med = group.meds[0];
         medsText = `📌 *${med.name}*\n💊 Dose: ${med.dosage}`;
       } else {
-        // Multiple medications at same time — list all together
         medsText = group.meds
-          .map((med, i) => `📌 *${med.name}*\n   💊 Dose: ${med.dosage}`)
+          .map((med) => `📌 *${med.name}*\n   💊 Dose: ${med.dosage}`)
           .join("\n\n");
       }
 
