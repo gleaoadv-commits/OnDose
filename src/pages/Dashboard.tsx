@@ -78,7 +78,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
           )}
 
           {med.status === "inativo_plano" && (
-            <div className="flex gap-2 mt-3 ml-[60px] items-center">
+            <div className="flex gap-2 mt-3 ml-[60px] items-center flex-wrap">
               <Ban className="h-3.5 w-3.5 text-destructive shrink-0" />
               <p className="text-xs text-destructive font-semibold flex-1">Inabilitado — plano gratuito</p>
               <Link to="/planos">
@@ -86,6 +86,21 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
                   <Crown className="h-3 w-3" /> Reativar
                 </Button>
               </Link>
+              {confirmDelete ? (
+                <>
+                  <span className="text-xs text-destructive font-semibold self-center">Confirmar?</span>
+                  <Button variant="outline" size="sm" onClick={() => deleteMedication(med.id)} className="text-xs rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10 h-8">
+                    <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)} className="text-xs rounded-xl border-border/50 h-8">
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
+                  <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                </Button>
+              )}
             </div>
           )}
 
