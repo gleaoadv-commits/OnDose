@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.nearby-pharmacies]
 verify_jwt = false
+
+[functions.suggest-medication]
+verify_jwt = false
