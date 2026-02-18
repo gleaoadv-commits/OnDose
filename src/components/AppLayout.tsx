@@ -20,7 +20,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { notifications, plan } = useApp();
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => {
+    if (n.read) return false;
+    // For dose reminders, only count if dose hasn't been taken
+    if ((n as any).type === "dose_reminder" && (n as any).eventId) return true;
+    // For info notifications, don't count in badge (they're informational)
+    if ((n as any).type === "info") return false;
+    return true;
+  }).length;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
