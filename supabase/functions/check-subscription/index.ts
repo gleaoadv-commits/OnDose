@@ -90,8 +90,8 @@ serve(async (req) => {
       });
     }
 
-    const PRO_PRODUCT = "prod_TzgHE734N3eI9w";
-    const PREMIUM_PRODUCT = "prod_TzgHpjEhcgv0gi";
+    const PRO_PRODUCT = "prod_U0EtzwCBMSlt6o";
+    const PREMIUM_PRODUCT = "prod_U0Eub1bzRh41Dc";
 
     let plan = "free";
     let subscriptionEnd = null;

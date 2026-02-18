@@ -8,14 +8,14 @@ import { toast } from "sonner";
 
 const TIERS = {
   pro: {
-    monthly: { price_id: "price_1T1gulDG7KKNrw1gSZ5BjB4f", amount: 12.9 },
-    yearly:  { price_id: "price_1T22VgDG7KKNrw1g9bQ2NOHe", amount: 118.8, monthly_equiv: 9.9 },
-    product_id: "prod_TzgHE734N3eI9w",
+    monthly: { price_id: "price_1T2EPyDqdLmQstZG9zWUo1B9", amount: 12.9 },
+    yearly:  { price_id: "price_1T2EQADqdLmQstZGyxXZjRuE", amount: 118.8, monthly_equiv: 9.9 },
+    product_id: "prod_U0EtzwCBMSlt6o",
   },
   premium: {
-    monthly: { price_id: "price_1T1gvNDG7KKNrw1gxHZ4ZRQC", amount: 34.9 },
-    yearly:  { price_id: "price_1T22VyDG7KKNrw1gw3RJSGxf", amount: 298.8, monthly_equiv: 24.9 },
-    product_id: "prod_TzgHpjEhcgv0gi",
+    monthly: { price_id: "price_1T2EQNDqdLmQstZGikpcg2wl", amount: 34.9 },
+    yearly:  { price_id: "price_1T2EQYDqdLmQstZGqYOhvxtI", amount: 298.8, monthly_equiv: 24.9 },
+    product_id: "prod_U0Eub1bzRh41Dc",
   },
 };
 
