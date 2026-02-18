@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X } from "lucide-react";
 import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes, getTimeSlotsCount } from "@/types/medication";
 import { toast } from "sonner";
+import MedicationAutocomplete from "@/components/MedicationAutocomplete";
 
 export default function AddMedication() {
   const navigate = useNavigate();
@@ -101,12 +102,11 @@ export default function AddMedication() {
         <Card className="p-5 space-y-5 rounded-2xl border-border/40">
           <div>
             <Label className="text-sm font-bold">Nome do Medicamento *</Label>
-            <Input
+            <MedicationAutocomplete
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={setName}
               placeholder="Ex: Losartana"
               className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
-              required
             />
           </div>
 
