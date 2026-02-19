@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Save, Copy, Check, FileText, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { User, Phone, Save, Copy, Check, FileText, Lock, Eye, EyeOff, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [userCode, setUserCode] = useState("");
@@ -22,6 +24,8 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -85,7 +89,35 @@ export default function ProfilePage() {
     setSavingPassword(false);
   };
 
-  if (loading) {
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+      });
+      if (error || data?.error) {
+        toast.error("Erro ao excluir conta. Tente novamente.");
+        console.error(error || data?.error);
+        return;
+      }
+      await signOut();
+      navigate("/auth");
+      toast.success("Conta excluída com sucesso.");
+    } catch (err) {
+      toast.error("Erro inesperado. Tente novamente.");
+      console.error(err);
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-6 w-6 border-3 border-primary border-t-transparent rounded-full animate-spin" />
