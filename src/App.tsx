@@ -24,6 +24,7 @@ import PharmaciesPage from "@/pages/PharmaciesPage";
 import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import TermsPage from "@/pages/TermsPage";
+import EmailConfirmedPage from "@/pages/EmailConfirmedPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
             <Route path="/termos" element={<TermsPage />} />
             <Route
               path="/*"

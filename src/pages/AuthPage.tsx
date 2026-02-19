@@ -43,7 +43,7 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/");
       } else {
-        const redirectUrl = window.location.origin;
+        const redirectUrl = `${window.location.origin}/email-confirmado`;
         const { error } = await supabase.auth.signUp({
           email,
           password,
