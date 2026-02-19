@@ -117,7 +117,7 @@ export default function ProfilePage() {
     }
   };
 
-
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-6 w-6 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -243,6 +243,80 @@ export default function ProfilePage() {
             <p className="text-xs text-muted-foreground">Leia os termos do OnDose</p>
           </div>
         </Link>
+      </Card>
+
+      {/* Delete Account Card */}
+      <Card className="p-5 rounded-2xl border-destructive/30 bg-destructive/5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Trash2 className="h-4 w-4 text-destructive" />
+          <p className="text-sm font-bold text-destructive">Excluir conta</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          A exclusão é <strong className="text-foreground">permanente e irreversível</strong>. Todos os seus medicamentos, agenda, exames e dados serão apagados.
+        </p>
+        <div className="flex items-start gap-2 bg-destructive/10 rounded-xl p-3">
+          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <p className="text-xs text-destructive font-medium">
+            Mesmo que você possua um plano ativo (PRO ou Premium), perderá o acesso imediatamente. Nenhum reembolso será realizado.
+          </p>
+        </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full rounded-xl text-sm font-semibold border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir minha conta
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Confirmar exclusão de conta
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3 text-left">
+                <span className="block">
+                  Esta ação é <strong>permanente e irreversível</strong>. Serão excluídos:
+                </span>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Todos os seus medicamentos e agenda</li>
+                  <li>Histórico de doses tomadas</li>
+                  <li>Exames e indicadores de saúde</li>
+                  <li>Vínculos com familiares</li>
+                  <li>Seu acesso ao plano (PRO/Premium), sem reembolso</li>
+                </ul>
+                <span className="block mt-2">
+                  Digite <strong>EXCLUIR</strong> para confirmar:
+                </span>
+                <input
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground mt-1"
+                  placeholder="Digite EXCLUIR"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                />
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                className="rounded-xl"
+                onClick={() => setDeleteConfirmText("")}
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteConfirmText !== "EXCLUIR" || deletingAccount}
+                onClick={handleDeleteAccount}
+              >
+                {deletingAccount ? "Excluindo..." : "Excluir conta definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
     </div>
   );
