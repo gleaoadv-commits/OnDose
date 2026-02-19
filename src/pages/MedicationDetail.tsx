@@ -29,6 +29,7 @@ export default function MedicationDetail() {
   const [editDosage, setEditDosage] = useState("");
   const [editQuantity, setEditQuantity] = useState("");
   const [editFrequency, setEditFrequency] = useState<MedicationFrequency>("1x-dia");
+  const [editStockTotal, setEditStockTotal] = useState<string>("");
 
   // Times editing
   const [editingTimes, setEditingTimes] = useState(false);
@@ -77,6 +78,7 @@ export default function MedicationDetail() {
     setEditDosage(med.dosage);
     setEditQuantity(String(med.quantity));
     setEditFrequency(med.frequency);
+    setEditStockTotal(med.stockTotal != null ? String(med.stockTotal) : "");
     setEditingInfo(true);
   };
   const saveInfo = async () => {
@@ -84,7 +86,15 @@ export default function MedicationDetail() {
     if (!editDosage.trim()) { toast.error("Informe a dosagem."); return; }
     const qty = Number(editQuantity);
     if (isNaN(qty) || qty < 1) { toast.error("Quantidade inválida."); return; }
-    await updateMedication(med.id, { name: editName.trim(), dosage: editDosage.trim(), quantity: qty, frequency: editFrequency });
+    const stockTotalVal = editStockTotal ? Number(editStockTotal) : undefined;
+    await updateMedication(med.id, {
+      name: editName.trim(),
+      dosage: editDosage.trim(),
+      quantity: qty,
+      frequency: editFrequency,
+      stockTotal: stockTotalVal,
+      stockCurrent: stockTotalVal !== undefined && med.stockTotal == null ? stockTotalVal : med.stockCurrent,
+    });
     setEditingInfo(false);
     toast.success("Medicamento atualizado!");
   };
@@ -196,6 +206,18 @@ export default function MedicationDetail() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Cápsulas na embalagem (opcional)</label>
+              <Input
+                type="number"
+                value={editStockTotal}
+                onChange={e => setEditStockTotal(e.target.value)}
+                min={1}
+                placeholder="Ex: 30"
+                className="rounded-xl h-10"
+              />
+              <p className="text-xs text-muted-foreground mt-1">O sistema avisará quando estiver acabando.</p>
             </div>
             <div className="flex gap-2 pt-1">
               <Button size="sm" className="rounded-xl text-xs flex-1 gap-1" onClick={saveInfo}>
