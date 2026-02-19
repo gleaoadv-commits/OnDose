@@ -229,6 +229,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Generate dose reminder notifications for today's pending events
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(todayStart);
+        todayEnd.setDate(todayEnd.getDate() + 1);
+
+        const activeMedIds = new Set(recalcMeds.filter(m => m.status === "ativo").map(m => m.id));
+        const todayPendingEvents = loadedEvents.filter(e => {
+          const d = new Date(e.scheduledTime);
+          return d >= todayStart && d < todayEnd && !e.taken && activeMedIds.has(e.medicationId);
+        });
+
+        const doseNotifs: AppNotification[] = todayPendingEvents.map(e => ({
+          id: crypto.randomUUID(),
+          medicationId: e.medicationId,
+          eventId: e.id,
+          message: `💊 Hora de tomar ${e.medicationName} (${e.dosage})`,
+          time: e.scheduledTime,
+          read: false,
+          type: "dose_reminder" as const,
+        }));
+
+        setNotifications(doseNotifs);
         setMedications(recalcMeds);
         setSchedule(loadedEvents);
       } catch (err) {
