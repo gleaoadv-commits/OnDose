@@ -99,11 +99,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Auto-reactivate medications disabled due to free plan limit
         if (newPlan !== "free") {
-          const inactivePlanMeds = medications.filter(m => m.status === "inativo_plano");
-          for (const med of inactivePlanMeds) {
-            await supabase.from("medications").update({ status: "ativo" }).eq("id", med.id).eq("user_id", user.id);
-          }
-          if (inactivePlanMeds.length > 0) {
+          // Query DB fresh to avoid stale closure issues
+          const { data: inactiveMeds } = await supabase
+            .from("medications")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("status", "inativo_plano");
+
+          if (inactiveMeds && inactiveMeds.length > 0) {
+            const ids = inactiveMeds.map((m: any) => m.id);
+            await supabase.from("medications").update({ status: "ativo" }).in("id", ids).eq("user_id", user.id);
             setMedications(prev => prev.map(m =>
               m.status === "inativo_plano" ? { ...m, status: "ativo" as const } : m
             ));
