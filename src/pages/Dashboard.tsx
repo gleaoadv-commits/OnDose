@@ -13,7 +13,7 @@ import OverdueDoseAlert from "@/components/OverdueDoseAlert";
 import PlanDowngradeModal from "@/components/PlanDowngradeModal";
 import AdherenceStats from "@/components/AdherenceStats";
 
-function MedicationCard({ med, index }: { med: Medication; index: number }) {
+function MedicationCard({ med, index, onReactivate }: { med: Medication; index: number; onReactivate?: (id: string) => void }) {
   const { pauseMedication, resumeMedication, stopMedication, deleteMedication } = useApp();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -84,11 +84,17 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
             <div className="flex gap-2 mt-3 ml-[60px] items-center flex-wrap">
               <Ban className="h-3.5 w-3.5 text-destructive shrink-0" />
               <p className="text-xs text-destructive font-semibold flex-1">Inabilitado — plano gratuito</p>
-              <Link to="/planos">
-                <Button size="sm" variant="outline" className="text-xs rounded-xl h-8 border-pro/40 text-pro hover:bg-pro/5 gap-1">
+              {onReactivate ? (
+                <Button size="sm" variant="outline" className="text-xs rounded-xl h-8 border-pro/40 text-pro hover:bg-pro/5 gap-1" onClick={() => onReactivate(med.id)}>
                   <Crown className="h-3 w-3" /> Reativar
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/planos">
+                  <Button size="sm" variant="outline" className="text-xs rounded-xl h-8 border-pro/40 text-pro hover:bg-pro/5 gap-1">
+                    <Crown className="h-3 w-3" /> Reativar
+                  </Button>
+                </Link>
+              )}
               {confirmDelete ? (
                 <>
                   <span className="text-xs text-destructive font-semibold self-center">Confirmar?</span>
@@ -133,7 +139,7 @@ function MedicationCard({ med, index }: { med: Medication; index: number }) {
 }
 
 export default function Dashboard() {
-  const { medications, schedule, canAddMedication, plan, loading } = useApp();
+  const { medications, schedule, canAddMedication, plan, loading, updateMedication } = useApp();
   const { user } = useAuth();
   const [pendingLinks, setPendingLinks] = useState(0);
 
@@ -157,6 +163,11 @@ export default function Dashboard() {
   const showDowngradeModal = plan === "free" && activeMeds.length > FREE_LIMIT && inactivePlanMeds.length === 0 && !loading;
   // Candidates to inabilitar = only "ativo" ones (not paused)
   const downgradeCandidates = activeMeds.filter(m => m.status === "ativo");
+
+  // Reactivate a single medication when user is already on paid plan
+  const handleReactivateMed = async (id: string) => {
+    await updateMedication(id, { status: "ativo" });
+  };
 
   // Show skeleton while loading data from server
   if (loading) {
@@ -334,7 +345,7 @@ export default function Dashboard() {
             </h3>
             <div className="space-y-2 opacity-70">
               {inactivePlanMeds.map((med, i) => (
-                <MedicationCard key={med.id} med={med} index={i} />
+                <MedicationCard key={med.id} med={med} index={i} onReactivate={plan !== "free" ? handleReactivateMed : undefined} />
               ))}
             </div>
           </div>
