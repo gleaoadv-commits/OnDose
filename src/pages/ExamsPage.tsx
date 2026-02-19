@@ -292,7 +292,7 @@ export default function ExamsPage() {
       </div>
 
       {/* Action buttons */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <label className="cursor-pointer">
           <input
             type="file"
@@ -312,6 +312,27 @@ export default function ExamsPage() {
               {analyzing ? "Analisando..." : "Foto do exame"}
             </p>
             <p className="text-[10px] text-muted-foreground">IA lê automaticamente</p>
+          </Card>
+        </label>
+
+        <label className="cursor-pointer">
+          <input
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handlePhotoUpload}
+            disabled={analyzing}
+          />
+          <Card className="p-4 rounded-2xl border-border/40 text-center card-hover h-full flex flex-col items-center justify-center gap-2">
+            {analyzing ? (
+              <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
+            ) : (
+              <FileText className="h-6 w-6 text-amber-500" />
+            )}
+            <p className="text-xs font-bold text-foreground">
+              {analyzing ? "Analisando..." : "Importar PDF"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">IA lê o arquivo</p>
           </Card>
         </label>
 
