@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = false
+
+[functions.exam-reminders-whatsapp]
+verify_jwt = false
