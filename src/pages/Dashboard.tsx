@@ -3,7 +3,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, Trash2, Crown, Ban, Bell } from "lucide-react";
+import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, Trash2, Crown, Ban, Bell, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -362,6 +362,22 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Support button */}
+      <a
+        href="https://wa.me/553131579232"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 p-4 rounded-2xl border border-success/30 bg-success/8 card-hover"
+      >
+        <div className="bg-success/15 rounded-xl p-2 shrink-0">
+          <MessageCircle className="h-5 w-5 text-success" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground">Suporte via WhatsApp</p>
+          <p className="text-xs text-muted-foreground">Tire dúvidas ou reporte problemas</p>
+        </div>
+      </a>
 
     </div>
   );
