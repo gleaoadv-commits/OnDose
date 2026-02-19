@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "https://ondose.lovable.app";
-const FROM_EMAIL = "OnDose <noreply@ondose.lovable.app>";
+const FROM_EMAIL = "OnDose <onboarding@resend.dev>";
 
 function generateEmailHTML(type: string, confirmUrl: string, userName?: string) {
   const name = userName || "usuário";
