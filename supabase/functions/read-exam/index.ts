@@ -77,8 +77,8 @@ Regras:
       text: "Extraia todos os indicadores deste exame. Responda em JSON.",
     });
 
-    // Use gemini-2.5-pro for PDFs (better document understanding), flash for images
-    const model = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+    // Use gemini-3-flash-preview for all file types
+    const model = "google/gemini-3-flash-preview";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
