@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "https://ondose.lovable.app";
+const FROM_EMAIL = "OnDose <noreply@ondose.lovable.app>";
 
 function generateEmailHTML(type: string, confirmUrl: string, userName?: string) {
   const name = userName || "usuário";
@@ -121,12 +123,47 @@ serve(async (req) => {
 
     const { subject, html } = generateEmailHTML(emailType, confirmUrl || "#", userName);
 
+    // Se não há chave do Resend, retorna no formato padrão do hook
+    if (!RESEND_API_KEY) {
+      console.warn("RESEND_API_KEY não configurada, usando resposta padrão do hook");
+      return new Response(
+        JSON.stringify({ subject, body: html }),
+        { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
+      );
+    }
+
+    // Envia via Resend
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [email],
+        subject,
+        html,
+      }),
+    });
+
+    const resendData = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      console.error("Erro ao enviar via Resend:", resendData);
+      // Fallback: retorna no formato do hook para o Supabase enviar
+      return new Response(
+        JSON.stringify({ subject, body: html }),
+        { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
+      );
+    }
+
+    console.log("E-mail enviado via Resend:", resendData.id);
+
+    // Retorna resposta vazia para indicar que o e-mail já foi enviado
     return new Response(
-      JSON.stringify({ subject, body: html }),
-      {
-        headers: { "Content-Type": "application/json; charset=utf-8" },
-        status: 200,
-      }
+      JSON.stringify({}),
+      { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
     );
   } catch (error) {
     console.error("Erro no email-hook:", error);
