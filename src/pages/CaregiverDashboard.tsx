@@ -105,6 +105,131 @@ const frequencyLabel = (f: string) => {
 const adherenceColor = (r: number) =>
   r >= 80 ? "text-success" : r >= 50 ? "text-amber-500" : "text-destructive";
 
+// ─── DailyDoseHistory Component ────────────────────────────────────────────────
+function DailyDoseHistory({ scheduleEvents }: { scheduleEvents: ScheduleEvent[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Group events by date (last 14 days), newest first
+  const grouped = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const map = new Map<string, { dateKey: string; label: string; ts: number; events: ScheduleEvent[] }>();
+
+    scheduleEvents.forEach(e => {
+      const t = new Date(e.scheduled_time);
+      if (t < from || t > now) return;
+      const dateKey = t.toISOString().split("T")[0];
+      if (!map.has(dateKey)) {
+        const today = new Date();
+        const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+        const isToday = t.toDateString() === today.toDateString();
+        const isYesterday = t.toDateString() === yesterday.toDateString();
+        const label = isToday ? "Hoje" : isYesterday ? "Ontem" : t.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" });
+        map.set(dateKey, { dateKey, label, ts: t.getTime(), events: [] });
+      }
+      map.get(dateKey)!.events.push(e);
+    });
+
+    return Array.from(map.values())
+      .sort((a, b) => b.ts - a.ts)
+      .map(d => ({
+        ...d,
+        events: d.events.sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()),
+        taken: d.events.filter(e => e.taken).length,
+        total: d.events.length,
+      }));
+  }, [scheduleEvents]);
+
+  if (grouped.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Histórico de doses (14 dias)</p>
+      {grouped.map(day => {
+        const isOpen = expanded === day.dateKey;
+        const allTaken = day.taken === day.total;
+        const noneTaken = day.taken === 0;
+        return (
+          <Card key={day.dateKey} className="rounded-2xl border-border/40 overflow-hidden">
+            <button
+              className="w-full flex items-center gap-3 p-3.5 text-left"
+              onClick={() => setExpanded(isOpen ? null : day.dateKey)}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-extrabold ${
+                allTaken ? "bg-success/15 text-success" : noneTaken ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-600"
+              }`}>
+                {day.taken}/{day.total}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground capitalize">{day.label}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {allTaken ? "Todas as doses tomadas ✓" : noneTaken ? "Nenhuma dose registrada" : `${day.taken} de ${day.total} tomadas`}
+                </p>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-90" : ""}`} />
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-border/40 divide-y divide-border/30">
+                {day.events.map(e => {
+                  const scheduledTime = new Date(e.scheduled_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                  const takenTime = e.taken_at ? new Date(e.taken_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : null;
+                  const delayMins = e.taken_at
+                    ? Math.round((new Date(e.taken_at).getTime() - new Date(e.scheduled_time).getTime()) / 60000)
+                    : null;
+                  const onTime = delayMins !== null && Math.abs(delayMins) <= 15;
+
+                  return (
+                    <div key={e.id} className="flex items-center gap-3 px-4 py-3">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: e.color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{e.medication_name}</p>
+                        <p className="text-[10px] text-muted-foreground">{e.dosage}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {e.taken ? (
+                          <>
+                            <div className="flex items-center gap-1 justify-end">
+                              <CheckCircle2 className="h-3 w-3 text-success" />
+                              <span className="text-xs font-bold text-success">
+                                {takenTime || scheduledTime}
+                              </span>
+                            </div>
+                            {takenTime && takenTime !== scheduledTime && (
+                              <p className={`text-[10px] ${onTime ? "text-success" : "text-amber-500"}`}>
+                                {onTime
+                                  ? "No horário"
+                                  : delayMins! > 0
+                                    ? `${delayMins}min atrasado`
+                                    : `${Math.abs(delayMins!)}min adiantado`}
+                              </p>
+                            )}
+                            {(!takenTime || takenTime === scheduledTime) && (
+                              <p className="text-[10px] text-muted-foreground">programado {scheduledTime}</p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs font-bold text-destructive/70">{scheduledTime}</span>
+                            <p className="text-[10px] text-destructive/60">não tomado</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── InactiveScreen Component ─────────────────────────────────────────────────
 function InactiveScreen({
   myProfile,
@@ -1023,6 +1148,9 @@ export default function CaregiverDashboard() {
                 <p className="text-sm text-muted-foreground text-center py-6">Sem dados no período.</p>
               )}
             </Card>
+
+            {/* Histórico diário com horários reais */}
+            <DailyDoseHistory scheduleEvents={scheduleEvents} />
 
             {/* Botão PDF */}
             <Button onClick={handleExportPDF} variant="outline" size="lg"
