@@ -123,46 +123,9 @@ serve(async (req) => {
 
     const { subject, html } = generateEmailHTML(emailType, confirmUrl || "#", userName);
 
-    // Se não há chave do Resend, retorna no formato padrão do hook
-    if (!RESEND_API_KEY) {
-      console.warn("RESEND_API_KEY não configurada, usando resposta padrão do hook");
-      return new Response(
-        JSON.stringify({ subject, body: html }),
-        { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
-      );
-    }
-
-    // Envia via Resend
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [email],
-        subject,
-        html,
-      }),
-    });
-
-    const resendData = await resendResponse.json();
-
-    if (!resendResponse.ok) {
-      console.error("Erro ao enviar via Resend:", resendData);
-      // Fallback: retorna no formato do hook para o Supabase enviar
-      return new Response(
-        JSON.stringify({ subject, body: html }),
-        { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
-      );
-    }
-
-    console.log("E-mail enviado via Resend:", resendData.id);
-
-    // Retorna resposta vazia para indicar que o e-mail já foi enviado
+    // Retorna o HTML para o Supabase entregar via SMTP
     return new Response(
-      JSON.stringify({}),
+      JSON.stringify({ subject, body: html }),
       { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 200 }
     );
   } catch (error) {
