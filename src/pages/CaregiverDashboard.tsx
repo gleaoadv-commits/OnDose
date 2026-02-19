@@ -1043,10 +1043,13 @@ export default function CaregiverDashboard() {
                   .filter(e => e.medication_id === m.id && !e.taken && new Date(e.scheduled_time).getTime() - now.getTime() > -1)
                   .sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0];
 
-                // Overdue: past scheduled events not taken
-                const overdueEvents = scheduleEvents.filter(e =>
-                  e.medication_id === m.id && !e.taken && new Date(e.scheduled_time).getTime() < now.getTime()
-                );
+                // Overdue: today's past scheduled events not taken
+                const todayStart = new Date(now);
+                todayStart.setHours(0, 0, 0, 0);
+                const overdueEvents = scheduleEvents.filter(e => {
+                  const t = new Date(e.scheduled_time).getTime();
+                  return e.medication_id === m.id && !e.taken && t >= todayStart.getTime() && t < now.getTime();
+                });
                 const isOverdue = overdueEvents.length > 0 && m.status === "ativo";
                 const oldestOverdue = isOverdue
                   ? overdueEvents.sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0]
