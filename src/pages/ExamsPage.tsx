@@ -120,13 +120,17 @@ export default function ExamsPage() {
 
   const extractPdfText = async (file: File): Promise<string> => {
     const pdfjsLib = await import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    
+    // Use a worker from CDN with proper configuration for Vite
+    const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
     
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
     const textParts: string[] = [];
     
-    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+    const maxPages = Math.min(pdf.numPages, 10);
+    for (let i = 1; i <= maxPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       const pageText = content.items.map((item: any) => item.str).join(" ");
@@ -146,12 +150,20 @@ export default function ExamsPage() {
       let body: any;
 
       if (isPdf) {
-        const pdfText = await extractPdfText(file);
-        if (!pdfText.trim()) {
-          toast.error("Não foi possível extrair texto do PDF. Tente tirar uma foto do exame.");
+        try {
+          const pdfText = await Promise.race([
+            extractPdfText(file),
+            new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000))
+          ]);
+          if (!pdfText.trim()) {
+            toast.error("Não foi possível extrair texto do PDF. Tente tirar uma foto do exame.");
+            return;
+          }
+          body = { pdfText };
+        } catch {
+          toast.error("Erro ao processar o PDF. Tente tirar uma foto do exame.");
           return;
         }
-        body = { pdfText };
       } else {
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve) => {
