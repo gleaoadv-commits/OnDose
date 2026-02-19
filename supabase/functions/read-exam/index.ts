@@ -49,6 +49,37 @@ Regras:
 - Se não conseguir ler, retorne success=false com uma mensagem em observations
 - Sempre informe que os resultados são apenas informativos e não substituem avaliação médica`;
 
+    const resolvedMime = mimeType || "image/jpeg";
+    const isPdf = resolvedMime === "application/pdf";
+
+    // Build user content parts based on file type
+    const userContent: any[] = [];
+    
+    if (isPdf) {
+      // For PDFs, use inline_data format supported by Gemini
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:application/pdf;base64,${imageBase64}`,
+        },
+      });
+    } else {
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${resolvedMime};base64,${imageBase64}`,
+        },
+      });
+    }
+    
+    userContent.push({
+      type: "text",
+      text: "Extraia todos os indicadores deste exame. Responda em JSON.",
+    });
+
+    // Use gemini-2.5-pro for PDFs (better document understanding), flash for images
+    const model = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -56,24 +87,10 @@ Regras:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}`,
-                },
-              },
-              {
-                type: "text",
-                text: "Extraia todos os indicadores deste exame. Responda em JSON.",
-              },
-            ],
-          },
+          { role: "user", content: userContent },
         ],
       }),
     });
