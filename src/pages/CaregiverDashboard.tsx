@@ -177,7 +177,7 @@ function DailyDoseHistory({ scheduleEvents }: { scheduleEvents: ScheduleEvent[] 
                   const delayMins = e.taken_at
                     ? Math.round((new Date(e.taken_at).getTime() - new Date(e.scheduled_time).getTime()) / 60000)
                     : null;
-                  const onTime = delayMins !== null && Math.abs(delayMins) <= 15;
+                  const onTime = delayMins !== null && Math.abs(delayMins) <= 5;
 
                   return (
                     <div key={e.id} className="flex items-center gap-3 px-4 py-3">
