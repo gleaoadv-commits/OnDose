@@ -123,14 +123,22 @@ serve(async (req) => {
 
     for (const sub of subscriptions.data) {
       const productId = sub.items.data[0]?.price?.product;
+      // current_period_end can be a number (unix timestamp) or string — handle both
+      const periodEnd = sub.current_period_end;
+      let endIso: string | null = null;
+      if (periodEnd != null) {
+        const ms = typeof periodEnd === "number" ? periodEnd * 1000 : Number(periodEnd) * 1000;
+        const d = new Date(ms);
+        endIso = isNaN(d.getTime()) ? null : d.toISOString();
+      }
       if (productId === PREMIUM_PRODUCT) {
         plan = "premium";
-        subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+        subscriptionEnd = endIso;
         break;
       }
       if (productId === PRO_PRODUCT) {
         plan = "pro";
-        subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+        subscriptionEnd = endIso;
       }
     }
 
