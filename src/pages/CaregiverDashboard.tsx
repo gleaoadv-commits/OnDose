@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import OnDoseLogo from "@/components/OnDoseLogo";
+import DosageInput from "@/components/DosageInput";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -957,16 +958,11 @@ export default function CaregiverDashboard() {
                 <p className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                   <Pill className="h-3.5 w-3.5" /> Novo medicamento para {primaryProfile?.display_name}
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs font-semibold">Nome *</Label>
-                    <Input value={addMedName} onChange={e => setAddMedName(e.target.value)} placeholder="Ex: Losartana" className="mt-1 rounded-xl text-sm h-10" />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold">Dosagem *</Label>
-                    <Input value={addMedDosage} onChange={e => setAddMedDosage(e.target.value)} placeholder="Ex: 50mg" className="mt-1 rounded-xl text-sm h-10" />
-                  </div>
+                <div>
+                  <Label className="text-xs font-semibold">Nome *</Label>
+                  <Input value={addMedName} onChange={e => setAddMedName(e.target.value)} placeholder="Ex: Losartana" className="mt-1 rounded-xl text-sm h-10" />
                 </div>
+                <DosageInput value={addMedDosage} onChange={setAddMedDosage} compact />
                 <div className="grid grid-cols-2 gap-2 overflow-hidden">
                   <div className="min-w-0 overflow-hidden">
                     <Label className="text-xs font-semibold">Horário</Label>
@@ -1346,16 +1342,11 @@ export default function CaregiverDashboard() {
 
           <div className="space-y-3 py-2">
             {/* Nome + Dosagem */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="min-w-0">
-                <Label className="text-xs font-semibold">Nome *</Label>
-                <Input value={editMedName} onChange={e => setEditMedName(e.target.value)} className="mt-1 rounded-xl text-sm h-10" />
-              </div>
-              <div className="min-w-0">
-                <Label className="text-xs font-semibold">Dosagem *</Label>
-                <Input value={editMedDosage} onChange={e => setEditMedDosage(e.target.value)} className="mt-1 rounded-xl text-sm h-10" />
-              </div>
+            <div>
+              <Label className="text-xs font-semibold">Nome *</Label>
+              <Input value={editMedName} onChange={e => setEditMedName(e.target.value)} className="mt-1 rounded-xl text-sm h-10" />
             </div>
+            <DosageInput value={editMedDosage} onChange={setEditMedDosage} compact />
 
             {/* Horário + Frequência */}
             <div className="grid grid-cols-2 gap-2 overflow-hidden">

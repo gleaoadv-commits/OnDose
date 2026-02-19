@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X, CalendarDays } from "l
 import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes } from "@/types/medication";
 import { toast } from "sonner";
 import MedicationAutocomplete from "@/components/MedicationAutocomplete";
+import DosageInput from "@/components/DosageInput";
 import MedicationTips from "@/components/MedicationTips";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -156,17 +157,9 @@ export default function AddMedication() {
           />
 
           {/* Dosagem + Quantidade side by side */}
+          <DosageInput value={dosage} onChange={setDosage} />
+
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-sm font-bold">Dosagem *</Label>
-              <Input
-                value={dosage}
-                onChange={e => setDosage(e.target.value)}
-                placeholder="Ex: 50mg"
-                className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
-                required
-              />
-            </div>
             <div>
               <Label className="text-sm font-bold">Quant. comprimidos</Label>
               <Input
