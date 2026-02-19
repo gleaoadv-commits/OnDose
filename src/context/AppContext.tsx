@@ -134,29 +134,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setSubscriptionReady(true);
     }
-  }, [user, medications, plan]);
+  }, [user, plan]);
 
-  // Load data from DB on mount
+  // Load data from DB on mount — subscription check runs in parallel with DB queries
   useEffect(() => {
     if (!user) return;
     
     const loadData = async () => {
       setLoading(true);
       try {
-        const [medsRes, eventsRes, rolesRes] = await Promise.all([
+        // Get session token first (fast, local)
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes.data?.session?.access_token;
+
+        // Run DB queries AND subscription check simultaneously — no delay
+        const [medsRes, eventsRes, rolesRes, subData] = await Promise.all([
           supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("schedule_events").select("*").eq("user_id", user.id),
           supabase.from("user_roles").select("role").eq("user_id", user.id),
+          token
+            ? supabase.functions.invoke("check-subscription", {
+                headers: { Authorization: `Bearer ${token}` },
+              }).then(r => r.data).catch(() => null)
+            : Promise.resolve(null),
         ]);
 
-        // Admin users get PRO plan
+        // Apply subscription result immediately — before rendering
+        if (subData?.plan) {
+          setPlan(subData.plan as UserPlan);
+          setSubscriptionEnd(subData.subscription_end ?? null);
+          setCancelAtPeriodEnd(subData.cancel_at_period_end === true);
+        }
+        setSubscriptionReady(true);
+
+        // Admin users get PRO plan (overrides subscription)
         if (rolesRes.data?.some((r: any) => r.role === "admin")) {
           setIsAdmin(true);
           setPlan("pro");
         }
-
-        // Check Stripe subscription in parallel (non-blocking for UI)
-        refreshSubscription();
 
         const loadedMeds: Medication[] = (medsRes.data ?? []).map((row: any) => ({
           id: row.id,
@@ -204,10 +219,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Auto-reactivate medications paused due to free plan limit
+        if (subData?.plan && subData.plan !== "free") {
+          const inactiveDueToPlan = recalcMeds.filter(m => m.status === "inativo_plano");
+          if (inactiveDueToPlan.length > 0) {
+            const ids = inactiveDueToPlan.map(m => m.id);
+            await supabase.from("medications").update({ status: "ativo" }).in("id", ids).eq("user_id", user.id);
+            inactiveDueToPlan.forEach(m => { m.status = "ativo"; });
+          }
+        }
+
         setMedications(recalcMeds);
         setSchedule(loadedEvents);
       } catch (err) {
         console.error("Error loading data:", err);
+        setSubscriptionReady(true);
       } finally {
         setLoading(false);
       }
