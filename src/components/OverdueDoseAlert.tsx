@@ -223,7 +223,7 @@ export default function OverdueDoseAlert() {
 
       {/* Confirm taken dialog */}
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="rounded-3xl max-w-[320px] p-0 overflow-hidden gap-0">
+        <DialogContent className="rounded-3xl w-[92vw] max-w-[360px] p-0 overflow-hidden gap-0">
           <DialogHeader className="px-6 pt-6 pb-4 text-center">
             <DialogTitle className="text-base font-bold text-foreground">
               Quando você tomou?
