@@ -41,7 +41,7 @@ const features = [
 ];
 
 export default function PlansPage() {
-  const { plan, subscriptionEnd, refreshSubscription } = useApp();
+  const { plan, subscriptionEnd, cancelAtPeriodEnd, refreshSubscription } = useApp();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
@@ -125,6 +125,21 @@ export default function PlansPage() {
             <h3 className="text-sm font-bold text-foreground">Gerenciamento da assinatura</h3>
           </div>
 
+          {/* Cancellation scheduled banner */}
+          {cancelAtPeriodEnd && subscriptionEnd && (
+            <Alert className="border-destructive/40 bg-destructive/5 py-2.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+              <AlertDescription className="text-xs text-muted-foreground ml-1">
+                <strong className="text-destructive">Cancelamento agendado:</strong> Seu acesso ao plano{" "}
+                {plan === "pro" ? "PRO" : "Premium"} ficará ativo até{" "}
+                <strong className="text-foreground">
+                  {new Date(subscriptionEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                </strong>
+                {" "}— após essa data, você retorna ao plano Gratuito automaticamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {subscriptionEnd && (
             <div className="flex items-start gap-2 text-xs text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
@@ -137,42 +152,61 @@ export default function PlansPage() {
             </div>
           )}
 
-          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-            <TrendingUp className="h-3.5 w-3.5 mt-0.5 shrink-0 text-success" />
-            <span>
-              <strong className="text-foreground">Upgrade:</strong> Ao mudar para um plano superior, cobraremos apenas o valor proporcional ao período restante.
-            </span>
-          </div>
+          {!cancelAtPeriodEnd && (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5 mt-0.5 shrink-0 text-success" />
+              <span>
+                <strong className="text-foreground">Upgrade:</strong> Ao mudar para um plano superior, cobraremos apenas o valor proporcional ao período restante.
+              </span>
+            </div>
+          )}
 
-          <Alert className="border-amber-500/30 bg-amber-500/5 py-2.5">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            <AlertDescription className="text-xs text-muted-foreground ml-1">
-              <strong className="text-foreground">Cancelamento:</strong> Não implica devolução de valores pagos.
-              {subscriptionEnd && (
-                <span> Ao cancelar, você mantém o acesso até{" "}
-                  <strong className="text-amber-600">
-                    {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
-                  </strong>
-                  {" "}e retorna ao plano Gratuito automaticamente.
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
+          {!cancelAtPeriodEnd && (
+            <Alert className="border-amber-500/30 bg-amber-500/5 py-2.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+              <AlertDescription className="text-xs text-muted-foreground ml-1">
+                <strong className="text-foreground">Cancelamento:</strong> Não implica devolução de valores pagos.
+                {subscriptionEnd && (
+                  <span> Ao cancelar, você mantém o acesso até{" "}
+                    <strong className="text-amber-600">
+                      {new Date(subscriptionEnd).toLocaleDateString("pt-BR")}
+                    </strong>
+                    {" "}e retorna ao plano Gratuito automaticamente.
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full rounded-xl text-sm font-semibold"
-            onClick={handleManageSubscription}
-            disabled={loadingPortal}
-          >
-            {loadingPortal ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Settings className="h-4 w-4 mr-2" />}
-            Gerenciar / Cancelar assinatura
-          </Button>
+          {!cancelAtPeriodEnd && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-xl text-sm font-semibold"
+              onClick={handleManageSubscription}
+              disabled={loadingPortal}
+            >
+              {loadingPortal ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Settings className="h-4 w-4 mr-2" />}
+              Gerenciar / Cancelar assinatura
+            </Button>
+          )}
+
+          {cancelAtPeriodEnd && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-xl text-sm font-semibold border-primary/40 text-primary hover:bg-primary/5"
+              onClick={handleManageSubscription}
+              disabled={loadingPortal}
+            >
+              {loadingPortal ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Settings className="h-4 w-4 mr-2" />}
+              Reativar assinatura
+            </Button>
+          )}
 
           <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
             <Info className="h-3 w-3 mt-0.5 shrink-0" />
-            <span>O cancelamento é processado pelo portal seguro do Stripe.</span>
+            <span>Gerenciamento processado pelo portal seguro do Stripe.</span>
           </div>
         </Card>
       )}
