@@ -141,7 +141,7 @@ export default function AuthPage() {
                     onClick={() => setIsCaregiver(false)}
                   >
                     <User className="h-4 w-4 mr-1.5" />
-                    Paciente
+                    Usuário
                   </Button>
                   <Button
                     type="button"
