@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-const MG_OPTIONS = ["5mg", "10mg", "15mg", "20mg", "25mg", "50mg", "75mg", "100mg", "150mg", "200mg", "500mg", "750mg", "1000mg"];
+const MG_OPTIONS = ["0,5mg", "1mg", "5mg", "10mg", "15mg", "20mg", "25mg", "50mg", "75mg", "100mg", "150mg", "200mg", "500mg", "750mg", "1000mg"];
 
 interface DosageInputProps {
   value: string;
