@@ -13,17 +13,17 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { imageBase64, mimeType } = await req.json();
+    const { imageBase64, mimeType, pdfText } = await req.json();
 
-    if (!imageBase64) {
+    if (!imageBase64 && !pdfText) {
       return new Response(
-        JSON.stringify({ error: "imageBase64 is required" }),
+        JSON.stringify({ error: "imageBase64 ou pdfText é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const systemPrompt = `Você é um médico laboratorista especialista em interpretar resultados de exames.
-Analise a foto do exame enviada e extraia TODOS os indicadores encontrados.
+Analise o exame enviado e extraia TODOS os indicadores encontrados.
 
 Responda SEMPRE em JSON puro (sem markdown) com a seguinte estrutura:
 {
@@ -49,36 +49,34 @@ Regras:
 - Se não conseguir ler, retorne success=false com uma mensagem em observations
 - Sempre informe que os resultados são apenas informativos e não substituem avaliação médica`;
 
-    const resolvedMime = mimeType || "image/jpeg";
-    const isPdf = resolvedMime === "application/pdf";
+    let userContent: any[];
 
-    // Build user content parts based on file type
-    const userContent: any[] = [];
-    
-    if (isPdf) {
-      // For PDFs, use inline_data format supported by Gemini
-      userContent.push({
-        type: "image_url",
-        image_url: {
-          url: `data:application/pdf;base64,${imageBase64}`,
+    if (pdfText) {
+      // PDF: text was extracted on the client, send as text
+      userContent = [
+        {
+          type: "text",
+          text: `Aqui está o texto extraído de um PDF de exame laboratorial. Extraia todos os indicadores. Responda em JSON.\n\n${pdfText}`,
         },
-      });
+      ];
     } else {
-      userContent.push({
-        type: "image_url",
-        image_url: {
-          url: `data:${resolvedMime};base64,${imageBase64}`,
+      // Image: send as image_url
+      const resolvedMime = mimeType || "image/jpeg";
+      userContent = [
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:${resolvedMime};base64,${imageBase64}`,
+          },
         },
-      });
+        {
+          type: "text",
+          text: "Extraia todos os indicadores deste exame. Responda em JSON.",
+        },
+      ];
     }
-    
-    userContent.push({
-      type: "text",
-      text: "Extraia todos os indicadores deste exame. Responda em JSON.",
-    });
 
-    // Use gpt-5 for PDFs (better doc understanding), gpt-5-mini for images
-    const model = isPdf ? "openai/gpt-5" : "openai/gpt-5-mini";
+    const model = "openai/gpt-5-mini";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

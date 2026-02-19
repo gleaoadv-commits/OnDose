@@ -118,25 +118,54 @@ export default function ExamsPage() {
     return Array.from(groups.values()).filter((g) => g.points.length > 0);
   }, [indicators, exams]);
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const extractPdfText = async (file: File): Promise<string> => {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const textParts: string[] = [];
+    
+    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map((item: any) => item.str).join(" ");
+      textParts.push(pageText);
+    }
+    
+    return textParts.join("\n");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const isPdf = file.type === "application/pdf";
     setAnalyzing(true);
     try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]);
-        };
-        reader.readAsDataURL(file);
-      });
-      const imageBase64 = await base64Promise;
+      let body: any;
 
-      const { data, error } = await supabase.functions.invoke("read-exam", {
-        body: { imageBase64, mimeType: file.type },
-      });
+      if (isPdf) {
+        const pdfText = await extractPdfText(file);
+        if (!pdfText.trim()) {
+          toast.error("Não foi possível extrair texto do PDF. Tente tirar uma foto do exame.");
+          return;
+        }
+        body = { pdfText };
+      } else {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+          };
+          reader.readAsDataURL(file);
+        });
+        const imageBase64 = await base64Promise;
+        body = { imageBase64, mimeType: file.type };
+      }
+
+      const { data, error } = await supabase.functions.invoke("read-exam", { body });
 
       if (error) throw error;
 
@@ -145,7 +174,6 @@ export default function ExamsPage() {
         return;
       }
 
-      // Auto-fill form
       setExamName(data.exam_name || "");
       if (data.indicators?.length > 0) {
         setManualIndicators(
@@ -299,7 +327,7 @@ export default function ExamsPage() {
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={handlePhotoUpload}
+            onChange={handleFileUpload}
             disabled={analyzing}
           />
           <Card className="p-4 rounded-2xl border-border/40 text-center card-hover h-full flex flex-col items-center justify-center gap-2">
@@ -320,7 +348,7 @@ export default function ExamsPage() {
             type="file"
             accept="application/pdf"
             className="hidden"
-            onChange={handlePhotoUpload}
+            onChange={handleFileUpload}
             disabled={analyzing}
           />
           <Card className="p-4 rounded-2xl border-border/40 text-center card-hover h-full flex flex-col items-center justify-center gap-2">
