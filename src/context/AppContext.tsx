@@ -11,6 +11,7 @@ interface AppState {
   subscriptionEnd: string | null;
   isAdmin: boolean;
   loading: boolean;
+  subscriptionReady: boolean;
   devPlanOverride: UserPlan | null;
   setDevPlanOverride: (plan: UserPlan | null) => void;
   refreshSubscription: () => Promise<void>;
@@ -70,6 +71,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [plan, setPlan] = useState<UserPlan>("free");
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionReady, setSubscriptionReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [devPlanOverride, setDevPlanOverride] = useState<UserPlan | null>(null);
 
@@ -126,6 +128,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error("Error refreshing subscription:", err);
+    } finally {
+      setSubscriptionReady(true);
     }
   }, [user, medications, plan]);
 
@@ -552,7 +556,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, loading, isAdmin,
+      medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, loading, subscriptionReady, isAdmin,
       devPlanOverride, setDevPlanOverride,
       refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
