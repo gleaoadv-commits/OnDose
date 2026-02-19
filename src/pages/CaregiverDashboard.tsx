@@ -1043,6 +1043,23 @@ export default function CaregiverDashboard() {
                   .filter(e => e.medication_id === m.id && !e.taken && new Date(e.scheduled_time).getTime() - now.getTime() > -1)
                   .sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0];
 
+                // Overdue: past scheduled events not taken
+                const overdueEvents = scheduleEvents.filter(e =>
+                  e.medication_id === m.id && !e.taken && new Date(e.scheduled_time).getTime() < now.getTime()
+                );
+                const isOverdue = overdueEvents.length > 0 && m.status === "ativo";
+                const oldestOverdue = isOverdue
+                  ? overdueEvents.sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime())[0]
+                  : null;
+                const overdueMinutes = oldestOverdue
+                  ? Math.round((now.getTime() - new Date(oldestOverdue.scheduled_time).getTime()) / 60000)
+                  : 0;
+                const overdueLabel = overdueMinutes >= 1440
+                  ? `${Math.floor(overdueMinutes / 1440)}d atraso`
+                  : overdueMinutes >= 60
+                    ? `${Math.floor(overdueMinutes / 60)}h atraso`
+                    : `${overdueMinutes}min atraso`;
+
                 const nextDoseTime = nextEvent
                   ? new Date(nextEvent.scheduled_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
                   : null;
@@ -1062,15 +1079,28 @@ export default function CaregiverDashboard() {
                 })();
 
                 return (
-                  <Card key={m.id} className={["p-4 rounded-2xl border-border/40", m.stock_current != null && m.stock_total != null && m.stock_current - Math.ceil(m.stock_total * 0.2) < 1 ? "border-l-4 border-l-destructive" : ""].join(" ")}>
+                  <Card key={m.id} className={["p-4 rounded-2xl border-border/40", isOverdue ? "border-l-4 border-l-destructive" : "", m.stock_current != null && m.stock_total != null && m.stock_current - Math.ceil(m.stock_total * 0.2) < 1 && !isOverdue ? "border-l-4 border-l-destructive" : ""].join(" ")}>
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                           style={{ background: m.color + "20" }}>
-                        <Pill className="h-5 w-5" style={{ color: m.color }} />
+                           style={{ background: isOverdue ? "hsl(var(--destructive) / 0.12)" : m.color + "20" }}>
+                        {isOverdue
+                          ? <AlertTriangle className="h-5 w-5 text-destructive" />
+                          : <Pill className="h-5 w-5" style={{ color: m.color }} />
+                        }
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
+                          {isOverdue && (
+                            <span className="text-[9px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                              🔴 Atrasada · {overdueLabel}
+                            </span>
+                          )}
+                          {!isOverdue && m.status === "ativo" && overdueEvents.length === 0 && nextEvent && (
+                            <span className="text-[9px] font-bold bg-success/15 text-success px-1.5 py-0.5 rounded-full shrink-0">
+                              ✅ Em dia
+                            </span>
+                          )}
                           {m.stock_current != null && m.stock_total != null && m.stock_current - Math.ceil(m.stock_total * 0.2) < 1 && (
                             <span className="text-[9px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full shrink-0">
                               ⚠ Cartela acabando ({m.stock_current} rest.)
@@ -1086,6 +1116,11 @@ export default function CaregiverDashboard() {
                         {m.times.length > 0 && (
                           <p className="text-[10px] text-muted-foreground mt-0.5">
                             🕐 {m.times.join(" · ")}
+                          </p>
+                        )}
+                        {isOverdue && oldestOverdue && (
+                          <p className="text-[10px] font-bold text-destructive mt-1">
+                            ⏰ Dose de {new Date(oldestOverdue.scheduled_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} não foi tomada
                           </p>
                         )}
                         {nextDoseTime && (
