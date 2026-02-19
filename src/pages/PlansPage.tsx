@@ -81,7 +81,7 @@ export default function PlansPage() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.error === "no_customer") {
-        toast.info("Nenhuma assinatura ativa encontrada. Assine um plano para gerenciar.");
+        toast.info("Esta conta possui acesso administrativo. O portal de assinatura Stripe não está disponível.");
         return;
       }
       if (data?.url) {
