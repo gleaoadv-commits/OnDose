@@ -139,7 +139,7 @@ function MedicationCard({ med, index, onReactivate }: { med: Medication; index: 
 }
 
 export default function Dashboard() {
-  const { medications, schedule, canAddMedication, plan, loading, updateMedication } = useApp();
+  const { medications, schedule, canAddMedication, plan, loading, subscriptionReady, updateMedication } = useApp();
   const { user } = useAuth();
   const [pendingLinks, setPendingLinks] = useState(0);
 
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
   // Show downgrade modal when: free plan AND more than FREE_LIMIT active/paused meds
   // AND user hasn't already made a selection (no inativo_plano meds exist yet)
-  const showDowngradeModal = plan === "free" && activeMeds.length > FREE_LIMIT && inactivePlanMeds.length === 0 && !loading;
+  const showDowngradeModal = plan === "free" && subscriptionReady && activeMeds.length > FREE_LIMIT && inactivePlanMeds.length === 0 && !loading;
   // Candidates to inabilitar = only "ativo" ones (not paused)
   const downgradeCandidates = activeMeds.filter(m => m.status === "ativo");
 
