@@ -101,6 +101,7 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
+    // Fetch active subscriptions (includes cancel_at_period_end=true — still active until period ends)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -120,25 +121,30 @@ serve(async (req) => {
 
     let plan = "free";
     let subscriptionEnd = null;
+    let cancelAtPeriodEnd = false;
+
+    function parsePeriodEnd(periodEnd: any): string | null {
+      if (periodEnd == null) return null;
+      const ms = typeof periodEnd === "number" ? periodEnd * 1000 : Number(periodEnd) * 1000;
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    }
 
     for (const sub of subscriptions.data) {
       const productId = sub.items.data[0]?.price?.product;
-      // current_period_end can be a number (unix timestamp) or string — handle both
-      const periodEnd = sub.current_period_end;
-      let endIso: string | null = null;
-      if (periodEnd != null) {
-        const ms = typeof periodEnd === "number" ? periodEnd * 1000 : Number(periodEnd) * 1000;
-        const d = new Date(ms);
-        endIso = isNaN(d.getTime()) ? null : d.toISOString();
-      }
+      const endIso = parsePeriodEnd(sub.current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end);
+      const isCanceling = (sub as any).cancel_at_period_end === true;
+
       if (productId === PREMIUM_PRODUCT) {
         plan = "premium";
         subscriptionEnd = endIso;
+        cancelAtPeriodEnd = isCanceling;
         break;
       }
       if (productId === PRO_PRODUCT) {
         plan = "pro";
         subscriptionEnd = endIso;
+        cancelAtPeriodEnd = isCanceling;
       }
     }
 
@@ -154,10 +160,13 @@ serve(async (req) => {
       logStep("Deactivated family links for non-premium user");
     }
 
+    logStep("Subscription result", { plan, subscriptionEnd, cancelAtPeriodEnd });
+
     return new Response(JSON.stringify({
       subscribed: plan !== "free",
       plan,
       subscription_end: subscriptionEnd,
+      cancel_at_period_end: cancelAtPeriodEnd,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

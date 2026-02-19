@@ -9,6 +9,7 @@ interface AppState {
   notifications: AppNotification[];
   plan: UserPlan;
   subscriptionEnd: string | null;
+  cancelAtPeriodEnd: boolean;
   isAdmin: boolean;
   loading: boolean;
   subscriptionReady: boolean;
@@ -70,6 +71,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [plan, setPlan] = useState<UserPlan>("free");
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(true);
   const [subscriptionReady, setSubscriptionReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -98,6 +100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const previousPlan = plan;
         setPlan(newPlan);
         setSubscriptionEnd(data.subscription_end ?? null);
+        setCancelAtPeriodEnd(data.cancel_at_period_end === true);
 
         // Auto-reactivate medications disabled due to free plan limit
         if (newPlan !== "free") {
@@ -556,7 +559,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, loading, subscriptionReady, isAdmin,
+      medications, schedule, notifications, plan: effectivePlan, subscriptionEnd, cancelAtPeriodEnd, loading, subscriptionReady, isAdmin,
       devPlanOverride, setDevPlanOverride,
       refreshSubscription,
       addMedication, updateMedication, pauseMedication, resumeMedication,
