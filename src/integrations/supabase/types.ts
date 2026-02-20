@@ -274,6 +274,11 @@ export type Database = {
           id: string
           plan_override: string | null
           referred_by: string | null
+          signup_city: string | null
+          signup_country: string | null
+          signup_device: string | null
+          signup_ip: string | null
+          signup_region: string | null
           updated_at: string
           user_code: string
           user_id: string
@@ -287,6 +292,11 @@ export type Database = {
           id?: string
           plan_override?: string | null
           referred_by?: string | null
+          signup_city?: string | null
+          signup_country?: string | null
+          signup_device?: string | null
+          signup_ip?: string | null
+          signup_region?: string | null
           updated_at?: string
           user_code: string
           user_id: string
@@ -300,6 +310,11 @@ export type Database = {
           id?: string
           plan_override?: string | null
           referred_by?: string | null
+          signup_city?: string | null
+          signup_country?: string | null
+          signup_device?: string | null
+          signup_ip?: string | null
+          signup_region?: string | null
           updated_at?: string
           user_code?: string
           user_id?: string

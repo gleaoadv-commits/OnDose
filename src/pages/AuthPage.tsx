@@ -52,7 +52,21 @@ export default function AuthPage() {
         if (referralCode.trim()) {
           signupMeta.referred_by = referralCode.trim().toUpperCase();
         }
-        const { error } = await supabase.auth.signUp({
+
+        // Capture device info
+        const signupDevice = navigator.userAgent || "unknown";
+
+        // Capture geo info via free API (best-effort)
+        let geoData: { city?: string; region?: string; country?: string; ip?: string } = {};
+        try {
+          const geoRes = await fetch("https://ipapi.co/json/");
+          if (geoRes.ok) {
+            const geo = await geoRes.json();
+            geoData = { city: geo.city, region: geo.region, country: geo.country_name, ip: geo.ip };
+          }
+        } catch { /* ignore geo errors */ }
+
+        const { error, data: signupData } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -61,6 +75,17 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
+
+        // Save signup context to profile (best-effort, profile created by trigger)
+        if (signupData?.user?.id) {
+          supabase.from("profiles").update({
+            signup_device: signupDevice,
+            signup_city: geoData.city || null,
+            signup_region: geoData.region || null,
+            signup_country: geoData.country || null,
+            signup_ip: geoData.ip || null,
+          }).eq("user_id", signupData.user.id).then(() => {});
+        }
 
         toast({
           title: "Conta criada!",
