@@ -59,7 +59,10 @@ export default function AuthPage() {
         // Capture geo info via free API (best-effort)
         let geoData: { city?: string; region?: string; country?: string; ip?: string } = {};
         try {
-          const geoRes = await fetch("https://ipapi.co/json/");
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          const geoRes = await fetch("https://ipapi.co/json/", { signal: controller.signal });
+          clearTimeout(timeoutId);
           if (geoRes.ok) {
             const geo = await geoRes.json();
             geoData = { city: geo.city, region: geo.region, country: geo.country_name, ip: geo.ip };
