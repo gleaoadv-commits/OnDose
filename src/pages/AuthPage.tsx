@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, User, Eye, EyeOff, Users } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Users, Gift } from "lucide-react";
 import OnDoseLogo from "@/components/OnDoseLogo";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +20,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -44,14 +45,18 @@ export default function AuthPage() {
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/email-confirmado`;
+        const signupMeta: Record<string, string> = {
+          full_name: name,
+          account_type: isCaregiver ? "caregiver" : "primary",
+        };
+        if (referralCode.trim()) {
+          signupMeta.referred_by = referralCode.trim().toUpperCase();
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              full_name: name,
-              account_type: isCaregiver ? "caregiver" : "primary",
-            },
+            data: signupMeta,
             emailRedirectTo: redirectUrl,
           },
         });
@@ -226,6 +231,26 @@ export default function AuthPage() {
               >
                 Esqueci minha senha
               </button>
+            )}
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="referral" className="text-sm font-bold flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5 text-accent" />
+                  Código de indicação <span className="text-muted-foreground font-normal">(opcional)</span>
+                </Label>
+                <Input
+                  id="referral"
+                  placeholder="Ex: DC-A1B2C3"
+                  value={referralCode}
+                  onChange={e => setReferralCode(e.target.value)}
+                  className="h-12 text-elder-sm rounded-2xl border-border/60 focus:border-primary uppercase"
+                  maxLength={10}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Recebeu um código de um amigo? Cole aqui para participar do programa de indicação.
+                </p>
+              </div>
             )}
 
             {!isLogin && (
