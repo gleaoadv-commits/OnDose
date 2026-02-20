@@ -56,7 +56,8 @@ export default function CalendarPage() {
 
   const monthRaw = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   const monthLabel = monthRaw.charAt(0).toUpperCase() + monthRaw.slice(1).replace(/ De /g, " de ");
-  const selectedDateStr = selectedDate.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const selectedDateRaw = selectedDate.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const selectedDateStr = selectedDateRaw.charAt(0).toUpperCase() + selectedDateRaw.slice(1).replace(/ De /gi, " de ");
 
   const dayEvents = useMemo(() => {
     const start = new Date(selectedDate);

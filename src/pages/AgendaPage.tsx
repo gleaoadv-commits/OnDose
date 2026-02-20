@@ -12,11 +12,12 @@ export default function AgendaPage() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editingTime, setEditingTime] = useState("");
 
-  const dateStr = currentDate.toLocaleDateString("pt-BR", {
+  const dateRaw = currentDate.toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
+  const dateStr = dateRaw.charAt(0).toUpperCase() + dateRaw.slice(1).replace(/ De /gi, " de ");
 
   const activeMedIds = useMemo(
     () => new Set(medications.filter(m => m.status === "ativo").map(m => m.id)),
@@ -91,7 +92,7 @@ export default function AgendaPage() {
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <div className="text-center">
-            <p className="text-elder-base font-bold text-foreground capitalize">{dateStr}</p>
+            <p className="text-elder-base font-bold text-foreground">{dateStr}</p>
             <div className="flex items-center justify-center gap-2 mt-1">
               {isToday && (
                 <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
