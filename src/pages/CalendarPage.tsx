@@ -54,7 +54,8 @@ export default function CalendarPage() {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
-  const monthLabel = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const monthRaw = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const monthLabel = monthRaw.charAt(0).toUpperCase() + monthRaw.slice(1).replace(/ De /g, " de ");
   const selectedDateStr = selectedDate.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
   const dayEvents = useMemo(() => {
