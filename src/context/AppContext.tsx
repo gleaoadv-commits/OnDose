@@ -211,7 +211,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return { ...med, stockCurrent: newStock };
         });
 
-        // Persist recalculated values if they differ
+        // Fix duplicate colors: reassign unique colors to active medications
+        const activeMedsForColor = recalcMeds.filter(m => m.status !== "encerrado");
+        const usedColors = new Set<string>();
+        for (const med of activeMedsForColor) {
+          if (usedColors.has(med.color)) {
+            const newColor = MEDICATION_COLORS.find(c => !usedColors.has(c));
+            if (newColor) {
+              med.color = newColor;
+              supabase.from("medications").update({ color: newColor }).eq("id", med.id).eq("user_id", user.id);
+              // Also update schedule events for this medication
+              supabase.from("schedule_events").update({ color: newColor }).eq("medication_id", med.id).eq("user_id", user.id);
+            }
+          }
+          usedColors.add(med.color);
+        }
+
+        // Persist recalculated stock values if they differ
         for (const med of recalcMeds) {
           const orig = loadedMeds.find(m => m.id === med.id);
           if (orig && orig.stockTotal != null && orig.stockCurrent !== med.stockCurrent) {
