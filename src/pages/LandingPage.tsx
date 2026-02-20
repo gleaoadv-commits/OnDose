@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Bell, Camera, Users, Pill, MapPin, FileText, ChevronDown, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OnDoseLogo from "@/components/OnDoseLogo";
-import ondoseScreenshot from "@/assets/ondose-screenshot-home.png";
+const ondoseScreenshot = "https://pkjpfrffzewdenvdnouu.supabase.co/storage/v1/object/public/avatars/screenshot-1.png";
 
 const features = [
   {
