@@ -24,6 +24,7 @@ import PharmaciesPage from "@/pages/PharmaciesPage";
 import AuthPage from "@/pages/AuthPage";
 import ResetPassword from "@/pages/ResetPassword";
 import TermsPage from "@/pages/TermsPage";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import EmailConfirmedPage from "@/pages/EmailConfirmedPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
             <Route path="/termos" element={<TermsPage />} />
+            <Route path="/privacidade" element={<PrivacyPolicyPage />} />
             <Route
               path="/*"
               element={
