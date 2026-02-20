@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { User, Phone, Save, Copy, Check, FileText, Lock, Eye, EyeOff, Trash2, AlertTriangle } from "lucide-react";
+import { User, Phone, Save, Copy, Check, FileText, Lock, Eye, EyeOff, Trash2, AlertTriangle, Gift, Users, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -26,21 +27,38 @@ export default function ProfilePage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [referralCount, setReferralCount] = useState(0);
+  const [referralReward, setReferralReward] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, whatsapp_number, user_code, account_type")
-        .eq("user_id", user.id)
-        .single();
-      if (data) {
-        setDisplayName(data.display_name || "");
-        setWhatsappNumber((data as any).whatsapp_number || "");
-        setUserCode((data as any).user_code || "");
-        setAccountType((data as any).account_type || "primary");
+      const [profileRes, referralsRes, rewardsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("display_name, whatsapp_number, user_code, account_type")
+          .eq("user_id", user.id)
+          .single(),
+        supabase
+          .from("referrals")
+          .select("id")
+          .eq("referrer_user_id", user.id),
+        supabase
+          .from("referral_rewards")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("reward_type", "coupon_5_percent")
+          .maybeSingle(),
+      ]);
+
+      if (profileRes.data) {
+        setDisplayName(profileRes.data.display_name || "");
+        setWhatsappNumber((profileRes.data as any).whatsapp_number || "");
+        setUserCode((profileRes.data as any).user_code || "");
+        setAccountType((profileRes.data as any).account_type || "primary");
       }
+      setReferralCount(referralsRes.data?.length ?? 0);
+      setReferralReward(rewardsRes.data ?? null);
       setLoading(false);
     };
     load();
@@ -149,6 +167,78 @@ export default function ProfilePage() {
         <Badge variant="outline" className="text-xs">
           {accountType === "primary" ? "Conta Principal" : "Conta Familiar"}
         </Badge>
+      </Card>
+
+      {/* Referral Program Card */}
+      <Card className="p-5 rounded-2xl border-accent/30 bg-accent/5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Gift className="h-5 w-5 text-accent" />
+          <p className="text-sm font-bold text-foreground">Programa de Indicação</p>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Indicações confirmadas</span>
+            <span className="font-bold text-foreground">{referralCount}/3</span>
+          </div>
+          <Progress value={Math.min((referralCount / 3) * 100, 100)} className="h-2.5" />
+        </div>
+
+        {/* Referral avatars/icons */}
+        <div className="flex items-center gap-2">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                i < referralCount
+                  ? "bg-accent text-white shadow-md"
+                  : "bg-muted/60 text-muted-foreground border border-border/40"
+              }`}
+            >
+              {i < referralCount ? (
+                <Users className="h-4 w-4" />
+              ) : (
+                <span className="text-xs">?</span>
+              )}
+            </div>
+          ))}
+          {referralCount >= 3 && (
+            <div className="ml-2 flex items-center gap-1.5 bg-amber-400/20 text-amber-700 px-3 py-1.5 rounded-full">
+              <Trophy className="h-4 w-4" />
+              <span className="text-xs font-bold">Meta alcançada!</span>
+            </div>
+          )}
+        </div>
+
+        {referralReward ? (
+          <div className="p-3 rounded-xl bg-accent/10 border border-accent/30 space-y-1">
+            <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              🎉 Parabéns! Você ganhou um cupom de 5% de desconto!
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {referralReward.coupon_code
+                ? `Cupom: ${referralReward.coupon_code}`
+                : "Seu cupom será enviado em breve via WhatsApp."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Válido até: {referralReward.expires_at ? new Date(referralReward.expires_at).toLocaleDateString("pt-BR") : "—"}
+              {" · "}Apenas planos anuais
+            </p>
+            {referralReward.used && (
+              <Badge className="bg-muted text-muted-foreground text-[10px]">Utilizado</Badge>
+            )}
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl bg-muted/40 border border-border/40 space-y-1">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Indique <strong className="text-foreground">3 amigos</strong> usando seu ID <strong className="text-primary">{userCode}</strong> e ganhe um
+              <strong className="text-foreground"> cupom de 5%</strong> na assinatura anual Premium!
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              O cupom é válido por 30 dias após ser concedido e aplicável apenas em planos anuais.
+            </p>
+          </div>
+        )}
       </Card>
 
       <Card className="p-5 rounded-2xl border-border/40 space-y-5">
