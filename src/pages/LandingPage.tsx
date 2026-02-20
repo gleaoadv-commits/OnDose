@@ -91,7 +91,7 @@ export default function LandingPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">
               Seus medicamentos,{" "}
-              <span className="text-gradient">sob controle.</span>
+              <span className="text-primary">sob controle.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg">
               Gerencie remédios, receba lembretes, controle o estoque e cuide de quem você ama — tudo em um só app.
@@ -104,7 +104,7 @@ export default function LandingPage() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="relative w-64 md:w-72">
-              <div className="absolute -inset-4 gradient-primary opacity-20 blur-3xl rounded-full" />
+              <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full" />
               <img
                 src={ondoseScreenshot}
                 alt="OnDose App - Tela inicial"
@@ -135,7 +135,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-black text-center mb-4">
             Tudo que você precisa para{" "}
-            <span className="text-gradient">cuidar da sua saúde</span>
+            <span className="text-primary">cuidar da sua saúde</span>
           </h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
             Funcionalidades pensadas para facilitar o dia a dia de quem toma medicamentos.
@@ -161,7 +161,7 @@ export default function LandingPage() {
       <section className="py-20 px-4 bg-primary/5">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
-            Quem usa, <span className="text-gradient">recomenda</span>
+            Quem usa, <span className="text-primary">recomenda</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t) => (
@@ -188,7 +188,7 @@ export default function LandingPage() {
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           <h2 className="text-3xl font-black">
-            Seus dados estão <span className="text-gradient">seguros</span>
+            Seus dados estão <span className="text-primary">seguros</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Criptografia de ponta a ponta, conformidade com a LGPD e controle total sobre suas informações. Seus dados de saúde são só seus.
@@ -202,7 +202,7 @@ export default function LandingPage() {
           <OnDoseLogo size="xl" className="justify-center" />
           <h2 className="text-3xl md:text-4xl font-black">
             Comece a cuidar da sua saúde{" "}
-            <span className="text-gradient">agora mesmo</span>
+            <span className="text-primary">agora mesmo</span>
           </h2>
           <p className="text-muted-foreground text-lg">
             Crie sua conta gratuita em segundos e tenha seus medicamentos sempre sob controle.
