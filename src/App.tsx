@@ -46,8 +46,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/landing" replace />;
   return <>{children}</>;
+}
+
+function PublicLanding() {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+      </div>
+    );
+  }
+  if (user) return <Navigate to="/" replace />;
+  return <LandingPage />;
 }
 
 function CaregiverGuard({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) {
@@ -87,8 +100,8 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/landing" element={<LandingPage />} />
+           <Routes>
+            <Route path="/landing" element={<PublicLanding />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
