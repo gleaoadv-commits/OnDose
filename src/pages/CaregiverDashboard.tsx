@@ -574,7 +574,9 @@ export default function CaregiverDashboard() {
     }
     setAddMedSaving(true);
     try {
-      const color = MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
+      const usedColors = new Set(medications.map(m => m.color));
+      const availableColor = MEDICATION_COLORS.find(c => !usedColors.has(c));
+      const color = availableColor ?? MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
       const { data: newMed, error } = await supabase.from("medications").insert({
         user_id: pid,
         name: addMedName.trim(),

@@ -273,7 +273,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addMedication = useCallback(async (med: Omit<Medication, "id" | "status" | "color">): Promise<string | false> => {
     if (!canAddMedication() || !user) return false;
 
-    const color = MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
+    const usedColors = new Set(medications.filter(m => m.status !== "encerrado").map(m => m.color));
+    const availableColor = MEDICATION_COLORS.find(c => !usedColors.has(c));
+    const color = availableColor ?? MEDICATION_COLORS[medications.length % MEDICATION_COLORS.length];
 
     // Insert medication
     const { data: medRow, error: medError } = await supabase.from("medications").insert({
