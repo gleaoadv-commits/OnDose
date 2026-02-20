@@ -27,6 +27,7 @@ import TermsPage from "@/pages/TermsPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import DeleteAccountPage from "@/pages/DeleteAccountPage";
 import EmailConfirmedPage from "@/pages/EmailConfirmedPage";
+import LandingPage from "@/pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +88,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
