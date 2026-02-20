@@ -233,7 +233,7 @@ export default function AuthPage() {
               </button>
             )}
 
-            {!isLogin && (
+            {!isLogin && !isCaregiver && (
               <div className="space-y-2">
                 <Label htmlFor="referral" className="text-sm font-bold flex items-center gap-1.5">
                   <Gift className="h-3.5 w-3.5 text-accent" />
