@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Shield, Bell, Camera, Users, Pill, MapPin, FileText, ChevronDown, Star, Heart } from "lucide-react";
+import { Shield, Bell, Camera, Users, Pill, MapPin, FileText, ChevronDown, Star, Heart, Clock, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OnDoseLogo from "@/components/OnDoseLogo";
-const ondoseScreenshot = "https://pkjpfrffzewdenvdnouu.supabase.co/storage/v1/object/public/avatars/screenshot-1.png";
+import OnDoseIcon from "@/components/OnDoseIcon";
 
 const features = [
   {
@@ -103,13 +103,55 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="relative w-64 md:w-72">
-              <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full" />
-              <img
-                src={ondoseScreenshot}
-                alt="OnDose App - Tela inicial"
-                className="relative rounded-3xl shadow-elevated border border-border/30 w-full"
-              />
+            <div className="relative w-72 md:w-80">
+              {/* Decorative app preview */}
+              <div className="relative bg-card rounded-3xl shadow-elevated border border-border/30 p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="gradient-primary rounded-xl p-2 shadow-glow">
+                    <OnDoseIcon size={28} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground">OnDose</div>
+                    <div className="text-xs text-muted-foreground">Sua saúde em dia</div>
+                  </div>
+                </div>
+                <div className="bg-primary/5 rounded-2xl p-4 space-y-3">
+                  <div className="text-sm font-semibold text-foreground">Próximos horários</div>
+                  {[
+                    { name: "Losartana 50mg", time: "08:00", color: "bg-primary" },
+                    { name: "Metformina 500mg", time: "12:00", color: "bg-accent" },
+                    { name: "Omeprazol 20mg", time: "20:00", color: "bg-primary" },
+                  ].map((med) => (
+                    <div key={med.name} className="flex items-center gap-3 bg-card rounded-xl p-3 shadow-soft">
+                      <div className={`w-3 h-3 rounded-full ${med.color}`} />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-foreground">{med.name}</div>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        {med.time}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-primary/10 rounded-xl p-3 text-center">
+                    <BarChart3 className="w-5 h-5 text-primary mx-auto mb-1" />
+                    <div className="text-xs font-semibold text-foreground">98%</div>
+                    <div className="text-[10px] text-muted-foreground">Adesão</div>
+                  </div>
+                  <div className="flex-1 bg-accent/10 rounded-xl p-3 text-center">
+                    <Bell className="w-5 h-5 text-accent mx-auto mb-1" />
+                    <div className="text-xs font-semibold text-foreground">3</div>
+                    <div className="text-[10px] text-muted-foreground">Hoje</div>
+                  </div>
+                  <div className="flex-1 bg-primary/10 rounded-xl p-3 text-center">
+                    <Pill className="w-5 h-5 text-primary mx-auto mb-1" />
+                    <div className="text-xs font-semibold text-foreground">5</div>
+                    <div className="text-[10px] text-muted-foreground">Remédios</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
