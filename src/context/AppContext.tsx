@@ -485,6 +485,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // Helper: recalculate stockCurrent for a medication based on taken events
+  // Auto-deactivates medication when stock reaches 0
   const recalculateStock = useCallback(async (medId: string, updatedSchedule: ScheduleEvent[]) => {
     const med = medications.find(m => m.id === medId);
     if (!med || med.stockTotal == null) return;
@@ -494,8 +495,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ).length;
 
     const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
-    await supabase.from("medications").update({ stock_current: newStock } as any).eq("id", medId).eq("user_id", user!.id);
-    setMedications(prev => prev.map(m => m.id === medId ? { ...m, stockCurrent: newStock } : m));
+    const updates: Record<string, any> = { stock_current: newStock };
+
+    // Auto-deactivate when stock reaches 0
+    if (newStock === 0 && med.status === "ativo") {
+      updates.status = "encerrado";
+      await supabase.from("medications").update(updates).eq("id", medId).eq("user_id", user!.id);
+      setMedications(prev => prev.map(m => m.id === medId ? { ...m, stockCurrent: newStock, status: "encerrado" as const } : m));
+      setNotifications(prev => [
+        {
+          id: crypto.randomUUID(),
+          medicationId: medId,
+          message: `⚠️ ${med.name} foi encerrado automaticamente — estoque zerado. Reponha o estoque para reativá-lo.`,
+          time: new Date().toISOString(),
+          read: false,
+          type: "info" as const,
+        },
+        ...prev,
+      ]);
+    } else {
+      await supabase.from("medications").update(updates).eq("id", medId).eq("user_id", user!.id);
+      setMedications(prev => prev.map(m => m.id === medId ? { ...m, stockCurrent: newStock } : m));
+    }
   }, [medications, user]);
 
   const markDoseTaken = useCallback(async (eventId: string) => {
