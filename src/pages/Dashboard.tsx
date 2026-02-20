@@ -224,37 +224,45 @@ export default function Dashboard() {
       {schedule.length > 0 && <AdherenceStats schedule={schedule} />}
 
       {/* Critical stock alerts: ≤ 3 doses = urgent, ≤ 20% = low */}
-      {medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent <= 3 || (m.stockCurrent / m.stockTotal) <= 0.2)).map(med => {
-        const isUrgent = med.stockCurrent != null && med.stockCurrent <= 3;
-        const pct = med.stockTotal ? Math.round((med.stockCurrent! / med.stockTotal) * 100) : 0;
+      {(() => {
+        const lowStockMeds = medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent <= 3 || (m.stockCurrent / m.stockTotal) <= 0.2));
+        if (lowStockMeds.length === 0) return null;
         return (
-          <Link key={med.id} to={`/medicamento/${med.id}`}>
-            <Card className={`p-3 rounded-xl flex items-center gap-3 card-hover mb-1.5 ${
-              isUrgent
-                ? "border-destructive/40 bg-destructive/10 ring-1 ring-destructive/30 shadow-md"
-                : "border-destructive/20 bg-destructive/5"
-            }`}>
-              {isUrgent ? (
-                <div className="bg-destructive/15 rounded-xl p-1.5 shrink-0">
-                  <AlertTriangle className="h-5 w-5 text-destructive animate-pulse-soft" />
-                </div>
-              ) : (
-                <Package className="h-4 w-4 text-destructive shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className={`font-bold text-destructive ${isUrgent ? "text-sm" : "text-xs"}`}>
-                  {isUrgent
-                    ? `⚠️ ${med.name} — URGENTE: apenas ${med.stockCurrent} dose(s)!`
-                    : `${med.name} — estoque baixo!`}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {med.stockCurrent} de {med.stockTotal} cápsulas ({pct}%) — renove o estoque
-                </p>
-              </div>
-            </Card>
-          </Link>
+          <div className="space-y-2">
+            {lowStockMeds.map(med => {
+              const isUrgent = med.stockCurrent != null && med.stockCurrent <= 3;
+              const pct = med.stockTotal ? Math.round((med.stockCurrent! / med.stockTotal) * 100) : 0;
+              return (
+                <Link key={med.id} to={`/medicamento/${med.id}`}>
+                  <Card className={`p-3 rounded-xl flex items-center gap-3 card-hover ${
+                    isUrgent
+                      ? "border-destructive/40 bg-destructive/10 ring-1 ring-destructive/30 shadow-md"
+                      : "border-destructive/20 bg-destructive/5"
+                  }`}>
+                    {isUrgent ? (
+                      <div className="bg-destructive/15 rounded-xl p-1.5 shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-destructive animate-pulse-soft" />
+                      </div>
+                    ) : (
+                      <Package className="h-4 w-4 text-destructive shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-bold text-destructive ${isUrgent ? "text-sm" : "text-xs"}`}>
+                        {isUrgent
+                          ? `⚠️ ${med.name} — URGENTE: apenas ${med.stockCurrent} dose(s)!`
+                          : `${med.name} — estoque baixo!`}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {med.stockCurrent} de {med.stockTotal} cápsulas ({pct}%) — renove o estoque
+                      </p>
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
         );
-      })}
+      })()}
 
       {/* Today's schedule */}
       <TodaySchedule />
