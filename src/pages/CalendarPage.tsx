@@ -122,7 +122,7 @@ export default function CalendarPage() {
               <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)} className="rounded-xl h-8 w-8">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <p className="text-elder-base font-bold text-foreground capitalize">{monthLabel}</p>
+              <p className="text-elder-base font-bold text-foreground">{monthLabel}</p>
               <Button variant="ghost" size="icon" onClick={() => changeMonth(1)} className="rounded-xl h-8 w-8">
                 <ChevronRight className="h-5 w-5" />
               </Button>
@@ -225,7 +225,7 @@ export default function CalendarPage() {
       {!isFree && (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-elder-sm font-bold text-foreground capitalize">{selectedDateStr}</p>
+            <p className="text-elder-sm font-bold text-foreground">{selectedDateStr}</p>
             <div className="flex items-center gap-1.5">
               {isSelectedToday && (
                 <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Hoje</span>
