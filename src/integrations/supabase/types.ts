@@ -273,6 +273,7 @@ export type Database = {
           display_name: string | null
           id: string
           plan_override: string | null
+          referred_by: string | null
           updated_at: string
           user_code: string
           user_id: string
@@ -285,6 +286,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           plan_override?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_code: string
           user_id: string
@@ -297,10 +299,74 @@ export type Database = {
           display_name?: string | null
           id?: string
           plan_override?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_code?: string
           user_id?: string
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      referral_rewards: {
+        Row: {
+          coupon_code: string | null
+          expires_at: string | null
+          granted_at: string
+          id: string
+          referral_count: number
+          reward_type: string
+          sent_whatsapp: boolean
+          sent_whatsapp_at: string | null
+          used: boolean
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_code?: string | null
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          referral_count?: number
+          reward_type?: string
+          sent_whatsapp?: boolean
+          sent_whatsapp_at?: string | null
+          used?: boolean
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_code?: string | null
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          referral_count?: number
+          reward_type?: string
+          sent_whatsapp?: boolean
+          sent_whatsapp_at?: string | null
+          used?: boolean
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_user_id: string
+          referrer_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_user_id: string
+          referrer_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+          referrer_user_id?: string
         }
         Relationships: []
       }
