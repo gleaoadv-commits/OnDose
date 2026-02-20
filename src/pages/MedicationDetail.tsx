@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw, Palmtree } from "lucide-react";
-import { FREQUENCY_LABELS, MedicationFrequency } from "@/types/medication";
+import { FREQUENCY_LABELS, Medication, MedicationFrequency } from "@/types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -133,14 +133,29 @@ export default function MedicationDetail() {
   const saveStock = () => {
     const val = Number(editStock);
     if (isNaN(val) || val < 0) { toast.error("Informe um número válido."); return; }
-    updateMedication(med.id, { stockCurrent: val, stockTotal: med.stockTotal ?? val });
+    const updates: Partial<Medication> = { stockCurrent: val, stockTotal: med.stockTotal ?? val };
+    // Reactivate if stock > 0 and med was auto-deactivated
+    if (val > 0 && med.status === "encerrado") {
+      updates.status = "ativo";
+      toast.success("Estoque atualizado e medicamento reativado! 🎉");
+    } else if (val === 0 && med.status === "ativo") {
+      updates.status = "encerrado";
+      toast.success("Estoque zerado — medicamento encerrado automaticamente.");
+    } else {
+      toast.success("Estoque atualizado!");
+    }
+    updateMedication(med.id, updates);
     setEditingStock(false);
-    toast.success("Estoque atualizado!");
   };
   const handleRestock = () => {
     if (med.stockTotal) {
-      updateMedication(med.id, { stockCurrent: med.stockTotal });
-      toast.success("Estoque reposto! 🎉");
+      const updates: Partial<Medication> = { stockCurrent: med.stockTotal };
+      // Reactivate if it was auto-deactivated due to zero stock
+      if (med.status === "encerrado") {
+        updates.status = "ativo";
+      }
+      updateMedication(med.id, updates);
+      toast.success(med.status === "encerrado" ? "Estoque reposto e medicamento reativado! 🎉" : "Estoque reposto! 🎉");
     }
   };
 
