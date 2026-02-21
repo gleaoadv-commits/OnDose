@@ -7,7 +7,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const META_API_VERSION = "v21.0";
 const PREMIUM_PRODUCT = "prod_U0Eub1bzRh41Dc";
+
+async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
+  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body },
+    }),
+  });
+  const result = await response.json();
+  return { response, result };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,21 +39,21 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
-    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
+    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
-    if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID not configured");
-    if (!ULTRAMSG_TOKEN) throw new Error("ULTRAMSG_TOKEN not configured");
+    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
+    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
-    // Calculate the date 7 days from now (date only, no time)
+    // Calculate the date 7 days from now
     const now = new Date();
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + 7);
-    const targetDateStr = targetDate.toISOString().split("T")[0]; // YYYY-MM-DD
+    const targetDateStr = targetDate.toISOString().split("T")[0];
 
     console.log(`Checking exam reminders with next_reminder_date = ${targetDateStr}`);
 
@@ -63,7 +83,6 @@ Deno.serve(async (req) => {
 
     if (profilesError) throw new Error(`Error fetching profiles: ${profilesError.message}`);
 
-    // Only Premium users get exam reminders via WhatsApp
     const premiumUserIds = new Set<string>();
 
     for (const profile of (profiles || [])) {
@@ -106,7 +125,6 @@ Deno.serve(async (req) => {
 
     console.log(`Premium users with WhatsApp eligible: ${profileMap.size}`);
 
-    // Group reminders by user
     const userReminders = new Map<string, string[]>();
     for (const reminder of reminders) {
       if (!profileMap.has(reminder.user_id)) continue;
@@ -143,27 +161,14 @@ Deno.serve(async (req) => {
       console.log(`Sending exam reminder to ${phone} — ${examNames.length} exam(s)`);
 
       try {
-        const response = await fetch(
-          `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              token: ULTRAMSG_TOKEN,
-              to: phone,
-              body: message,
-            }).toString(),
-          }
-        );
-
-        const result = await response.json();
+        const { response, result } = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
 
         if (response.ok && !result.error) {
           sent++;
           console.log(`Sent to ${phone}: ${response.status}`);
         } else {
-          console.error(`UltraMsg error for ${userId}:`, result);
-          errors.push(`User ${userId}: ${result.error || response.status}`);
+          console.error(`Meta API error for ${userId}:`, result);
+          errors.push(`User ${userId}: ${JSON.stringify(result.error || result)}`);
         }
       } catch (err) {
         console.error(`Exception for ${userId}:`, err.message);
