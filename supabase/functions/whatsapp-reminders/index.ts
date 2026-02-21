@@ -7,6 +7,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const META_API_VERSION = "v21.0";
+
+async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
+  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body },
+    }),
+  });
+  const result = await response.json();
+  return { response, result };
+}
+
 // Round a date to the nearest minute for grouping same-time doses
 function roundToMinute(dateStr: string): string {
   const d = new Date(dateStr);
@@ -27,12 +48,12 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
-    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
+    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
-    if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID not configured");
-    if (!ULTRAMSG_TOKEN) throw new Error("ULTRAMSG_TOKEN not configured");
+    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
+    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
@@ -75,14 +96,12 @@ Deno.serve(async (req) => {
     const paidUserIds = new Set<string>();
 
     for (const profile of (profiles || [])) {
-      // Check plan_override first (fast path)
       if (profile.plan_override === "pro" || profile.plan_override === "premium") {
         paidUserIds.add(profile.user_id);
         console.log(`User ${profile.user_id} (${profile.display_name}) is paid via plan_override: ${profile.plan_override}`);
         continue;
       }
 
-      // No override — check Stripe subscription
       try {
         const { data: authUser } = await supabase.auth.admin.getUserById(profile.user_id);
         const email = authUser?.user?.email;
@@ -124,7 +143,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Only include profiles of paid users with whatsapp
     const profileMap = new Map(
       (profiles || [])
         .filter((p: any) => paidUserIds.has(p.user_id) && p.whatsapp_number)
@@ -168,7 +186,6 @@ Deno.serve(async (req) => {
     for (const group of groups.values()) {
       const profile = profileMap.get(group.userId)!;
 
-      // Format phone: remove non-digits, add Brazil country code if needed
       let phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
       if (!phone.startsWith("55") && phone.length <= 11) {
         phone = "55" + phone;
@@ -191,30 +208,17 @@ Deno.serve(async (req) => {
       const appLink = "https://ondose.lovable.app";
       const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar ${plural}:\n\n${medsText}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
-      console.log(`Sending UltraMsg to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
+      console.log(`Sending Meta WhatsApp to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
 
       try {
-        const response = await fetch(
-          `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              token: ULTRAMSG_TOKEN,
-              to: phone,
-              body: message,
-            }).toString(),
-          }
-        );
-
-        const result = await response.json();
+        const { response, result } = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
 
         if (response.ok && !result.error) {
           sent++;
-          console.log(`UltraMsg sent to ${phone}: ${response.status}`);
+          console.log(`Meta API sent to ${phone}: ${response.status}`);
         } else {
-          console.error(`UltraMsg error for user ${group.userId}:`, result);
-          errors.push(`User ${group.userId}: ${result.error || response.status}`);
+          console.error(`Meta API error for user ${group.userId}:`, result);
+          errors.push(`User ${group.userId}: ${JSON.stringify(result.error || result)}`);
         }
       } catch (err) {
         console.error(`Exception for user ${group.userId}:`, err.message);
@@ -222,7 +226,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`UltraMsg reminders: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
+    console.log(`Meta WhatsApp reminders: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
 
     return new Response(
       JSON.stringify({ sent, groups: groups.size, errors: errors.length, errorDetails: errors }),

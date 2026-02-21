@@ -4,21 +4,41 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const META_API_VERSION = "v21.0";
+
+async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
+  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body },
+    }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.error) {
+    throw new Error(`Meta API error: ${JSON.stringify(result.error || result)}`);
+  }
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
-    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
+    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 
-    if (!ULTRAMSG_INSTANCE_ID) {
-      throw new Error("ULTRAMSG_INSTANCE_ID not configured");
-    }
-    if (!ULTRAMSG_TOKEN) {
-      throw new Error("ULTRAMSG_TOKEN not configured");
-    }
+    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
+    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
 
     const { to, userName, medicationName, dosage } = await req.json();
 
@@ -51,27 +71,10 @@ Deno.serve(async (req) => {
     const appLink = "https://ondose.lovable.app";
     const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
-    console.log(`Sending UltraMsg to ${phone} (${medicationName})`);
+    console.log(`Sending Meta WhatsApp to ${phone} (${medicationName})`);
 
-    const response = await fetch(
-      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          token: ULTRAMSG_TOKEN,
-          to: phone,
-          body: message,
-        }).toString(),
-      }
-    );
-
-    const result = await response.json();
-    console.log(`UltraMsg response: ${response.status}`, result);
-
-    if (!response.ok || result.error) {
-      throw new Error(`UltraMsg error: ${result.error || response.status}`);
-    }
+    const result = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
+    console.log(`Meta API response:`, result);
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
