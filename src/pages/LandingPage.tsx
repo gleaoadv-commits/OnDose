@@ -67,7 +67,7 @@ const stats = [
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  const goToSignup = () => navigate("/auth");
+  const goToSignup = () => navigate("/auth?mode=signup");
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
