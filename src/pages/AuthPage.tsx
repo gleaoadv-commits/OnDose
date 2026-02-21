@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, User, Eye, EyeOff, Users, Gift } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Users, Gift, ArrowLeft } from "lucide-react";
 import OnDoseLogo from "@/components/OnDoseLogo";
 import { useToast } from "@/hooks/use-toast";
 
@@ -159,6 +159,23 @@ export default function AuthPage() {
         </div>
 
         <Card className="p-7 space-y-5 shadow-elevated border-border/30 rounded-3xl animate-slide-up">
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!isLogin) {
+                setIsLogin(true);
+                setAcceptedTerms(false);
+              } else {
+                navigate("/landing");
+              }
+            }}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors -mb-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {isLogin ? "Voltar" : "Voltar ao login"}
+          </button>
+
           <h2 className="text-elder-lg font-bold text-foreground text-center">
             {isLogin ? "Bem-vindo de volta!" : isCaregiver ? "Criar conta de Familiar" : "Crie sua conta"}
           </h2>
