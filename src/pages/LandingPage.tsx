@@ -75,9 +75,14 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <OnDoseLogo size="sm" />
-          <Button onClick={goToSignup} size="sm" className="gradient-primary text-primary-foreground font-bold rounded-xl shadow-glow">
-            Criar Conta Grátis
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate("/auth")} variant="ghost" size="sm" className="font-semibold text-muted-foreground hover:text-foreground">
+              Entrar
+            </Button>
+            <Button onClick={goToSignup} size="sm" className="gradient-primary text-primary-foreground font-bold rounded-xl shadow-glow">
+              Criar Conta Grátis
+            </Button>
+          </div>
         </div>
       </nav>
 
@@ -256,6 +261,12 @@ export default function LandingPage() {
           >
             Criar Minha Conta Grátis
           </Button>
+          <button
+            onClick={() => navigate("/auth")}
+            className="text-sm text-primary font-semibold hover:underline underline-offset-2"
+          >
+            Já tenho conta — Entrar
+          </button>
           <p className="text-xs text-muted-foreground">
             Sem cartão de crédito • Cancele quando quiser
           </p>
