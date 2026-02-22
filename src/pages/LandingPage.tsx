@@ -14,19 +14,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/30">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <OnDoseLogo size="sm" />
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/auth")} variant="ghost" size="sm" className="font-semibold text-foreground">
-              Entrar
-            </Button>
-            <Button onClick={goToSignup} size="sm" className="gradient-primary text-primary-foreground font-bold rounded-xl shadow-glow">
-              Criar Conta
-            </Button>
-          </div>
-        </div>
+      {/* Nav - only logo, minimal */}
+      <nav className="absolute top-0 left-0 z-50 px-4 pt-4">
+        <OnDoseLogo size="sm" />
       </nav>
 
       <LandingHero onSignup={goToSignup} />
