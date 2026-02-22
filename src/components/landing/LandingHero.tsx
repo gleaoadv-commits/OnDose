@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import LandingHeroMockup from "@/components/landing/LandingHeroMockup";
+import heroImage from "@/assets/landing-hero-lifestyle.jpg";
 
 interface LandingHeroProps {
   onSignup: () => void;
@@ -7,26 +7,38 @@ interface LandingHeroProps {
 
 export default function LandingHero({ onSignup }: LandingHeroProps) {
   return (
-    <section className="py-12 md:py-20 px-4">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-14">
-        <div className="flex-1 text-center md:text-left space-y-5">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] text-foreground">
-            Seus medicamentos{" "}
-            <span className="text-primary">sob controle.</span>
-          </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto md:mx-0">
-            Gerencie remédios, receba lembretes e cuide de quem você ama — tudo em um só app.
-          </p>
-          <Button
-            onClick={onSignup}
-            size="lg"
-            className="gradient-primary text-primary-foreground font-bold rounded-full shadow-glow text-base px-8 py-6"
-          >
-            Começar Agora — É Grátis
-          </Button>
-        </div>
-        <div className="flex-1 flex justify-center">
-          <LandingHeroMockup />
+    <section className="relative">
+      {/* Hero image - right aligned on desktop, full width on mobile */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 md:pt-12 pb-12 md:pb-20">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          {/* Text */}
+          <div className="flex-1 space-y-5 text-center md:text-left order-2 md:order-1">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] text-foreground">
+              <span className="text-primary">OnDose:</span>
+              <br />
+              Medicamentos e Saúde, Sob Controle.
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto md:mx-0">
+              Gerencie sua medicação com facilidade, receba lembretes inteligentes e compartilhe com sua família.
+            </p>
+            <Button
+              onClick={onSignup}
+              size="lg"
+              className="gradient-primary text-primary-foreground font-bold rounded-full shadow-glow text-base px-8 py-6"
+            >
+              Começar Agora — É Grátis
+            </Button>
+          </div>
+
+          {/* Image */}
+          <div className="flex-1 order-1 md:order-2">
+            <img
+              src={heroImage}
+              alt="Mulher sorrindo usando o app OnDose"
+              className="w-full max-w-md mx-auto rounded-3xl object-cover aspect-[4/3] shadow-elevated"
+              loading="eager"
+            />
+          </div>
         </div>
       </div>
     </section>
