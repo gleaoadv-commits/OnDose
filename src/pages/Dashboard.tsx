@@ -39,9 +39,9 @@ function MedicationCard({ med, index, onReactivate }: { med: Medication; index: 
           <div className="flex items-start gap-3">
             <div
               className="pill-icon rounded-2xl"
-              style={{ backgroundColor: med.color + "15", color: med.color }}
+              style={{ backgroundColor: med.color }}
             >
-              <Pill className="h-6 w-6" />
+              <Pill className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
