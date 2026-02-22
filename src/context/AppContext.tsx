@@ -220,8 +220,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (newColor) {
               med.color = newColor;
               supabase.from("medications").update({ color: newColor }).eq("id", med.id).eq("user_id", user.id);
-              // Also update schedule events for this medication
               supabase.from("schedule_events").update({ color: newColor }).eq("medication_id", med.id).eq("user_id", user.id);
+              // Also update loaded events in memory so schedule colors stay in sync
+              for (const evt of loadedEvents) {
+                if (evt.medicationId === med.id) {
+                  evt.color = newColor;
+                }
+              }
             }
           }
           usedColors.add(med.color);
