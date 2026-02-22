@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/landing-hero-lifestyle.jpg";
+import LandingHeroMockup from "@/components/landing/LandingHeroMockup";
 
 interface LandingHeroProps {
   onSignup: () => void;
@@ -25,14 +25,8 @@ export default function LandingHero({ onSignup }: LandingHeroProps) {
             Começar Agora — É Grátis
           </Button>
         </div>
-        <div className="flex-1 flex justify-center relative">
-          <div className="absolute -z-10 w-72 h-72 bg-primary/10 rounded-full blur-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          <img
-            src={heroImage}
-            alt="Pessoa usando o app OnDose"
-            className="w-64 md:w-80 rounded-3xl object-cover aspect-[3/4] shadow-elevated"
-            loading="eager"
-          />
+        <div className="flex-1 flex justify-center">
+          <LandingHeroMockup />
         </div>
       </div>
     </section>
