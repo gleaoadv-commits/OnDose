@@ -1,5 +1,5 @@
-import { useApp } from "@/context/AppContext";
-import { Card } from "@/components/ui/card";
+import { useApp } from "../context/AppContext";
+import { Card } from "../components/ui/card";
 import { Bell, Check, BellRing, Pill, Info } from "lucide-react";
 
 export default function NotificationsPage() {

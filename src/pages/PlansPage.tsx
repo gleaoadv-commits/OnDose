@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 import { Check, Crown, X, Sparkles, Shield, Star, Loader2, Settings, AlertTriangle, CalendarClock, TrendingUp, Info } from "lucide-react";
-import { useApp } from "@/context/AppContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useApp } from "../context/AppContext";
+import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "../components/ui/alert";
 
 const TIERS = {
   pro: {

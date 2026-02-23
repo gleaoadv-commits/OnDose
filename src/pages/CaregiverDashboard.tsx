@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../integrations/supabase/client";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { Switch } from "../components/ui/switch";
 import {
   AlertTriangle, Clock, Heart, User, LogOut, CheckCircle2, Shield,
   Copy, Share2, X, Pill, BarChart3, FileText, Phone, Save, Bell, Plus,
@@ -16,8 +16,8 @@ import {
   ChevronRight, Activity, Hash, UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
-import OnDoseLogo from "@/components/OnDoseLogo";
-import DosageInput from "@/components/DosageInput";
+import OnDoseLogo from "../components/OnDoseLogo";
+import DosageInput from "../components/DosageInput";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";

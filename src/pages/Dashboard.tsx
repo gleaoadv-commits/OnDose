@@ -1,17 +1,17 @@
 import { useState, useMemo, useEffect } from "react";
-import { useApp } from "@/context/AppContext";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Plus, Pill, Pause, Play, Square, Clock, Heart, Camera, Users, FileText, Link2, Package, MapPin, Trash2, Crown, Ban, Bell, MessageCircle, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FREQUENCY_LABELS, Medication } from "@/types/medication";
-import TodaySchedule from "@/components/TodaySchedule";
-import OverdueDoseAlert from "@/components/OverdueDoseAlert";
-import PlanDowngradeModal from "@/components/PlanDowngradeModal";
-import AdherenceStats from "@/components/AdherenceStats";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { FREQUENCY_LABELS, Medication } from "../types/medication";
+import TodaySchedule from "../components/TodaySchedule";
+import OverdueDoseAlert from "../components/OverdueDoseAlert";
+import PlanDowngradeModal from "../components/PlanDowngradeModal";
+import AdherenceStats from "../components/AdherenceStats";
 
 function MedicationCard({ med, index, onReactivate }: { med: Medication; index: number; onReactivate?: (id: string) => void }) {
   const { pauseMedication, resumeMedication, stopMedication, deleteMedication } = useApp();

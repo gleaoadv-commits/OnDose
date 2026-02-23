@@ -1,36 +1,36 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { AppProvider } from "@/context/AppContext";
-import AppLayout from "@/components/AppLayout";
-import Dashboard from "@/pages/Dashboard";
-import AddMedication from "@/pages/AddMedication";
-import MedicationDetail from "@/pages/MedicationDetail";
-import CalendarPage from "@/pages/CalendarPage";
-import AgendaPage from "@/pages/AgendaPage";
-import NotificationsPage from "@/pages/NotificationsPage";
-import PlansPage from "@/pages/PlansPage";
-import ProfilePage from "@/pages/ProfilePage";
-import IdentifyMedicationPage from "@/pages/IdentifyMedicationPage";
-import ReportsPage from "@/pages/ReportsPage";
-import CaregiversPage from "@/pages/CaregiversPage";
-import ExamsPage from "@/pages/ExamsPage";
-import FamilyLinksPage from "@/pages/FamilyLinksPage";
-import CaregiverDashboard from "@/pages/CaregiverDashboard";
-import PharmaciesPage from "@/pages/PharmaciesPage";
-import AuthPage from "@/pages/AuthPage";
-import ResetPassword from "@/pages/ResetPassword";
-import TermsPage from "@/pages/TermsPage";
-import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
-import DeleteAccountPage from "@/pages/DeleteAccountPage";
-import EmailConfirmedPage from "@/pages/EmailConfirmedPage";
-import LandingPage from "@/pages/LandingPage";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AppProvider } from "./context/AppContext";
+import AppLayout from "./components/AppLayout";
+import Dashboard from "./pages/Dashboard";
+import AddMedication from "./pages/AddMedication";
+import MedicationDetail from "./pages/MedicationDetail";
+import CalendarPage from "./pages/CalendarPage";
+import AgendaPage from "./pages/AgendaPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import PlansPage from "./pages/PlansPage";
+import ProfilePage from "./pages/ProfilePage";
+import IdentifyMedicationPage from "./pages/IdentifyMedicationPage";
+import ReportsPage from "./pages/ReportsPage";
+import CaregiversPage from "./pages/CaregiversPage";
+import ExamsPage from "./pages/ExamsPage";
+import FamilyLinksPage from "./pages/FamilyLinksPage";
+import CaregiverDashboard from "./pages/CaregiverDashboard";
+import PharmaciesPage from "./pages/PharmaciesPage";
+import AuthPage from "./pages/AuthPage";
+import ResetPassword from "./pages/ResetPassword";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import DeleteAccountPage from "./pages/DeleteAccountPage";
+import EmailConfirmedPage from "./pages/EmailConfirmedPage";
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +100,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-           <Routes>
+          <Routes>
             <Route path="/landing" element={<PublicLanding />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -130,7 +130,7 @@ const App = () => (
                           <Route path="/exames" element={<ExamsPage />} />
                           <Route path="/vinculos" element={<FamilyLinksPage />} />
                           <Route path="/farmacias" element={<PharmaciesPage />} />
-                          
+
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </AppLayout>

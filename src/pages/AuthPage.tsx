@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "../integrations/supabase/client";
+import { lovable } from "../integrations/lovable";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card } from "../components/ui/card";
+import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
 import { Mail, Lock, User, Eye, EyeOff, Users, Gift, ArrowLeft } from "lucide-react";
-import OnDoseLogo from "@/components/OnDoseLogo";
-import { useToast } from "@/hooks/use-toast";
+import OnDoseLogo from "../components/OnDoseLogo";
+import { useToast } from "../hooks/use-toast";
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();

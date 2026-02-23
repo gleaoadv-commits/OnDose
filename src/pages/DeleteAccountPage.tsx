@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Trash2, Shield, AlertTriangle, ArrowRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 
 export default function DeleteAccountPage() {
   return (

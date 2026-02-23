@@ -1,20 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useApp } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useApp } from "../context/AppContext";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ArrowLeft, Pill, Pause, Play, Square, Trash2, Clock, Calendar, Pencil, Check, X, Package, RefreshCw, Palmtree } from "lucide-react";
-import { FREQUENCY_LABELS, Medication, MedicationFrequency } from "@/types/medication";
+import { FREQUENCY_LABELS, Medication, MedicationFrequency } from "../types/medication";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import AnvisaBulario from "@/components/AnvisaBulario";
+} from "../components/ui/alert-dialog";
+import AnvisaBulario from "../components/AnvisaBulario";
 
 export default function MedicationDetail() {
   const { id } = useParams<{ id: string }>();

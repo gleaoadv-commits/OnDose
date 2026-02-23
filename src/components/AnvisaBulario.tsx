@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { supabase } from "../integrations/supabase/client";
+import { Button } from "../components/ui/button";
 import { BookOpen, ExternalLink, ChevronDown, ChevronUp, Loader2, AlertCircle, Shield } from "lucide-react";
-import { useApp } from "@/context/AppContext";
+import { useApp } from "../context/AppContext";
 
 interface BulaResult {
   idProduto: number;

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
+import { Input } from "../components/ui/input";
 import { Loader2, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 
 interface MedicationAutocompleteProps {
   value: string;

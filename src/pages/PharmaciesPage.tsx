@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { MapPin, Phone, Clock, Navigation, Loader2, AlertCircle, Pill, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useApp } from "@/context/AppContext";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { supabase } from "../integrations/supabase/client";
+import { useApp } from "../context/AppContext";
 import { Link } from "react-router-dom";
 
 interface Pharmacy {

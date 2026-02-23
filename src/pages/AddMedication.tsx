@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useApp } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { useApp } from "../context/AppContext";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Save, Pill, Calendar, Clock, Plus, X, CalendarDays } from "lucide-react";
-import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes } from "@/types/medication";
+import { MedicationFrequency, FREQUENCY_LABELS, getDefaultTimes } from "../types/medication";
 import { toast } from "sonner";
-import MedicationAutocomplete from "@/components/MedicationAutocomplete";
-import DosageInput from "@/components/DosageInput";
-import MedicationTips from "@/components/MedicationTips";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import MedicationAutocomplete from "../components/MedicationAutocomplete";
+import DosageInput from "../components/DosageInput";
+import MedicationTips from "../components/MedicationTips";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 export default function AddMedication() {
   const navigate = useNavigate();

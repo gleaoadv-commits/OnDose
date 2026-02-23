@@ -1,9 +1,9 @@
-import { useApp } from "@/context/AppContext";
-import { Card } from "@/components/ui/card";
+import { useApp } from "../context/AppContext";
+import { Card } from "../components/ui/card";
 import { Check, Clock, CalendarClock, Circle } from "lucide-react";
 import { useMemo } from "react";
-import { INFREQUENT_FREQUENCIES, MedicationFrequency } from "@/types/medication";
-import MotivationalBanner from "@/components/MotivationalBanner";
+import { INFREQUENT_FREQUENCIES, MedicationFrequency } from "../types/medication";
+import MotivationalBanner from "../components/MotivationalBanner";
 
 export default function TodaySchedule() {
   const { schedule, medications, markDoseTaken, unmarkDoseTaken } = useApp();

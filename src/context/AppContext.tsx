@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency, getFrequencyDayStep } from "@/types/medication";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency, getFrequencyDayStep } from "../types/medication";
+import { supabase } from "../integrations/supabase/client";
+import { useAuth } from "../context/AuthContext";
 
 interface AppState {
   medications: Medication[];

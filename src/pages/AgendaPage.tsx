@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { useApp } from "@/context/AppContext";
-import { Card } from "@/components/ui/card";
+import { useApp } from "../context/AppContext";
+import { Card } from "../components/ui/card";
 import { Check, ChevronLeft, ChevronRight, CalendarDays, Circle, Trash2, Pencil, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 
 export default function AgendaPage() {

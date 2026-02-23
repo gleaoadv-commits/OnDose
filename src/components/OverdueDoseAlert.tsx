@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
-import { useApp } from "@/context/AppContext";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useApp } from "../context/AppContext";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "../components/ui/dialog";
 import {
   AlertTriangle,
   Check,

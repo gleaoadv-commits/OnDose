@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card } from "../components/ui/card";
 import { Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { INFREQUENT_FREQUENCIES, MedicationFrequency } from "@/types/medication";
+import { supabase } from "../integrations/supabase/client";
+import { INFREQUENT_FREQUENCIES, MedicationFrequency } from "../types/medication";
 
 interface Props {
   medicationName: string;

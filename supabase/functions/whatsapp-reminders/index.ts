@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { sendEvolutionMessage } from "../_shared/evolution.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,10 +51,16 @@ Deno.serve(async (req) => {
 
     const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
     const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
+    const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
+    const EVOLUTION_INSTANCE = Deno.env.get("EVOLUTION_INSTANCE") || "OnDose";
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
-    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
-    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
+    const useEvolution = !!(EVOLUTION_API_URL && EVOLUTION_API_KEY);
+
+    if (!useEvolution && (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN)) {
+      throw new Error("WhatsApp providers (Meta or Evolution) not properly configured");
+    }
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
@@ -208,16 +215,26 @@ Deno.serve(async (req) => {
       const appLink = "https://ondose.lovable.app";
       const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar ${plural}:\n\n${medsText}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
-      console.log(`Sending Meta WhatsApp to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
+      console.log(`Sending ${useEvolution ? 'Evolution' : 'Meta'} WhatsApp to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
 
       try {
-        const { response, result } = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
+        let responseOk = false;
+        let result;
 
-        if (response.ok && !result.error) {
-          sent++;
-          console.log(`Meta API sent to ${phone}: ${response.status}`);
+        if (useEvolution) {
+          result = await sendEvolutionMessage(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, EVOLUTION_INSTANCE!, phone, message);
+          responseOk = !!result; // Evolution helper throws on fail
         } else {
-          console.error(`Meta API error for user ${group.userId}:`, result);
+          const res = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID!, WHATSAPP_ACCESS_TOKEN!, phone, message);
+          result = res.result;
+          responseOk = res.response.ok && !result.error;
+        }
+
+        if (responseOk) {
+          sent++;
+          console.log(`${useEvolution ? 'Evolution' : 'Meta'} API sent to ${phone}`);
+        } else {
+          console.error(`${useEvolution ? 'Evolution' : 'Meta'} API error for user ${group.userId}:`, result);
           errors.push(`User ${group.userId}: ${JSON.stringify(result.error || result)}`);
         }
       } catch (err) {

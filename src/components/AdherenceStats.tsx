@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { Card } from "@/components/ui/card";
+import { Card } from "../components/ui/card";
 import { Flame, TrendingUp, CheckCircle2, XCircle } from "lucide-react";
-import { ScheduleEvent } from "@/types/medication";
+import { ScheduleEvent } from "../types/medication";
 
 interface AdherenceStatsProps {
   schedule: ScheduleEvent[];

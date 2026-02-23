@@ -1,3 +1,5 @@
+import { sendEvolutionMessage } from "../_shared/evolution.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -36,9 +38,15 @@ Deno.serve(async (req) => {
   try {
     const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
     const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
+    const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
+    const EVOLUTION_INSTANCE = Deno.env.get("EVOLUTION_INSTANCE") || "OnDose";
 
-    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
-    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
+    const useEvolution = !!(EVOLUTION_API_URL && EVOLUTION_API_KEY);
+
+    if (!useEvolution && (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN)) {
+      throw new Error("WhatsApp providers (Meta or Evolution) not properly configured");
+    }
 
     const { to, userName, medicationName, dosage } = await req.json();
 
@@ -71,10 +79,15 @@ Deno.serve(async (req) => {
     const appLink = "https://ondose.lovable.app";
     const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
 
-    console.log(`Sending Meta WhatsApp to ${phone} (${medicationName})`);
+    console.log(`Sending ${useEvolution ? 'Evolution' : 'Meta'} WhatsApp to ${phone} (${medicationName})`);
 
-    const result = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
-    console.log(`Meta API response:`, result);
+    let result;
+    if (useEvolution) {
+      result = await sendEvolutionMessage(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, EVOLUTION_INSTANCE!, phone, message);
+    } else {
+      result = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID!, WHATSAPP_ACCESS_TOKEN!, phone, message);
+    }
+    console.log(`${useEvolution ? 'Evolution' : 'Meta'} API response:`, result);
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

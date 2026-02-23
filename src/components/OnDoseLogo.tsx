@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import OnDoseIcon from "@/components/OnDoseIcon";
+import { cn } from "../lib/utils";
+import OnDoseIcon from "./OnDoseIcon";
 
 interface OnDoseLogoProps {
   size?: "sm" | "md" | "lg" | "xl";

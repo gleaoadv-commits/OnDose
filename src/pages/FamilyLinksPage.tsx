@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useApp } from "@/context/AppContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "../context/AuthContext";
+import { useApp } from "../context/AppContext";
+import { supabase } from "../integrations/supabase/client";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "../components/ui/alert-dialog";
 import {
   Users, Check, X, UserX, Clock, ArrowLeft, Phone, UserPlus, Hash, Sparkles, Crown
 } from "lucide-react";

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 import { Loader2, Lightbulb, AlertTriangle, AlertCircle, X } from "lucide-react";
 
 interface Tip {

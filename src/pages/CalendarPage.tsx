@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { useApp } from "@/context/AppContext";
-import { Card } from "@/components/ui/card";
+import { useApp } from "../context/AppContext";
+import { Card } from "../components/ui/card";
 import { ChevronLeft, ChevronRight, CalendarDays, Lock, Crown, Check, Circle, Trash2, Pencil, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
+import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 
 export default function CalendarPage() {

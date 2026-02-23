@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import OnDoseLogo from "@/components/OnDoseLogo";
+import OnDoseLogo from "../components/OnDoseLogo";
 
 export default function TermsPage() {
   const navigate = useNavigate();

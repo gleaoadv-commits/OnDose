@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useApp } from "@/context/AppContext";
-import { Medication } from "@/types/medication";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useApp } from "../context/AppContext";
+import { Medication } from "../types/medication";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { Crown, Pill, AlertTriangle, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 interface PlanDowngradeModalProps {
   open: boolean;

@@ -23,34 +23,34 @@ const steps = [
 
 export default function LandingHowItWorks() {
   return (
-    <section className="py-14 px-4 bg-muted/40">
+    <section className="py-24 px-6 bg-muted/30">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-black text-center mb-10 text-foreground">
+        <h2 className="text-3xl md:text-4xl font-black text-center mb-16 text-foreground">
           Como Funciona
         </h2>
 
         {/* Steps with integrated timeline */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-6 max-w-sm sm:max-w-none mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 max-w-sm sm:max-w-none mx-auto relative">
           {steps.map((s, i) => (
-            <div key={s.num} className="flex flex-col items-center text-center">
+            <div key={s.num} className="flex flex-col items-center text-center group">
               {/* Number + connector */}
-              <div className="relative flex items-center justify-center w-full mb-6">
+              <div className="relative flex items-center justify-center w-full mb-8">
                 {i > 0 && (
-                  <div className="absolute right-1/2 w-full h-0.5 bg-primary/30" />
+                  <div className="absolute right-1/2 w-full h-0.5 bg-primary/20 hidden sm:block" />
                 )}
                 {i < steps.length - 1 && (
-                  <div className="absolute left-1/2 w-full h-0.5 bg-primary/30" />
+                  <div className="absolute left-1/2 w-full h-0.5 bg-primary/20 hidden sm:block" />
                 )}
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-sm shrink-0 z-10">
+                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-lg shadow-glow z-10 group-hover:scale-110 transition-transform">
                   {s.num}
                 </div>
               </div>
               {/* Icon + text */}
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <s.icon className="w-7 h-7 text-primary" />
+              <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
+                <s.icon className="w-10 h-10 text-primary" />
               </div>
-              <h3 className="font-bold text-base text-foreground">{s.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">{s.desc}</p>
+              <h3 className="font-bold text-xl text-foreground mb-3">{s.title}</h3>
+              <p className="text-muted-foreground leading-relaxed italic">{s.desc}</p>
             </div>
           ))}
         </div>

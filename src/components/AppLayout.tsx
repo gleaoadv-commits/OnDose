@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3, Calendar } from "lucide-react";
-import OnDoseLogo from "@/components/OnDoseLogo";
-import { useAuth } from "@/context/AuthContext";
-import { useApp } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
+import OnDoseLogo from "../components/OnDoseLogo";
+import { useAuth } from "../context/AuthContext";
+import { useApp } from "../context/AppContext";
+import { Button } from "../components/ui/button";
 
 const navItems = [
   { path: "/", label: "Início", icon: Home },
