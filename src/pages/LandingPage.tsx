@@ -79,10 +79,10 @@ export default function LandingPage() {
               <Check size={14} /> Grátis para sempre (até 2 remédios)
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1]">
-              A saúde de quem você ama, <span className="text-[#14B8A6]">na palma da mão.</span>
+              Sua saúde em dia, via <span className="text-[#14B8A6]">WhatsApp.</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-500 leading-relaxed max-w-xl">
-              Chega de dúvidas ou esquecimentos. Com o OnDose, você gerencia seus medicamentos e recebe alertas inteligentes para nunca pular uma dose.
+              Esquecer o remédio? Nunca mais. Com o OnDose, você organiza suas medicações e recebe alertas inteligentes direto no seu WhatsApp. Prático, fácil e gratuito.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button className="text-lg px-10 h-16" onClick={() => navigate('/auth?mode=signup')}>
@@ -97,7 +97,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <div className="text-sm font-medium text-slate-500">
-                  <span className="text-slate-900 font-bold">12k+</span> usuários ativos
+                  Junte-se aos <span className="text-slate-900 font-bold">primeiros usuários</span> e ganhe acesso vitalício gratuito.
                 </div>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function LandingPage() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-teal-100/40 rounded-full blur-[100px] -z-10"></div>
 
             <div className="relative w-full max-w-[320px]">
-              <div className="absolute -top-6 -right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-50 animate-bounce delay-700">
+              <div className="absolute -top-6 -right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-50 animate-bounce delay-700 z-10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white">
                     <Bell size={20} />
@@ -119,11 +119,16 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <img
-                src="/screenshot-3.png"
-                alt="OnDose Interface Premium"
-                className="w-full rounded-[3rem] shadow-2xl border-[10px] border-white ring-1 ring-slate-200 object-cover aspect-[9/19]"
-              />
+              <div className="relative rounded-[3rem] overflow-hidden border-[10px] border-white shadow-2xl ring-1 ring-slate-200">
+                <img
+                  src="/premium-mockup.png"
+                  alt="OnDose Interface Premium"
+                  className="w-full h-full object-cover"
+                />
+                {/* Anonimização do nome no mockup - Cobertura total ajustada */}
+                <div className="absolute top-[10.4%] left-[11%] right-[15%] h-[2.4%] bg-[#14B8A6] rounded-sm opacity-100"></div>
+                <div className="absolute top-[10.5%] left-[13%] px-2.5 py-1.0 text-[8px] font-bold text-white/90">Olá! 👋</div>
+              </div>
             </div>
           </div>
         </div>
@@ -140,13 +145,13 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
               icon={Bell}
-              title="Alertas Infalíveis"
-              description="Notificações críticas que você não consegue ignorar até confirmar que tomou o medicamento."
+              title="Alertas via WhatsApp"
+              description="Esqueça notificações que passam despercebidas. Receba lembretes no lugar onde você já passa o dia todo."
             />
             <FeatureCard
               icon={Users}
-              title="Rede de Cuidado"
-              description="Conecte familiares e receba alertas caso seu pai, mãe ou filho esqueçam de uma dose importante."
+              title="Cuide de Quem Você Ama"
+              description="Acompanhe a medicação de familiares e seja avisado se alguém esquecer de uma dose importante."
             />
             <FeatureCard
               icon={ShieldCheck}
