@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnDose - Conectar WhatsApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: sans-serif;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="card w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-400">Conectar WhatsApp à sua API</h1>
+
+        <label class="block text-sm mb-1">URL da API (do Railway)</label>
+        <input type="text" id="apiUrl" placeholder="Ex: https://evolution-production.up.railway.app"
+            value="https://evolution-api-production-0140.up.railway.app">
+
+        <label class="block text-sm mb-1">Global API Key (sua senha)</label>
+        <input type="password" id="apiKey" placeholder="Sua senha secreta">
+
+        <button onclick="createInstance()" id="btnCreate"
+            class="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold mb-4 transition">
+            1. Criar Instância OnDose
+        </button>
+
+        <button onclick="getQR()" id="btnQR"
+            class="w-full bg-green-600 hover:bg-green-700 p-2 rounded font-bold mb-4 transition opacity-50 cursor-not-allowed"
+            disabled>
+            2. Gerar QR Code
+        </button>
+
+        <div id="status" class="text-center text-sm mt-4 text-gray-400"></div>
+
+        <div id="qrContainer" class="mt-6 flex justify-center hidden">
+            <div class="bg-white p-4 rounded-lg">
+                <img id="qrImage" src="" alt="QR Code" class="w-64 h-64">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const btnQR = document.getElementById('btnQR');
+        const qrContainer = document.getElementById('qrContainer');
+        const qrImage = document.getElementById('qrImage');
+
+        async function createInstance() {
+            const url = document.getElementById('apiUrl').value.replace(/\/$/, "");
+            const key = document.getElementById('apiKey').value;
+
+            if (!key) {
+                statusEl.innerText = "Por favor, digite a senha (Global API Key).";
+                return;
+            }
+
+            statusEl.innerText = "Criando instância...";
+            statusEl.className = "text-center text-sm mt-4 text-gray-400";
+
+            try {
+                const response = await fetch(`${url}/instance/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': key
+                    },
+                    body: JSON.stringify({
+                        instanceName: "OnDose",
+                        token: "ondose_token",
+                        qrcode: true
+                    })
+                });
+
+                if (response.ok || response.status === 403) {
+                    statusEl.innerText = "Pronto! Instância configurada (ou já existia).";
+                    statusEl.className = "text-center text-sm mt-4 text-green-400";
+                    btnQR.disabled = false;
+                    btnQR.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    const error = await response.json();
+                    statusEl.innerText = "Erro da API: " + (error.message || "Senha incorreta.");
+                    statusEl.className = "text-center text-sm mt-4 text-red-400";
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.innerHTML = `Erro de conexão. Isso pode ser o navegador bloqueando o arquivo local.<br><br>
+                <b>Tente clicar com o botão direito no arquivo e escolher "Abrir com Live Server" no VS Code.</b>`;
+                statusEl.className = "text-center text-sm mt-4 text-red-400";
+            }
+        }
+
+        async function getQR() {
+            const url = document.getElementById('apiUrl').value.replace(/\/$/, "");
+            const key = document.getElementById('apiKey').value;
+
+            statusEl.innerText = "Gerando QR Code...";
+            qrContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${url}/instance/connect/OnDose`, {
+                    headers: { 'apikey': key }
+                });
+
+                const data = await response.json();
+
+                if (data.base64) {
+                    qrImage.src = data.base64;
+                    qrContainer.classList.remove('hidden');
+                    statusEl.innerText = "Escaneie o QR Code no seu WhatsApp!";
+                } else {
+                    statusEl.innerText = "Aguardando QR Code... Tente clicar novamente em 5 segundos.";
+                }
+            } catch (err) {
+                statusEl.innerText = "Erro ao buscar QR Code.";
+            }
+        }
+    </script>
+</body>
+
+</html>

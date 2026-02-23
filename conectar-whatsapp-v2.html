@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conectar WhatsApp - OnDose</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #25d366;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #128c7e;
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #qrcode {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        #qrcode img {
+            width: 100%;
+            border: 1px solid #eee;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>OnDose WhatsApp</h1>
+        <p>Conecte sua API do Railway</p>
+
+        <input type="text" id="apiUrl" placeholder="Link do Railway (ex: https://...)"
+            value="https://evolution-api-production-52b3.up.railway.app">
+        <input type="text" id="apiKey" placeholder="Sua Senha (ex: on-dose-123)" value="on-dose-123">
+        <button id="btnConectar" onclick="iniciarConexao()">GERAR QR CODE</button>
+
+        <div id="status"></div>
+        <div id="qrcode">
+            <p>Escaneie o código abaixo:</p>
+            <img id="qrImage" src="" alt="QR Code">
+        </div>
+    </div>
+
+    <script>
+        async function iniciarConexao() {
+            const url = document.getElementById('apiUrl').value.trim().replace(/\/$/, "");
+            const key = document.getElementById('apiKey').value.trim();
+            const status = document.getElementById('status');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const qrImage = document.getElementById('qrImage');
+            const btn = document.getElementById('btnConectar');
+
+            if (!url || !key) {
+                alert("Por favor, preencha a URL e a Senha.");
+                return;
+            }
+
+            status.style.display = "block";
+            status.className = "loading";
+            status.innerHTML = "Limpando e inicializando instância...";
+            btn.disabled = true;
+            qrcodeDiv.style.display = "none";
+
+            const headers = { 'Content-Type': 'application/json', 'apikey': key };
+
+            try {
+                // 1. Limpeza
+                await fetch(`${url}/instance/logout/OnDose`, { method: 'DELETE', headers });
+                await fetch(`${url}/instance/delete/OnDose`, { method: 'DELETE', headers });
+
+                // 2. Criar
+                const resCreate = await fetch(`${url}/instance/create`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ instanceName: "OnDose", qrcode: true, integration: "WHATSAPP-BAILEYS" })
+                });
+
+                if (!resCreate.ok) {
+                    throw new Error("Erro ao criar instância. Verifique se a Senha no Railway está correta.");
+                }
+
+                status.innerHTML = "Instância pronta! Aguardando o navegador da API iniciar...";
+
+                // 3. Loop de busca
+                let tentativas = 0;
+                const buscarQR = async () => {
+                    if (tentativas > 40) { // Aumentado para 120 segundos
+                        status.className = "error";
+                        status.innerHTML = "Tempo esgotado (120s). A API está demorando muito para iniciar o Chrome interno. Tente atualizar a página do Railway e clicar em GERAR QR CODE novamente.";
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    try {
+                        // Busca o estado da conexão para dar feedback melhor
+                        const resState = await fetch(`${url}/instance/connectionState/OnDose`, { headers });
+                        const stateData = await resState.json();
+                        const currentState = stateData.instance?.state || stateData.state || "desconhecido";
+
+                        status.innerHTML = `Estado da API: <b>${currentState}</b>... (${tentativas}/40)`;
+
+                        // Busca o QR Code
+                        const resQr = await fetch(`${url}/instance/connect/OnDose`, { headers });
+                        const data = await resQr.json();
+
+                        if (data.base64) {
+                            qrImage.src = data.base64;
+                            qrcodeDiv.style.display = "block";
+                            status.className = "success";
+                            status.innerHTML = "✅ QR Code Gerado! Escaneie agora.";
+                            btn.disabled = false;
+                        } else if (currentState === 'open' || currentState === 'connected') {
+                            status.className = "success";
+                            status.innerHTML = "✅ WhatsApp já está CONECTADO!";
+                            btn.disabled = false;
+                        } else {
+                            tentativas++;
+                            setTimeout(buscarQR, 3000);
+                        }
+                    } catch (e) {
+                        status.innerHTML = `Erro na comunicação: ${e.message}. Tentando reconectar... (${tentativas}/40)`;
+                        tentativas++;
+                        setTimeout(buscarQR, 3000);
+                    }
+                };
+
+                setTimeout(buscarQR, 2000);
+
+            } catch (err) {
+                status.className = "error";
+                status.innerHTML = "Erro: " + err.message;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
