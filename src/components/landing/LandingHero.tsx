@@ -1,5 +1,6 @@
 import { Button } from "../ui/button";
 import heroImage from "../../assets/landing-hero-lifestyle.jpg";
+import screenshotHome from "../../assets/ondose-screenshot-home.png";
 
 interface LandingHeroProps {
   onSignup: () => void;
@@ -31,7 +32,7 @@ export default function LandingHero({ onSignup }: LandingHeroProps) {
         <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl opacity-30 -z-10 animate-pulse-soft"></div>
         <div className="relative group perspective-1000">
           <img
-            src="/screenshot-3.png"
+            src={screenshotHome}
             alt="OnDose App Dashboard"
             className="w-full max-w-[320px] rounded-[3rem] shadow-2xl border-[8px] border-slate-900 transform transition-transform duration-700 group-hover:scale-105 group-hover:rotate-1"
           />
