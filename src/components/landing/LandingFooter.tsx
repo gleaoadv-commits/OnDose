@@ -1,24 +1,23 @@
-import OnDoseLogo from "../OnDoseLogo";
-import { useNavigate } from "react-router-dom";
-
 export default function LandingFooter() {
-  const navigate = useNavigate();
-
   return (
-    <footer className="bg-[#0D9488] text-white py-6 mt-8">
-      <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <span className="font-bold text-sm opacity-90">OnDose</span>
-          <a href="/termos" className="text-xs opacity-70 hover:opacity-100 transition-opacity">Termos</a>
+    <footer className="bg-card border-t border-border/40 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="text-2xl font-bold text-primary">OnDose</div>
+        <div className="flex gap-8 text-sm text-muted-foreground font-medium">
+          <a href="/auth" className="hover:text-primary transition-colors">Entrar</a>
+          <a href="/privacidade" className="hover:text-primary transition-colors">Privacidade</a>
+          <a href="/termos" className="hover:text-primary transition-colors">Termos</a>
+          <a href="#" className="hover:text-primary transition-colors">Sobre</a>
         </div>
-        <button
-          onClick={() => navigate('/auth?mode=signup')}
-          className="px-6 py-2.5 rounded-full bg-white text-[#0D9488] font-bold text-sm hover:bg-slate-50 transition-colors"
-        >
-          Começar Agora — É Grátis
-        </button>
-        <p className="text-xs opacity-70">© All rights reserved.</p>
+      </div>
+      <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-border/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
+        <p>© {new Date().getFullYear()} OnDose. Todos os direitos reservados.</p>
+        <div className="flex gap-6 font-semibold">
+          <span className="cursor-pointer hover:text-foreground">Google Play</span>
+          <span className="cursor-pointer hover:text-foreground">App Store</span>
+        </div>
       </div>
     </footer>
   );
 }
+

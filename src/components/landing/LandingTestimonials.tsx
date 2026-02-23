@@ -1,84 +1,69 @@
-import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
     name: "Maria S.",
-    text: "OnDose me ajudou a manter meus medicamentos sob controle de uma forma incrível. Nunca mais esqueci uma dose!",
-    avatar: 1,
+    role: "Usuária",
+    text: "O OnDose me ajudou a manter meus medicamentos sob controle de uma forma que nenhum outro app conseguiu.",
+    rating: 5,
   },
   {
     name: "Carlos R.",
-    text: "O monitoramento familiar é sensacional. Agora acompanho os remédios da minha mãe mesmo de longe.",
-    avatar: 2,
+    role: "Familiar",
+    text: "O monitoramento familiar é incrível. Agora eu sei exatamente quando minha mãe toma os remédios.",
+    rating: 5,
   },
   {
     name: "Ana L.",
-    text: "Meus medicamentos sempre em dia. O app é super intuitivo e os alertas são impossíveis de ignorar.",
-    avatar: 3,
-  },
-  {
-    name: "Ana P.",
-    text: "Melhor app de medicamentos que já usei. Simples, bonito e funcional. Recomendo para toda família.",
-    avatar: 4,
+    role: "Mãe",
+    text: "Meus medicamentos agora estão sempre em dia. O app é super intuitivo e essencial para quem cuida da saúde.",
+    rating: 5,
   },
 ];
 
 export default function LandingTestimonials() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (dir: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const amount = 280;
-    scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
-  };
-
   return (
-    <section className="py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-            Wall of Love
-          </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => scroll('left')}
-              className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
-              aria-label="Anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
-              aria-label="Próximo"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+    <section className="py-20 px-6 relative overflow-hidden bg-background">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div className="space-y-3">
+            <h2 className="text-3xl md:text-4xl font-black text-foreground">
+              O que nossos usuários dizem
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl">
+              Milhares de pessoas já confiam no OnDose para cuidar da sua saúde e de quem amam.
+            </p>
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none' }}
-        >
+        <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t) => (
             <div
               key={t.name}
-              className="min-w-[240px] max-w-[260px] flex-shrink-0 snap-start p-6 rounded-2xl border border-slate-200/60 bg-white"
+              className="bg-card rounded-3xl border border-border/50 p-8 shadow-sm hover:shadow-md transition-all duration-300 relative group"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#14B8A6]/20 mb-4">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${t.avatar}&backgroundColor=d1e9e9`}
-                  alt={t.name}
-                  className="w-full h-full object-cover"
-                />
+              <Quote className="absolute top-6 right-8 w-10 h-10 text-primary/10 group-hover:text-primary/20 transition-colors" />
+              <div className="flex gap-1 mb-6">
+                {Array.from({ length: t.rating }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                ))}
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed italic mb-4">
+              <p className="text-lg text-foreground leading-relaxed italic mb-8 relative z-10">
                 "{t.text}"
               </p>
-              <p className="text-sm font-bold text-slate-900">— {t.name}</p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full border-2 border-primary/20 overflow-hidden shadow-sm">
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${t.name}&backgroundColor=d1e9e9`}
+                    alt={t.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground text-lg">{t.name}</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{t.role}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -86,3 +71,4 @@ export default function LandingTestimonials() {
     </section>
   );
 }
+
