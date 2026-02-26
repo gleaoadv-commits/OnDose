@@ -1,39 +1,74 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { sendEvolutionMessage } from "../_shared/evolution.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const META_API_VERSION = "v21.0";
 
-async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
+// --- NOVAS CREDENCIAIS META OFICIAIS --- //
+const DEFAULT_ACCESS_TOKEN = "EAAW3hFgBhZAcBQ0TZADskq52BYtAlyCbM0JRdEGHXv8bGrFCzDYL8HQq5ZAMjTyuZBvMVcPv3hjTujAhFXYnAPeyd746rQCGPcun3ZCOlY8AenFEufNK4P7IeFTTPaUGwjnCKWmDCmE3SOZB1T8JnZBk4FmX95tVZA4MbmqV4GEi2MMCbhLQuhHA59SZCoz1yk48VizAObXrV6dwmKssEZA5c1MFEVq5anGjWNBxeA7hwuMxYGX2IqT1b5XoTCZAL9WDwZBouVVuVkeRImJVKaZAIArfFk5QZD";
+const DEFAULT_PHONE_ID = "1029626996895162";
+// Nome exato que deve ter sido dado ao modelo de mensagem no painel do Facebook:
+const DEFAULT_TEMPLATE_NAME = "lembrete_dose"; // <-- AVISO: Se você usou outro nome, precisaremos trocar aqui.
+
+async function sendMetaWhatsAppTemplate(phoneNumberId: string, accessToken: string, templateName: string, to: string, variable1: string, variable2: string) {
   const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: "pt_BR" // Padrão Brasil
+      },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: variable1 }, // Corresponde à {{1}}
+            { type: "text", text: variable2 }  // Corresponde à {{2}}
+          ]
+        }
+      ]
+    }
+  };
+
+  console.log(`Payload enviado para a Meta API (${to}):`, JSON.stringify(payload));
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
-    }),
+    body: JSON.stringify(payload),
   });
-  const result = await response.json();
-  return { response, result };
+
+  const result = await response.json().catch(() => ({}));
+  if (result.error) {
+    console.error("Meta API retornou Erro:", result.error.message);
+  }
+  return { ok: response.ok && !result.error, response, result };
 }
 
-// Round a date to the nearest minute for grouping same-time doses
 function roundToMinute(dateStr: string): string {
   const d = new Date(dateStr);
   d.setSeconds(0, 0);
   return d.toISOString();
+}
+
+function extractHourFromUTCString(dateStr: string): string {
+  const d = new Date(dateStr);
+  // Converte a data salva (UTC) para o horário local (America/Sao_Paulo seria ideal)
+  // Como Deno Edge Functions rodam em UTC, subtraímos 3 horas (BRT) manualmente para facilitar:
+  d.setHours(d.getHours() - 3);
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
 const PRO_PRODUCT = "prod_U0EtzwCBMSlt6o";
@@ -49,25 +84,20 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-    const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
-    const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
-    const EVOLUTION_INSTANCE = Deno.env.get("EVOLUTION_INSTANCE") || "OnDose";
+    const META_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || DEFAULT_ACCESS_TOKEN;
+    const META_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || DEFAULT_PHONE_ID;
+    const TEMPLATE_NAME = Deno.env.get("WHATSAPP_TEMPLATE_NAME") || DEFAULT_TEMPLATE_NAME;
+
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
-    const useEvolution = !!(EVOLUTION_API_URL && EVOLUTION_API_KEY);
-
-    if (!useEvolution && (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN)) {
-      throw new Error("WhatsApp providers (Meta or Evolution) not properly configured");
-    }
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    const windowStart = new Date(now.getTime() - 2 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 2 * 60 * 1000);
+    // Aumenta a janela de busca para mitigar delays ou acionamentos manuais distantes (8 horas para cima e baixo)
+    const windowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
 
     console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
 
@@ -99,29 +129,22 @@ Deno.serve(async (req) => {
 
     if (profilesError) throw new Error(`Error fetching profiles: ${profilesError.message}`);
 
-    // Build a set of paid user IDs (PRO or Premium)
     const paidUserIds = new Set<string>();
 
     for (const profile of (profiles || [])) {
       if (profile.plan_override === "pro" || profile.plan_override === "premium") {
         paidUserIds.add(profile.user_id);
-        console.log(`User ${profile.user_id} (${profile.display_name}) is paid via plan_override: ${profile.plan_override}`);
+        console.log(`User ${profile.user_id} (${profile.display_name}) is paid via plan_override`);
         continue;
       }
 
       try {
         const { data: authUser } = await supabase.auth.admin.getUserById(profile.user_id);
         const email = authUser?.user?.email;
-        if (!email) {
-          console.log(`No email for user ${profile.user_id}, skipping`);
-          continue;
-        }
+        if (!email) continue;
 
         const customers = await stripe.customers.list({ email, limit: 1 });
-        if (customers.data.length === 0) {
-          console.log(`No Stripe customer for ${email} — free plan, skipping WhatsApp`);
-          continue;
-        }
+        if (customers.data.length === 0) continue;
 
         const customerId = customers.data[0].id;
         const subscriptions = await stripe.subscriptions.list({
@@ -142,11 +165,9 @@ Deno.serve(async (req) => {
         if (hasPaidPlan) {
           paidUserIds.add(profile.user_id);
           console.log(`User ${profile.user_id} (${profile.display_name}) is paid via Stripe`);
-        } else {
-          console.log(`User ${profile.user_id} (${profile.display_name}) has no active paid plan — skipping`);
         }
       } catch (err) {
-        console.error(`Error checking plan for user ${profile.user_id}:`, err.message);
+        console.error(`Error checking plan for user ${profile.user_id}:`, err);
       }
     }
 
@@ -156,10 +177,9 @@ Deno.serve(async (req) => {
         .map((p: any) => [p.user_id, p])
     );
 
-    console.log(`Paid users with WhatsApp eligible for reminders: ${profileMap.size}`);
+    console.log(`Paid users with eligible WhatsApp: ${profileMap.size}`);
 
-    // Group events by user_id + rounded scheduled_time
-    const groups = new Map<string, { userId: string; roundedTime: string; meds: { name: string; dosage: string }[] }>();
+    const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[] }>();
 
     for (const event of events) {
       const profile = profileMap.get(event.user_id);
@@ -169,23 +189,11 @@ Deno.serve(async (req) => {
       const key = `${event.user_id}::${roundedTime}`;
 
       if (!groups.has(key)) {
-        groups.set(key, { userId: event.user_id, roundedTime, meds: [] });
+        groups.set(key, { userId: event.user_id, originalEventTime: event.scheduled_time, meds: [] });
       }
-      groups.get(key)!.meds.push({ name: event.medication_name, dosage: event.dosage });
+      // Nós enviaremos um Lote de remédios como {{1}}: "Aspirina (1mg), Buscopan (5 gotas)"
+      groups.get(key)!.meds.push(`${event.medication_name} (${event.dosage})`);
     }
-
-    const closings = [
-      "Cuide-se! Você está indo muito bem! 💪",
-      "Saúde é o seu maior bem. Vamos juntos! 🌱",
-      "Cada dose é um passo para uma vida mais saudável! ✨",
-      "Você não está sozinho nessa jornada. Continue! 🤝",
-      "Pequenos hábitos fazem grandes diferenças. Parabéns! 🏆",
-      "Seu bem-estar importa. Continue firme! 💙",
-      "Um passo de cada vez. Você consegue! 🌟",
-      "Cuidar de si mesmo é o maior ato de amor! ❤️",
-      "A consistência é o segredo da saúde. Continue assim! 🎯",
-      "Hoje é mais um dia de autocuidado. Orgulhe-se! 🌸",
-    ];
 
     let sent = 0;
     const errors: string[] = [];
@@ -193,66 +201,54 @@ Deno.serve(async (req) => {
     for (const group of groups.values()) {
       const profile = profileMap.get(group.userId)!;
 
+      // Meta Cloud API aceita com ou sem DDI 55, mas exige clareza no código de país.
       let phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
       if (!phone.startsWith("55") && phone.length <= 11) {
         phone = "55" + phone;
       }
 
-      const userName = profile.display_name || "Usuário";
-      const closing = closings[Math.floor(Math.random() * closings.length)];
-
-      let medsText: string;
-      if (group.meds.length === 1) {
-        const med = group.meds[0];
-        medsText = `📌 *${med.name}*\n💊 Dose: ${med.dosage}`;
-      } else {
-        medsText = group.meds
-          .map((med) => `📌 *${med.name}*\n   💊 Dose: ${med.dosage}`)
-          .join("\n\n");
-      }
-
-      const plural = group.meds.length > 1 ? "seus medicamentos" : "seu medicamento";
-      const appLink = "https://ondose.lovable.app";
-      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar ${plural}:\n\n${medsText}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}`;
-
-      console.log(`Sending ${useEvolution ? 'Evolution' : 'Meta'} WhatsApp to ${phone} — ${group.meds.length} med(s) at ${group.roundedTime}`);
+      // Prepara as {{1}} e {{2}} pro template oficial
+      const varRestoDosRemedios = group.meds.join(" e ");
+      const varHoraFormatada = extractHourFromUTCString(group.originalEventTime);
 
       try {
-        let responseOk = false;
-        let result;
+        console.log(`Disparando Cloud API Meta para ${phone}. Medicamentos: ${varRestoDosRemedios}, Horário: ${varHoraFormatada}`);
 
-        if (useEvolution) {
-          result = await sendEvolutionMessage(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, EVOLUTION_INSTANCE!, phone, message);
-          responseOk = !!result; // Evolution helper throws on fail
-        } else {
-          const res = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID!, WHATSAPP_ACCESS_TOKEN!, phone, message);
-          result = res.result;
-          responseOk = res.response.ok && !result.error;
-        }
+        const res = await sendMetaWhatsAppTemplate(
+          META_PHONE_ID,
+          META_ACCESS_TOKEN,
+          TEMPLATE_NAME,
+          phone,
+          varRestoDosRemedios, // Template {{1}}
+          varHoraFormatada     // Template {{2}}
+        );
 
-        if (responseOk) {
+        if (res.ok) {
           sent++;
-          console.log(`${useEvolution ? 'Evolution' : 'Meta'} API sent to ${phone}`);
+          console.log(`Sucesso! Meta aceitou a mensagem de ${phone}.`);
         } else {
-          console.error(`${useEvolution ? 'Evolution' : 'Meta'} API error for user ${group.userId}:`, result);
-          errors.push(`User ${group.userId}: ${JSON.stringify(result.error || result)}`);
+          console.error(`Erro Meta API para ${phone}:`, res.result);
+          const errorMsg = res.result && typeof res.result === "object" ? JSON.stringify(res.result) : String(res.result);
+          errors.push(`User ${group.userId}: ${errorMsg}`);
         }
       } catch (err) {
-        console.error(`Exception for user ${group.userId}:`, err.message);
-        errors.push(`User ${group.userId}: ${err.message}`);
+        const errMessage = err instanceof Error ? err.message : String(err);
+        console.error(`Exceção Grave para user ${group.userId}:`, errMessage);
+        errors.push(`User ${group.userId}: ${errMessage}`);
       }
     }
 
-    console.log(`Meta WhatsApp reminders: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
+    console.log(`Resumo Cloud API: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
 
     return new Response(
       JSON.stringify({ sent, groups: groups.size, errors: errors.length, errorDetails: errors }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Critical Error no Lembrete:", errorMessage);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
