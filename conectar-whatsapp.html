@@ -36,12 +36,11 @@
     <div class="card w-full max-w-md">
         <h1 class="text-2xl font-bold mb-6 text-center text-blue-400">Conectar WhatsApp à sua API</h1>
 
-        <label class="block text-sm mb-1">URL da API (do Railway)</label>
-        <input type="text" id="apiUrl" placeholder="Ex: https://evolution-production.up.railway.app"
-            value="https://evolution-api-production-0140.up.railway.app">
+        <label class="block text-sm mb-1">URL da API (da Hostinger)</label>
+        <input type="text" id="apiUrl" placeholder="Ex: http://187.77.55.115:8080" value="http://187.77.55.115:8080">
 
         <label class="block text-sm mb-1">Global API Key (sua senha)</label>
-        <input type="password" id="apiKey" placeholder="Sua senha secreta">
+        <input type="password" id="apiKey" placeholder="Sua senha secreta" value="OnDoseAPI2026!">
 
         <button onclick="createInstance()" id="btnCreate"
             class="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold mb-4 transition">
@@ -54,11 +53,27 @@
             2. Gerar QR Code
         </button>
 
+        <div id="pairingArea" class="hidden">
+            <label class="block text-sm mb-1">Número do WhatsApp (com DDD)</label>
+            <input type="text" id="phoneNum" placeholder="Ex: 5531999999999">
+            <button onclick="getPairingCode()" id="btnPairing"
+                class="w-full bg-purple-600 hover:bg-purple-700 p-2 rounded font-bold mb-4 transition">
+                Ou Gerar Código de Emparelhamento
+            </button>
+        </div>
+
         <div id="status" class="text-center text-sm mt-4 text-gray-400"></div>
 
         <div id="qrContainer" class="mt-6 flex justify-center hidden">
             <div class="bg-white p-4 rounded-lg">
                 <img id="qrImage" src="" alt="QR Code" class="w-64 h-64">
+            </div>
+        </div>
+
+        <div id="pairingCodeDisplay" class="mt-6 text-center hidden">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <p class="text-xs text-gray-400 mb-2">Digite este código no seu WhatsApp:</p>
+                <p id="pairCode" class="text-3xl font-mono font-bold tracking-widest text-purple-400"></p>
             </div>
         </div>
     </div>
@@ -68,6 +83,9 @@
         const btnQR = document.getElementById('btnQR');
         const qrContainer = document.getElementById('qrContainer');
         const qrImage = document.getElementById('qrImage');
+        const pairingArea = document.getElementById('pairingArea');
+        const pairingCodeDisplay = document.getElementById('pairingCodeDisplay');
+        const pairCodeEl = document.getElementById('pairCode');
 
         async function createInstance() {
             const url = document.getElementById('apiUrl').value.replace(/\/$/, "");
@@ -78,10 +96,14 @@
                 return;
             }
 
-            statusEl.innerText = "Criando instância...";
+            statusEl.innerText = "Criando/Limpando instância...";
             statusEl.className = "text-center text-sm mt-4 text-gray-400";
 
             try {
+                // Forçar delete para garantir reset
+                await fetch(`${url}/instance/logout/OnDose`, { method: 'DELETE', headers: { 'apikey': key } });
+                await fetch(`${url}/instance/delete/OnDose`, { method: 'DELETE', headers: { 'apikey': key } });
+
                 const response = await fetch(`${url}/instance/create`, {
                     method: 'POST',
                     headers: {
@@ -91,15 +113,17 @@
                     body: JSON.stringify({
                         instanceName: "OnDose",
                         token: "ondose_token",
-                        qrcode: true
+                        qrcode: true,
+                        integration: "WHATSAPP-BAILEYS"
                     })
                 });
 
                 if (response.ok || response.status === 403) {
-                    statusEl.innerText = "Pronto! Instância configurada (ou já existia).";
+                    statusEl.innerText = "Pronto! Instância configurada. Agora escolha o método de conexão.";
                     statusEl.className = "text-center text-sm mt-4 text-green-400";
                     btnQR.disabled = false;
                     btnQR.classList.remove('opacity-50', 'cursor-not-allowed');
+                    pairingArea.classList.remove('hidden');
                 } else {
                     const error = await response.json();
                     statusEl.innerText = "Erro da API: " + (error.message || "Senha incorreta.");
@@ -107,8 +131,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                statusEl.innerHTML = `Erro de conexão. Isso pode ser o navegador bloqueando o arquivo local.<br><br>
-                <b>Tente clicar com o botão direito no arquivo e escolher "Abrir com Live Server" no VS Code.</b>`;
+                statusEl.innerHTML = `Erro de conexão. Verifique se a URL está correta.`;
                 statusEl.className = "text-center text-sm mt-4 text-red-400";
             }
         }
@@ -119,6 +142,7 @@
 
             statusEl.innerText = "Gerando QR Code...";
             qrContainer.classList.add('hidden');
+            pairingCodeDisplay.classList.add('hidden');
 
             try {
                 const response = await fetch(`${url}/instance/connect/OnDose`, {
@@ -136,6 +160,41 @@
                 }
             } catch (err) {
                 statusEl.innerText = "Erro ao buscar QR Code.";
+            }
+        }
+
+        async function getPairingCode() {
+            const url = document.getElementById('apiUrl').value.replace(/\/$/, "");
+            const key = document.getElementById('apiKey').value;
+            const number = document.getElementById('phoneNum').value;
+
+            if (!number) {
+                statusEl.innerText = "Digite o número para emparelhar.";
+                return;
+            }
+
+            statusEl.innerText = "Gerando Código de Emparelhamento...";
+            qrContainer.classList.add('hidden');
+            pairingCodeDisplay.classList.add('hidden');
+
+            try {
+                // Rota refinada para Evolution v2.2.3
+                const response = await fetch(`${url}/instance/connect/OnDose?number=${number}`, {
+                    headers: { 'apikey': key }
+                });
+
+                const data = await response.json();
+
+                if (data.pairingCode || data.code) {
+                    pairCodeEl.innerText = data.pairingCode || data.code;
+                    pairingCodeDisplay.classList.remove('hidden');
+                    statusEl.innerText = "Digite o código no seu WhatsApp!";
+                } else {
+                    console.log("Resposta da API:", data);
+                    statusEl.innerText = "Aguardando... Se o código não aparecer, verifique se o número no WhatsApp está ativo.";
+                }
+            } catch (err) {
+                statusEl.innerText = "Erro na API de Pairing.";
             }
         }
     </script>

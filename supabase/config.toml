@@ -1,4 +1,4 @@
-project_id = "pkjpfrffzewdenvdnouu"
+project_id = "fbfzcmydjjqoyzgrkocg"
 
 [functions.email-hook]
 verify_jwt = false
@@ -43,6 +43,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.delete-account]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
 verify_jwt = false
 
 [functions.exam-reminders-whatsapp]

@@ -24,8 +24,8 @@ async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, t
     }),
   });
   const result = await response.json();
-  if (!response.ok || result.error) {
-    throw new Error(`Meta API error: ${JSON.stringify(result.error || result)}`);
+  if (!response.ok || (result && result.error)) {
+    throw new Error(`Meta API error: ${JSON.stringify(result?.error || result)}`);
   }
   return result;
 }
@@ -83,7 +83,33 @@ Deno.serve(async (req) => {
 
     let result;
     if (useEvolution) {
-      result = await sendEvolutionMessage(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, EVOLUTION_INSTANCE!, phone, message);
+      // Enviamos como Lista para teste manual ser interativo
+      const title = `💊 Lembrete OnDose`;
+      const description = `Olá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}`;
+      const buttonText = `Clique para Responder`;
+      const footer = `Teste de Interatividade`;
+      const sections = [
+        {
+          title: "Ações de Teste",
+          rows: [
+            { id: `take_test-id`, title: "✅ Tomei agora", description: "Simular registro de dose" },
+            { id: `delay_test-id`, title: "⏰ Com atraso", description: "Simular registro com atraso" }
+          ]
+        }
+      ];
+
+      const { sendEvolutionList } = await import("../_shared/evolution.ts");
+      result = await sendEvolutionList(
+        EVOLUTION_API_URL!,
+        EVOLUTION_API_KEY!,
+        EVOLUTION_INSTANCE!,
+        phone,
+        title,
+        description,
+        buttonText,
+        footer,
+        sections
+      );
     } else {
       result = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID!, WHATSAPP_ACCESS_TOKEN!, phone, message);
     }
@@ -93,9 +119,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error:", errorMessage);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

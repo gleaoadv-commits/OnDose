@@ -7,7 +7,7 @@ SELECT cron.schedule(
   $$
   SELECT
     net.http_post(
-      url := 'https://pkjpfrffzewdenvdnouu.supabase.co/functions/v1/whatsapp-reminders',
+      url := 'https://fbfzcmydjjqoyzgrkocg.supabase.co/functions/v1/whatsapp-reminders',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'Authorization', 'Bearer ' || (SELECT value FROM pg_catalog.pg_settings WHERE name = 'app.settings.service_role_key') -- Ajuste manual pode ser necessário dependendo da config do projeto
