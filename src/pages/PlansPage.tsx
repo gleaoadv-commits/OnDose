@@ -41,7 +41,6 @@ const features = [
 export default function PlansPage() {
   const { plan, subscriptionEnd, cancelAtPeriodEnd, refreshSubscription } = useApp();
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
-  const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
   const handleCheckout = async (tier: "pro" | "premium") => {
@@ -253,43 +252,48 @@ export default function PlansPage() {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">PRO</h3>
-              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-                R$ 9,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-              </p>
-
-              <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
-              <ul className="space-y-2.5 mb-5">
-                {[...features].filter(f => !f.freeOnly).sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
-                  <li key={f.label} className="flex items-center gap-2.5 text-sm">
-                    {f.pro ? (
-                      <div className="bg-success/10 rounded-full p-0.5">
-                        <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
-                      </div>
-                    ) : (
-                      <div className="bg-muted rounded-full p-0.5">
-                        <X className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span className={f.pro ? "text-foreground" : "text-muted-foreground"}>{f.label}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan === "free" && (
-                <Button
-                  size="lg"
-                  className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                  onClick={() => handleCheckout("pro")}
-                  disabled={!!loadingCheckout}
-                >
-                  {loadingCheckout === "pro" ? (
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  ) : (
-                    <Crown className="h-5 w-5 mr-2" />
-                  )}
-                  Assinar PRO Mensal
-                </Button>
+              {plan === "pro" && (
+                <span className="text-xs font-bold text-pro bg-pro/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
               )}
             </div>
+
+            <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+              R$ 9,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+            </p>
+
+            <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
+            <ul className="space-y-2.5 mb-5">
+              {[...features].filter(f => !f.freeOnly).sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
+                <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                  {f.pro ? (
+                    <div className="bg-success/10 rounded-full p-0.5">
+                      <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
+                    </div>
+                  ) : (
+                    <div className="bg-muted rounded-full p-0.5">
+                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className={f.pro ? "text-foreground" : "text-muted-foreground"}>{f.label}</span>
+                </li>
+              ))}
+            </ul>
+            {plan === "free" && (
+              <Button
+                size="lg"
+                className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                onClick={() => handleCheckout("pro")}
+                disabled={!!loadingCheckout}
+              >
+                {loadingCheckout === "pro" ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Crown className="h-5 w-5 mr-2" />
+                )}
+                Assinar PRO Mensal
+              </Button>
+            )}
+          </div>
         </Card>
 
         {/* Premium */}
@@ -302,42 +306,47 @@ export default function PlansPage() {
                 <Star className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">Premium</h3>
-              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-                R$ 18,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-              </p>
-
-              <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
-              <ul className="space-y-2.5 mb-5">
-                {features.filter(f => !f.freeOnly).map(f => (
-                  <li key={f.label} className="flex items-center gap-2.5 text-sm">
-                    <div className="bg-success/10 rounded-full p-0.5">
-                      <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
-                    </div>
-                    <span className="text-foreground">{f.label}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan !== "premium" && (
-                <Button
-                  size="lg"
-                  className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                  onClick={() => handleCheckout("premium")}
-                  disabled={!!loadingCheckout}
-                >
-                  {loadingCheckout === "premium" ? (
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  ) : (
-                    <Star className="h-5 w-5 mr-2" />
-                  )}
-                  Assinar Premium Mensal
-                </Button>
-              )}
               {plan === "premium" && (
-                <p className="text-center text-xs text-muted-foreground py-2">
-                  ✅ Você já está no plano mais completo. Gerencie sua assinatura acima.
-                </p>
+                <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
               )}
             </div>
+
+            <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+              R$ 18,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+            </p>
+
+            <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
+            <ul className="space-y-2.5 mb-5">
+              {features.filter(f => !f.freeOnly).map(f => (
+                <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                  <div className="bg-success/10 rounded-full p-0.5">
+                    <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
+                  </div>
+                  <span className="text-foreground">{f.label}</span>
+                </li>
+              ))}
+            </ul>
+            {plan !== "premium" && (
+              <Button
+                size="lg"
+                className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                onClick={() => handleCheckout("premium")}
+                disabled={!!loadingCheckout}
+              >
+                {loadingCheckout === "premium" ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Star className="h-5 w-5 mr-2" />
+                )}
+                Assinar Premium Mensal
+              </Button>
+            )}
+            {plan === "premium" && (
+              <p className="text-center text-xs text-muted-foreground py-2">
+                ✅ Você já está no plano mais completo. Gerencie sua assinatura acima.
+              </p>
+            )}
+          </div>
         </Card>
       </div>
     </div>
