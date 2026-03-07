@@ -17,63 +17,28 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     const medList = medications.map((m: any) => `- ${m.name} (${m.dosage})`).join("\n");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+        system_instruction: {
+          parts: [{ text: "Você é um assistente farmacêutico especialista em interações medicamentosas. Analise a lista de medicamentos e identifique interações clinicamente relevantes. Retorne APENAS interações reais e conhecidas em formato JSON." }]
+        },
+        contents: [
           {
-            role: "system",
-            content: `Você é um assistente farmacêutico especialista em interações medicamentosas.
-Analise a lista de medicamentos e identifique interações clinicamente relevantes.
-Retorne APENAS interações reais e conhecidas — não invente.
-Para cada interação, indique: os medicamentos envolvidos, a gravidade (leve/moderada/grave) e uma explicação breve em português simples.
-Se não houver interações conhecidas, retorne lista vazia.`,
-          },
-          {
-            role: "user",
-            content: `Analise as possíveis interações entre estes medicamentos em uso simultâneo:\n${medList}`,
-          },
+            parts: [{ text: `Analise as possíveis interações entre estes medicamentos em uso simultâneo:\n${medList}\n\nRetorne um objeto JSON com o campo 'interactions' sendo um array de objetos. Cada objeto deve ter 'drugs' (array de strings), 'severity' (enum: ["leve", "moderada", "grave"]) e 'description' (string).` }]
+          }
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "report_interactions",
-              description: "Reporta interações medicamentosas encontradas",
-              parameters: {
-                type: "object",
-                properties: {
-                  interactions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        drugs: { type: "array", items: { type: "string" }, description: "Nomes dos medicamentos envolvidos" },
-                        severity: { type: "string", enum: ["leve", "moderada", "grave"] },
-                        description: { type: "string", description: "Explicação em português simples" },
-                      },
-                      required: ["drugs", "severity", "description"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["interactions"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "report_interactions" } },
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       }),
     });
 
@@ -84,8 +49,8 @@ Se não houver interações conhecidas, retorne lista vazia.`,
     }
 
     const aiData = await response.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    const result = toolCall ? JSON.parse(toolCall.function.arguments) : { interactions: [] };
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const result = JSON.parse(content);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

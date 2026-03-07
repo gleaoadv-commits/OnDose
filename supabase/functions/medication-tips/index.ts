@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     const { medicationName, currentMedications, times } = await req.json();
 
@@ -42,77 +42,30 @@ Deno.serve(async (req) => {
       ? `ATENÇÃO: Os seguintes medicamentos já estão agendados nos MESMOS horários: ${conflicts.join("; ")}`
       : "";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+        system_instruction: {
+          parts: [{ text: "Você é um assistente farmacêutico brasileiro especializado em medicamentos. Seu papel é fornecer dicas práticas e alertas importantes sobre medicamentos de forma clara e acessível. Retorne APENAS dicas relevantes em formato JSON." }]
+        },
+        contents: [
           {
-            role: "system",
-            content: `Você é um assistente farmacêutico brasileiro especializado em medicamentos. 
-Seu papel é fornecer dicas práticas e alertas importantes sobre medicamentos de forma clara e acessível.
-Sempre seja direto, útil e baseado em evidências farmacológicas conhecidas.
-Retorne APENAS dicas relevantes — se não souber informações específicas sobre interações, não invente.`,
-          },
-          {
-            role: "user",
-            content: `O usuário está cadastrando o medicamento: "${medicationName.trim()}" 
+            parts: [{
+              text: `O usuário está cadastrando o medicamento: "${medicationName.trim()}" 
 Horários programados para o novo medicamento: ${newTimesText}
-
 Medicamentos que o usuário JÁ TEM cadastrados:
 ${existingMedsText}
-
 ${conflictText}
 
-Por favor, analise e retorne:
-1. Dicas sobre como tomar este medicamento (jejum, com água, com alimentos, etc.)
-2. Alertas sobre possíveis interações com os medicamentos já cadastrados (se houver)
-3. Se houver conflito de horário detectado, alerte sobre medicamentos no mesmo horário
-
-Seja conciso. Máximo 4 dicas/alertas no total.`,
-          },
+Por favor, analise e retorne um objeto JSON com o campo 'tips' sendo um array de objetos. Cada objeto deve ter 'type' (enum: ["info", "warning", "danger"]) e 'message' (string, máx 100 caracteres).` }]
+          }
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_medication_tips",
-              description: "Retorna dicas e alertas sobre o medicamento",
-              parameters: {
-                type: "object",
-                properties: {
-                  tips: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: {
-                          type: "string",
-                          enum: ["info", "warning", "danger"],
-                          description: "info=dica geral, warning=atenção/conflito horário, danger=interação medicamentosa grave",
-                        },
-                        message: {
-                          type: "string",
-                          description: "Texto da dica, máximo 100 caracteres",
-                        },
-                      },
-                      required: ["type", "message"],
-                      additionalProperties: false,
-                    },
-                    description: "Lista de dicas e alertas (máximo 4)",
-                  },
-                },
-                required: ["tips"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_medication_tips" } },
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       }),
     });
 
@@ -133,16 +86,15 @@ Seja conciso. Máximo 4 dicas/alertas no total.`,
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     let tips: any[] = [];
 
-    if (toolCall?.function?.arguments) {
-      try {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        tips = (parsed.tips || []).slice(0, 4);
-      } catch {
-        tips = [];
-      }
+    try {
+      const parsed = JSON.parse(content);
+      tips = (parsed.tips || []).slice(0, 4);
+    } catch (e) {
+      console.error("Erro ao parsear resposta do Gemini:", e);
+      tips = [];
     }
 
     return new Response(JSON.stringify({ tips }), {

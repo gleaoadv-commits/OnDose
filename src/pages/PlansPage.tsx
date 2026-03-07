@@ -9,40 +9,38 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 
 const TIERS = {
   pro: {
-    monthly: { price_id: "price_1T2EPyDqdLmQstZG9zWUo1B9", amount: 12.9 },
-    yearly:  { price_id: "price_1T2EQADqdLmQstZGyxXZjRuE", amount: 118.8, monthly_equiv: 9.9 },
-    product_id: "prod_U0EtzwCBMSlt6o",
+    monthly: { price_id: "price_1T8QwmDqdLmQstZGbDxSVMBC", amount: 9.9 },
+    product_id: "prod_U6eFRdGuH5fd70",
   },
   premium: {
-    monthly: { price_id: "price_1T2EQNDqdLmQstZGikpcg2wl", amount: 34.9 },
-    yearly:  { price_id: "price_1T2EQYDqdLmQstZGqYOhvxtI", amount: 298.8, monthly_equiv: 24.9 },
+    monthly: { price_id: "price_1T8QvxDqdLmQstZGMjnYfUKg", amount: 18.9 },
     product_id: "prod_U0Eub1bzRh41Dc",
   },
 };
 
 const features = [
-  { label: "Cadastro de medicamentos",                    free: true,  pro: true,  premium: true,  freeOnly: false },
-  { label: "Agenda diária",                               free: true,  pro: true,  premium: true,  freeOnly: false },
-  { label: "Calendário visual",                           free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Notificações no app",                         free: true,  pro: true,  premium: true,  freeOnly: false },
-  { label: "Até 2 medicamentos",                          free: true,  pro: false, premium: false, freeOnly: true  },
-  { label: "Medicamentos ilimitados",                     free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Notificações por WhatsApp",                   free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Reconhecimento por foto (IA)",                free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Relatórios de adesão",                        free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Histórico completo de medicamentos",          free: false, pro: true,  premium: true,  freeOnly: false },
-  { label: "Bulário eletrônico ANVISA",                   free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Gestão de informações para até 2 familiares",  free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Familiares extras (R$19,90/mês cada)",        free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Relatórios para familiares",                  free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Acompanhamento de exames (IA)",               free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Gráficos de evolução de saúde",               free: false, pro: false, premium: true,  freeOnly: false },
-  { label: "Lembrete de exames recorrentes (IA)",         free: false, pro: false, premium: true,  freeOnly: false },
+  { label: "Cadastro de medicamentos", free: true, pro: true, premium: true, freeOnly: false },
+  { label: "Agenda diária", free: true, pro: true, premium: true, freeOnly: false },
+  { label: "Calendário visual", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Notificações no app", free: true, pro: true, premium: true, freeOnly: false },
+  { label: "Até 2 medicamentos", free: true, pro: false, premium: false, freeOnly: true },
+  { label: "Medicamentos ilimitados", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Notificações por WhatsApp", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Reconhecimento por foto (IA)", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Relatórios de adesão", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Histórico completo de medicamentos", free: false, pro: true, premium: true, freeOnly: false },
+  { label: "Bulário eletrônico ANVISA", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Gestão de informações para até 2 familiares", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Familiares extras (R$19,90/mês cada)", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Relatórios para familiares", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Acompanhamento de exames (IA)", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Gráficos de evolução de saúde", free: false, pro: false, premium: true, freeOnly: false },
+  { label: "Lembrete de exames recorrentes (IA)", free: false, pro: false, premium: true, freeOnly: false },
 ];
 
 export default function PlansPage() {
   const { plan, subscriptionEnd, cancelAtPeriodEnd, refreshSubscription } = useApp();
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
@@ -56,7 +54,7 @@ export default function PlansPage() {
         return;
       }
 
-      const priceId = TIERS[tier][billingCycle].price_id;
+      const priceId = TIERS[tier].monthly.price_id;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId },
       });
@@ -100,8 +98,7 @@ export default function PlansPage() {
     toast.success("Status atualizado!");
   };
 
-  const proSavings = Math.round((1 - TIERS.pro.yearly.monthly_equiv / TIERS.pro.monthly.amount) * 100);
-  const premiumSavings = Math.round((1 - TIERS.premium.yearly.monthly_equiv / TIERS.premium.monthly.amount) * 100);
+  // Savings calculation removed as yearly billing is gone
 
   return (
     <div className="space-y-5">
@@ -212,40 +209,7 @@ export default function PlansPage() {
       )}
 
 
-      {/* Billing toggle */}
-      <div className="flex items-center justify-center">
-        <div className="flex items-center bg-muted rounded-2xl p-1 gap-1 relative">
-          <button
-            onClick={() => setBillingCycle("monthly")}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-              billingCycle === "monthly"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Mensal
-          </button>
-          <button
-            onClick={() => setBillingCycle("yearly")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-              billingCycle === "yearly"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Anual
-            <span className="text-xs font-extrabold text-success bg-success/10 px-1.5 py-0.5 rounded-full">
-              -{proSavings}%
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {billingCycle === "yearly" && (
-        <p className="text-center text-xs text-muted-foreground">
-          💡 Cobrado anualmente — economize comparado ao plano mensal
-        </p>
-      )}
+      {/* Billing toggle removed */}
 
       <div className="grid gap-4">
         {/* Free */}
@@ -289,66 +253,43 @@ export default function PlansPage() {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">PRO</h3>
-              {billingCycle === "yearly" && plan !== "pro" && (
-                <span className="text-xs font-extrabold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                  Economize {proSavings}%
-                </span>
-              )}
-              {plan === "pro" && (
-                <span className="text-xs font-bold text-pro bg-pro/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
+              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+                R$ 9,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              </p>
+
+              <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
+              <ul className="space-y-2.5 mb-5">
+                {[...features].filter(f => !f.freeOnly).sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
+                  <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                    {f.pro ? (
+                      <div className="bg-success/10 rounded-full p-0.5">
+                        <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
+                      </div>
+                    ) : (
+                      <div className="bg-muted rounded-full p-0.5">
+                        <X className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className={f.pro ? "text-foreground" : "text-muted-foreground"}>{f.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {plan === "free" && (
+                <Button
+                  size="lg"
+                  className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                  onClick={() => handleCheckout("pro")}
+                  disabled={!!loadingCheckout}
+                >
+                  {loadingCheckout === "pro" ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <Crown className="h-5 w-5 mr-2" />
+                  )}
+                  Assinar PRO Mensal
+                </Button>
               )}
             </div>
-
-            {billingCycle === "yearly" ? (
-              <div className="mb-1">
-                <div className="flex items-baseline gap-2">
-                  <p className="text-elder-2xl font-extrabold text-foreground">
-                    R$ {TIERS.pro.yearly.monthly_equiv.toFixed(2).replace(".", ",")}
-                    <span className="text-sm text-muted-foreground font-normal">/mês</span>
-                  </p>
-                  <span className="text-sm text-muted-foreground line-through">R$ 12,90</span>
-                </div>
-                <p className="text-xs text-muted-foreground">R$ {TIERS.pro.yearly.amount.toFixed(2).replace(".", ",")} cobrado por ano</p>
-              </div>
-            ) : (
-              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-                R$ 12,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-              </p>
-            )}
-
-            <p className="text-sm text-muted-foreground mb-4">Todos os recursos, sem limites</p>
-            <ul className="space-y-2.5 mb-5">
-              {[...features].filter(f => !f.freeOnly).sort((a, b) => Number(b.pro) - Number(a.pro)).map(f => (
-                <li key={f.label} className="flex items-center gap-2.5 text-sm">
-                  {f.pro ? (
-                    <div className="bg-success/10 rounded-full p-0.5">
-                      <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
-                    </div>
-                  ) : (
-                    <div className="bg-muted rounded-full p-0.5">
-                      <X className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <span className={f.pro ? "text-foreground" : "text-muted-foreground"}>{f.label}</span>
-                </li>
-              ))}
-            </ul>
-            {plan === "free" && (
-              <Button
-                size="lg"
-                className="w-full rounded-2xl text-elder-base font-bold gradient-pro text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                onClick={() => handleCheckout("pro")}
-                disabled={!!loadingCheckout}
-              >
-                {loadingCheckout === "pro" ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <Crown className="h-5 w-5 mr-2" />
-                )}
-                Assinar PRO {billingCycle === "yearly" ? "Anual" : "Mensal"}
-              </Button>
-            )}
-          </div>
         </Card>
 
         {/* Premium */}
@@ -361,65 +302,42 @@ export default function PlansPage() {
                 <Star className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-elder-xl font-bold text-foreground">Premium</h3>
-              {billingCycle === "yearly" && plan !== "premium" && (
-                <span className="text-xs font-extrabold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                  Economize {premiumSavings}%
-                </span>
+              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
+                R$ 18,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
+              </p>
+
+              <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
+              <ul className="space-y-2.5 mb-5">
+                {features.filter(f => !f.freeOnly).map(f => (
+                  <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                    <div className="bg-success/10 rounded-full p-0.5">
+                      <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
+                    </div>
+                    <span className="text-foreground">{f.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {plan !== "premium" && (
+                <Button
+                  size="lg"
+                  className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
+                  onClick={() => handleCheckout("premium")}
+                  disabled={!!loadingCheckout}
+                >
+                  {loadingCheckout === "premium" ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <Star className="h-5 w-5 mr-2" />
+                  )}
+                  Assinar Premium Mensal
+                </Button>
               )}
               {plan === "premium" && (
-                <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full ml-auto">Atual</span>
+                <p className="text-center text-xs text-muted-foreground py-2">
+                  ✅ Você já está no plano mais completo. Gerencie sua assinatura acima.
+                </p>
               )}
             </div>
-
-            {billingCycle === "yearly" ? (
-              <div className="mb-1">
-                <div className="flex items-baseline gap-2">
-                  <p className="text-elder-2xl font-extrabold text-foreground">
-                    R$ {TIERS.premium.yearly.monthly_equiv.toFixed(2).replace(".", ",")}
-                    <span className="text-sm text-muted-foreground font-normal">/mês</span>
-                  </p>
-                  <span className="text-sm text-muted-foreground line-through">R$ 34,90</span>
-                </div>
-                <p className="text-xs text-muted-foreground">R$ {TIERS.premium.yearly.amount.toFixed(2).replace(".", ",")} cobrado por ano</p>
-              </div>
-            ) : (
-              <p className="text-elder-2xl font-extrabold text-foreground mb-1">
-                R$ 34,90<span className="text-sm text-muted-foreground font-normal">/mês</span>
-              </p>
-            )}
-
-            <p className="text-sm text-muted-foreground mb-4">Controle total + 2 familiares inclusos + exames IA</p>
-            <ul className="space-y-2.5 mb-5">
-              {features.filter(f => !f.freeOnly).map(f => (
-                <li key={f.label} className="flex items-center gap-2.5 text-sm">
-                  <div className="bg-success/10 rounded-full p-0.5">
-                    <Check className="h-3.5 w-3.5 text-success stroke-[3]" />
-                  </div>
-                  <span className="text-foreground">{f.label}</span>
-                </li>
-              ))}
-            </ul>
-            {plan !== "premium" && (
-              <Button
-                size="lg"
-                className="w-full rounded-2xl text-elder-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-elevated hover:opacity-90 transition-opacity"
-                onClick={() => handleCheckout("premium")}
-                disabled={!!loadingCheckout}
-              >
-                {loadingCheckout === "premium" ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <Star className="h-5 w-5 mr-2" />
-                )}
-                Assinar Premium {billingCycle === "yearly" ? "Anual" : "Mensal"}
-              </Button>
-            )}
-            {plan === "premium" && (
-              <p className="text-center text-xs text-muted-foreground py-2">
-                ✅ Você já está no plano mais completo. Gerencie sua assinatura acima.
-              </p>
-            )}
-          </div>
         </Card>
       </div>
     </div>

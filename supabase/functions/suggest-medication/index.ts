@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     const { query } = await req.json();
     if (!query || query.trim().length < 2) {
@@ -20,48 +20,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+        system_instruction: {
+          parts: [{ text: "Você é um assistente farmacêutico brasileiro. Dado um texto parcial digitado pelo usuário, sugira até 5 nomes de medicamentos reais que correspondam ao que está sendo digitado. Retorne apenas nomes de medicamentos existentes no Brasil (nomes comerciais e/ou genéricos). Seja direto e retorne apenas os nomes em formato JSON." }]
+        },
+        contents: [
           {
-            role: "system",
-            content: `Você é um assistente farmacêutico brasileiro. Dado um texto parcial digitado pelo usuário, sugira até 5 nomes de medicamentos reais que correspondam ao que está sendo digitado. 
-Retorne apenas nomes de medicamentos existentes no Brasil (nomes comerciais e/ou genéricos).
-Seja direto e retorne apenas os nomes, sem explicações.`,
-          },
-          {
-            role: "user",
-            content: `O usuário digitou: "${query.trim()}"\n\nSugira até 5 medicamentos que comecem ou contenham esse texto. Retorne apenas os nomes separados por vírgula, sem numeração, sem pontuação extra.`,
-          },
+            parts: [{ text: `O usuário digitou: "${query.trim()}"\nSugira até 5 medicamentos que comecem ou contenham esse texto. Retorne um objeto JSON com o campo 'suggestions' sendo um array de strings.` }]
+          }
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_suggestions",
-              description: "Retorna lista de sugestões de medicamentos",
-              parameters: {
-                type: "object",
-                properties: {
-                  suggestions: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Lista de nomes de medicamentos sugeridos (máximo 5)",
-                  },
-                },
-                required: ["suggestions"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_suggestions" } },
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       }),
     });
 
@@ -82,16 +57,15 @@ Seja direto e retorne apenas os nomes, sem explicações.`,
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     let suggestions: string[] = [];
 
-    if (toolCall?.function?.arguments) {
-      try {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        suggestions = (parsed.suggestions || []).slice(0, 5);
-      } catch {
-        suggestions = [];
-      }
+    try {
+      const parsed = JSON.parse(content);
+      suggestions = (parsed.suggestions || []).slice(0, 5);
+    } catch (e) {
+      console.error("Erro ao parsear resposta do Gemini:", e);
+      suggestions = [];
     }
 
     return new Response(JSON.stringify({ suggestions }), {

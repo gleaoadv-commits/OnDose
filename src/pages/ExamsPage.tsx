@@ -91,11 +91,11 @@ export default function ExamsPage() {
   // Group indicators by name for charts
   const indicatorGroups = useMemo(() => {
     const groups = new Map<string, { name: string; unit: string; refMin: number | null; refMax: number | null; points: { date: string; value: number; examId: string }[] }>();
-    
+
     indicators.forEach((ind) => {
       const exam = exams.find((e) => e.id === ind.exam_result_id);
       if (!exam) return;
-      
+
       const key = ind.indicator_name.toLowerCase();
       if (!groups.has(key)) {
         groups.set(key, {
@@ -120,15 +120,15 @@ export default function ExamsPage() {
 
   const extractPdfText = async (file: File): Promise<string> => {
     const pdfjsLib = await import("pdfjs-dist");
-    
+
     // Use a worker from CDN with proper configuration for Vite
     const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
     pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-    
+
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
     const textParts: string[] = [];
-    
+
     const maxPages = Math.min(pdf.numPages, 10);
     for (let i = 1; i <= maxPages; i++) {
       const page = await pdf.getPage(i);
@@ -136,7 +136,7 @@ export default function ExamsPage() {
       const pageText = content.items.map((item: any) => item.str).join(" ");
       textParts.push(pageText);
     }
-    
+
     return textParts.join("\n");
   };
 
@@ -705,7 +705,7 @@ function ExamRemindersTab({ user }: { user: any }) {
                     <SelectItem value="2">2 meses</SelectItem>
                     <SelectItem value="3">3 meses</SelectItem>
                     <SelectItem value="6">6 meses</SelectItem>
-                    <SelectItem value="12">12 meses (anual)</SelectItem>
+                    <SelectItem value="12">12 meses</SelectItem>
                     <SelectItem value="24">24 meses</SelectItem>
                   </SelectContent>
                 </Select>
@@ -745,8 +745,8 @@ function ExamRemindersTab({ user }: { user: any }) {
                       {isDue
                         ? `⚠️ Vencido há ${Math.abs(daysLeft)} ${Math.abs(daysLeft) === 1 ? "dia" : "dias"}!`
                         : isSoon
-                        ? `🔔 Vence em ${daysLeft} ${daysLeft === 1 ? "dia" : "dias"}`
-                        : `✅ Próximo em ${nextDate.toLocaleDateString("pt-BR")}`}
+                          ? `🔔 Vence em ${daysLeft} ${daysLeft === 1 ? "dia" : "dias"}`
+                          : `✅ Próximo em ${nextDate.toLocaleDateString("pt-BR")}`}
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => deleteReminder(r.id)} className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/5 shrink-0">

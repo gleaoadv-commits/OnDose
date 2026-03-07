@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { medicationName, frequency, dosage } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     const frequencyLabels: Record<string, string> = {
       "10-10dias": "a cada 10 dias",
@@ -23,27 +23,18 @@ serve(async (req) => {
 
     const freqLabel = frequencyLabels[frequency] || frequency;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
+        system_instruction: {
+          parts: [{ text: "Você é um assistente de saúde carinhoso e motivador do app OnDose. Gere UMA mensagem curta (máximo 2 frases) comemorando e incentivando o paciente que lembrou de tomar seu medicamento. A mensagem deve ser calorosa, usar emojis de forma moderada, e ser específica para a frequência do medicamento. Varie o tom entre: orgulho, celebração, encorajamento, carinho. NUNCA repita a mesma mensagem. Seja criativo. Responda APENAS com a mensagem motivacional, sem prefixos." }]
+        },
+        contents: [
           {
-            role: "system",
-            content: `Você é um assistente de saúde carinhoso e motivador do app OnDose. 
-Gere UMA mensagem curta (máximo 2 frases) comemorando e incentivando o paciente que lembrou de tomar seu medicamento.
-A mensagem deve ser calorosa, usar emojis de forma moderada, e ser específica para a frequência do medicamento.
-Varie o tom entre: orgulho, celebração, encorajamento, carinho.
-NUNCA repita a mesma mensagem. Seja criativo.
-Responda APENAS com a mensagem motivacional, sem prefixos.`
-          },
-          {
-            role: "user",
-            content: `O paciente vai tomar ${medicationName} (${dosage}), que é tomado ${freqLabel}. Gere uma mensagem motivacional única para este momento.`
+            parts: [{ text: `O paciente vai tomar ${medicationName} (${dosage}), que é tomado ${freqLabel}. Gere uma mensagem motivacional única para este momento.` }]
           }
         ],
       }),
@@ -71,7 +62,7 @@ Responda APENAS com a mensagem motivacional, sem prefixos.`
     }
 
     const data = await response.json();
-    const message = data.choices?.[0]?.message?.content || "Parabéns por cuidar da sua saúde! 💊✨";
+    const message = data.candidates?.[0]?.content?.parts?.[0]?.text || "Parabéns por cuidar da sua saúde! 💊✨";
 
     return new Response(JSON.stringify({ message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

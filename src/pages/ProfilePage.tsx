@@ -189,11 +189,10 @@ export default function ProfilePage() {
           {[0, 1, 2].map(i => (
             <div
               key={i}
-              className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                i < referralCount
+              className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${i < referralCount
                   ? "bg-accent text-white shadow-md"
                   : "bg-muted/60 text-muted-foreground border border-border/40"
-              }`}
+                }`}
             >
               {i < referralCount ? (
                 <Users className="h-4 w-4" />
@@ -222,7 +221,7 @@ export default function ProfilePage() {
             </p>
             <p className="text-xs text-muted-foreground">
               Válido até: {referralReward.expires_at ? new Date(referralReward.expires_at).toLocaleDateString("pt-BR") : "—"}
-              {" · "}Apenas planos anuais
+              {" · "}Apenas planos Premium
             </p>
             {referralReward.used && (
               <Badge className="bg-muted text-muted-foreground text-[10px]">Utilizado</Badge>
@@ -232,10 +231,10 @@ export default function ProfilePage() {
           <div className="p-3 rounded-xl bg-muted/40 border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground leading-relaxed">
               Indique <strong className="text-foreground">3 amigos</strong> usando seu ID <strong className="text-primary">{userCode}</strong> e ganhe um
-              <strong className="text-foreground"> cupom de 5%</strong> na assinatura anual Premium!
+              <strong className="text-foreground"> cupom de 5%</strong> na assinatura Premium!
             </p>
             <p className="text-[10px] text-muted-foreground">
-              O cupom é válido por 30 dias após ser concedido e aplicável apenas em planos anuais.
+              O cupom é válido por 30 dias após ser concedido e aplicável apenas em assinaturas Premium.
             </p>
           </div>
         )}
