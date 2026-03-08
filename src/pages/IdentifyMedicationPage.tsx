@@ -98,19 +98,20 @@ export default function IdentifyMedicationPage() {
 
       if (error) {
         console.error("Error:", error);
-        toast.error("Erro ao analisar imagem");
+        toast.error(`Erro ao analisar imagem: ${error.message || "Erro desconhecido"}`);
         return;
       }
 
       if (data?.error) {
-        toast.error(data.error);
+        toast.error(`Erro IA: ${data.error}`);
         return;
       }
 
       setResult(data);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao processar imagem");
+      const msg = err instanceof Error ? err.message : "Erro inesperado";
+      toast.error(`Erro ao processar imagem: ${msg}`);
     } finally {
       setLoading(false);
     }

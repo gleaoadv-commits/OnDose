@@ -11,7 +11,13 @@ Deno.serve(async (req) => {
 
   try {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      console.error("ERRO: GEMINI_API_KEY não encontrada nos secrets do Supabase");
+      return new Response(JSON.stringify({ error: "Configuração pendente: Chave de IA não encontrada." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { imageBase64, mimeType, pdfText } = await req.json();
 
@@ -63,7 +69,7 @@ Aviso: Informe sempre que os dados são informativos e não substituem avaliaç�
       ];
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
