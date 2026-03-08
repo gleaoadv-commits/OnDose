@@ -37,20 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Then get current session and validate it
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // Validate that session still exists on the server
-        const { error } = await supabase.auth.getUser();
-        if (error) {
-          // Session is invalid on server - sign out locally
-          console.warn("Session invalid on server, signing out:", error.message);
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
+        setSession(session);
+        setUser(session.user);
       } else {
         setSession(null);
         setUser(null);

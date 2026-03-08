@@ -22,32 +22,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `Você é um médico laboratorista especialista em interpretar resultados de exames.
-Analise o exame enviado e extraia TODOS os indicadores encontrados.
+    const systemPrompt = `Você é um médico laboratorista especialista em interpretar resultados de exames brasileiros.
+Analise o exame enviado (imagem ou texto) e extraia TODOS os indicadores de saúde encontrados.
 
-Responda SEMPRE em JSON puro (sem markdown) com a seguinte estrutura:
-{
-  "success": true/false,
-  "exam_name": "Nome do exame (ex: Hemograma Completo, Perfil Lipídico, etc)",
-  "indicators": [
-    {
-      "name": "Nome do indicador (ex: Glicose, Colesterol Total, Hemoglobina)",
-      "value": 95.5,
-      "unit": "mg/dL",
-      "reference_min": 70,
-      "reference_max": 99,
-      "status": "normal/alto/baixo"
-    }
-  ],
-  "observations": "Observações gerais sobre o exame"
-}
+Siga estas regras rigorosamente:
+1. Extraia o nome exato do indicador (ex: Glicose, Colesterol LDL, Creatinina, Hemoglobina).
+2. O campo "value" DEVE ser um número. Se o valor no exame usar vírgula (ex: "95,5"), converta para ponto ("95.5").
+3. Identifique a unidade de medida (ex: mg/dL, g/dL, UI/L).
+4. Extraia os limites de referência (min e max) se estiverem presentes. Caso contrário, use valores padrão médicos brasileiros.
+5. Defina o "status": "normal" (dentro da faixa), "alto" (acima do max) ou "baixo" (abaixo do min).
+6. Se não conseguir ler ou os dados forem inconsistentes, retorne success=false.
+7. Retorne SEMPRE um JSON puro seguindo a estrutura fornecida. Não inclua Markdown.
 
-Regras:
-- Extraia TODOS os indicadores visíveis no exame
-- Os valores de referência devem ser os padrões médicos se não estiverem visíveis
-- O campo "value" deve ser numérico
-- Se não conseguir ler, retorne success=false com uma mensagem em observations
-- Sempre informe que os resultados são apenas informativos e não substituem avaliação médica`;
+Aviso: Informe sempre que os dados são informativos e não substituem avaliação médica.`;
 
     let userContent: any[];
 

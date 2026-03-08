@@ -62,7 +62,10 @@ Seja preciso e responsável — informe que o usuário deve sempre consultar um 
               }
             ]
           }
-        ]
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       }),
     });
 
@@ -88,18 +91,16 @@ Seja preciso e responsável — informe que o usuário deve sempre consultar um 
     }
 
     const aiResult = await response.json();
-    const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
     // Parse the JSON from the AI response
     let parsed;
     try {
-      // Try to extract JSON from potential markdown code blocks
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
-      parsed = JSON.parse(jsonMatch[1].trim());
+      parsed = JSON.parse(content);
     } catch {
       parsed = {
         identified: false,
-        description: content || "Não foi possível processar a resposta da IA.",
+        description: "Não foi possível processar a resposta da IA.",
         confidence: "baixa",
       };
     }

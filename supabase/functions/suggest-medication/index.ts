@@ -27,11 +27,11 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         system_instruction: {
-          parts: [{ text: "Você é um assistente farmacêutico brasileiro. Dado um texto parcial digitado pelo usuário, sugira até 5 nomes de medicamentos reais que correspondam ao que está sendo digitado. Retorne apenas nomes de medicamentos existentes no Brasil (nomes comerciais e/ou genéricos). Seja direto e retorne apenas os nomes em formato JSON." }]
+          parts: [{ text: "Você é um assistente farmacêutico especialista no mercado brasileiro. Sua tarefa é sugerir nomes de medicamentos (comerciais ou genéricos) reais e populares no Brasil com base no texto parcial fornecido. Retorne SEMPRE um JSON puro com o campo 'suggestions' contendo um array de até 5 strings. Não inclua Markdown ou explicações." }]
         },
         contents: [
           {
-            parts: [{ text: `O usuário digitou: "${query.trim()}"\nSugira até 5 medicamentos que comecem ou contenham esse texto. Retorne um objeto JSON com o campo 'suggestions' sendo um array de strings.` }]
+            parts: [{ text: `Sugira até 5 medicamentos que comecem ou contenham: "${query.trim()}"` }]
           }
         ],
         generationConfig: {

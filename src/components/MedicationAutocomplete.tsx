@@ -52,7 +52,7 @@ export default function MedicationAutocomplete({
     onChange(val);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 500);
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
   };
 
   const handleSelect = (suggestion: string) => {
