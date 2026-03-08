@@ -8,12 +8,6 @@ const corsHeaders = {
 
 const META_API_VERSION = "v21.0";
 
-// --- NOVAS CREDENCIAIS META OFICIAIS --- //
-const DEFAULT_ACCESS_TOKEN = "EAAW3hFgBhZAcBQ0TZADskq52BYtAlyCbM0JRdEGHXv8bGrFCzDYL8HQq5ZAMjTyuZBvMVcPv3hjTujAhFXYnAPeyd746rQCGPcun3ZCOlY8AenFEufNK4P7IeFTTPaUGwjnCKWmDCmE3SOZB1T8JnZBk4FmX95tVZA4MbmqV4GEi2MMCbhLQuhHA59SZCoz1yk48VizAObXrV6dwmKssEZA5c1MFEVq5anGjWNBxeA7hwuMxYGX2IqT1b5XoTCZAL9WDwZBouVVuVkeRImJVKaZAIArfFk5QZD";
-const DEFAULT_PHONE_ID = "1029626996895162";
-// Nome exato que deve ter sido dado ao modelo de mensagem no painel do Facebook:
-const DEFAULT_TEMPLATE_NAME = "lembrete_dose"; // <-- AVISO: Se você usou outro nome, precisaremos trocar aqui.
-
 async function sendMetaWhatsAppTemplate(phoneNumberId: string, accessToken: string, templateName: string, to: string, variable1: string, variable2: string) {
   const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
 
@@ -24,22 +18,20 @@ async function sendMetaWhatsAppTemplate(phoneNumberId: string, accessToken: stri
     type: "template",
     template: {
       name: templateName,
-      language: {
-        code: "pt_BR" // Padrão Brasil
-      },
+      language: { code: "pt_BR" },
       components: [
         {
           type: "body",
           parameters: [
-            { type: "text", text: variable1 }, // Corresponde à {{1}}
-            { type: "text", text: variable2 }  // Corresponde à {{2}}
+            { type: "text", text: variable1 },
+            { type: "text", text: variable2 }
           ]
         }
       ]
     }
   };
 
-  console.log(`Payload enviado para a Meta API (${to}):`, JSON.stringify(payload));
+  console.log(`Payload enviado para Meta API (${to}):`, JSON.stringify(payload));
 
   const response = await fetch(url, {
     method: "POST",
@@ -52,7 +44,7 @@ async function sendMetaWhatsAppTemplate(phoneNumberId: string, accessToken: stri
 
   const result = await response.json().catch(() => ({}));
   if (result.error) {
-    console.error("Meta API retornou Erro:", result.error.message);
+    console.error("Meta API erro:", result.error.message);
   }
   return { ok: response.ok && !result.error, response, result };
 }
@@ -65,9 +57,7 @@ function roundToMinute(dateStr: string): string {
 
 function extractHourFromUTCString(dateStr: string): string {
   const d = new Date(dateStr);
-  // Converte a data salva (UTC) para o horário local (America/Sao_Paulo seria ideal)
-  // Como Deno Edge Functions rodam em UTC, subtraímos 3 horas (BRT) manualmente para facilitar:
-  d.setHours(d.getHours() - 3);
+  d.setHours(d.getHours() - 3); // UTC -> BRT
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
@@ -84,18 +74,20 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const META_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || DEFAULT_ACCESS_TOKEN;
-    const META_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || DEFAULT_PHONE_ID;
-    const TEMPLATE_NAME = Deno.env.get("WHATSAPP_TEMPLATE_NAME") || DEFAULT_TEMPLATE_NAME;
+    const META_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const META_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const TEMPLATE_NAME = Deno.env.get("WHATSAPP_TEMPLATE_NAME") || "lembrete_dose";
+
+    if (!META_ACCESS_TOKEN || !META_PHONE_ID) {
+      throw new Error("WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID not configured");
+    }
 
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    // Aumenta a janela de busca para mitigar delays ou acionamentos manuais distantes (8 horas para cima e baixo)
     const windowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
     const windowEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
 
@@ -134,7 +126,7 @@ Deno.serve(async (req) => {
     for (const profile of (profiles || [])) {
       if (profile.plan_override === "pro" || profile.plan_override === "premium") {
         paidUserIds.add(profile.user_id);
-        console.log(`User ${profile.user_id} (${profile.display_name}) is paid via plan_override`);
+        console.log(`User ${profile.user_id} (${profile.display_name}) paid via plan_override`);
         continue;
       }
 
@@ -164,7 +156,7 @@ Deno.serve(async (req) => {
 
         if (hasPaidPlan) {
           paidUserIds.add(profile.user_id);
-          console.log(`User ${profile.user_id} (${profile.display_name}) is paid via Stripe`);
+          console.log(`User ${profile.user_id} (${profile.display_name}) paid via Stripe`);
         }
       } catch (err) {
         console.error(`Error checking plan for user ${profile.user_id}:`, err);
@@ -191,7 +183,6 @@ Deno.serve(async (req) => {
       if (!groups.has(key)) {
         groups.set(key, { userId: event.user_id, originalEventTime: event.scheduled_time, meds: [] });
       }
-      // Nós enviaremos um Lote de remédios como {{1}}: "Aspirina (1mg), Buscopan (5 gotas)"
       groups.get(key)!.meds.push(`${event.medication_name} (${event.dosage})`);
     }
 
@@ -201,44 +192,41 @@ Deno.serve(async (req) => {
     for (const group of groups.values()) {
       const profile = profileMap.get(group.userId)!;
 
-      // Meta Cloud API aceita com ou sem DDI 55, mas exige clareza no código de país.
       let phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
       if (!phone.startsWith("55") && phone.length <= 11) {
         phone = "55" + phone;
       }
 
-      // Prepara as {{1}} e {{2}} pro template oficial
-      const varRestoDosRemedios = group.meds.join(" e ");
-      const varHoraFormatada = extractHourFromUTCString(group.originalEventTime);
+      const varMeds = group.meds.join(" e ");
+      const varHora = extractHourFromUTCString(group.originalEventTime);
 
       try {
-        console.log(`Disparando Cloud API Meta para ${phone}. Medicamentos: ${varRestoDosRemedios}, Horário: ${varHoraFormatada}`);
+        console.log(`Disparando Meta API para ${phone}. Meds: ${varMeds}, Hora: ${varHora}`);
 
         const res = await sendMetaWhatsAppTemplate(
           META_PHONE_ID,
           META_ACCESS_TOKEN,
           TEMPLATE_NAME,
           phone,
-          varRestoDosRemedios, // Template {{1}}
-          varHoraFormatada     // Template {{2}}
+          varMeds,
+          varHora
         );
 
         if (res.ok) {
           sent++;
-          console.log(`Sucesso! Meta aceitou a mensagem de ${phone}.`);
+          console.log(`Sucesso para ${phone}`);
         } else {
           console.error(`Erro Meta API para ${phone}:`, res.result);
-          const errorMsg = res.result && typeof res.result === "object" ? JSON.stringify(res.result) : String(res.result);
-          errors.push(`User ${group.userId}: ${errorMsg}`);
+          errors.push(`User ${group.userId}: ${JSON.stringify(res.result)}`);
         }
       } catch (err) {
         const errMessage = err instanceof Error ? err.message : String(err);
-        console.error(`Exceção Grave para user ${group.userId}:`, errMessage);
+        console.error(`Exceção para user ${group.userId}:`, errMessage);
         errors.push(`User ${group.userId}: ${errMessage}`);
       }
     }
 
-    console.log(`Resumo Cloud API: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
+    console.log(`Resumo: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
 
     return new Response(
       JSON.stringify({ sent, groups: groups.size, errors: errors.length, errorDetails: errors }),
@@ -246,7 +234,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Critical Error no Lembrete:", errorMessage);
+    console.error("Critical Error:", errorMessage);
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
