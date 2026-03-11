@@ -7,22 +7,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const META_API_VERSION = "v21.0";
 const PREMIUM_PRODUCT = "prod_U0Eub1bzRh41Dc";
 
-async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
+  const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "Client-Token": clientToken,
     },
     body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
+      phone: to,
+      message: body,
     }),
   });
   const result = await response.json();
@@ -39,17 +36,16 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
+    const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
+    const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
-    if (!WHATSAPP_PHONE_NUMBER_ID) throw new Error("WHATSAPP_PHONE_NUMBER_ID not configured");
-    if (!WHATSAPP_ACCESS_TOKEN) throw new Error("WHATSAPP_ACCESS_TOKEN not configured");
+    if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN || !ZAPI_CLIENT_TOKEN) throw new Error("Z-API credentials not configured");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
-    // Calculate the date 7 days from now
     const now = new Date();
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + 7);
@@ -112,7 +108,7 @@ Deno.serve(async (req) => {
             break;
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error checking plan for user ${profile.user_id}:`, err.message);
       }
     }
@@ -161,16 +157,16 @@ Deno.serve(async (req) => {
       console.log(`Sending exam reminder to ${phone} — ${examNames.length} exam(s)`);
 
       try {
-        const { response, result } = await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
+        const { response, result } = await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, phone, message);
 
-        if (response.ok && !result.error) {
+        if (response.ok) {
           sent++;
           console.log(`Sent to ${phone}: ${response.status}`);
         } else {
-          console.error(`Meta API error for ${userId}:`, result);
-          errors.push(`User ${userId}: ${JSON.stringify(result.error || result)}`);
+          console.error(`Z-API error for ${userId}:`, result);
+          errors.push(`User ${userId}: ${JSON.stringify(result)}`);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Exception for ${userId}:`, err.message);
         errors.push(`User ${userId}: ${err.message}`);
       }
@@ -182,7 +178,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ sent, users: userReminders.size, errors: errors.length, errorDetails: errors }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),

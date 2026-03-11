@@ -4,26 +4,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const META_API_VERSION = "v21.0";
-
-async function sendMetaTextMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
+  const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "Client-Token": clientToken,
     },
     body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
+      phone: to,
+      message: body,
     }),
   });
   const result = await response.json();
-  if (!response.ok || result?.error) {
-    throw new Error(`Meta API error: ${JSON.stringify(result?.error || result)}`);
+  if (!response.ok) {
+    throw new Error(`Z-API error: ${JSON.stringify(result)}`);
   }
   return result;
 }
@@ -34,11 +30,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
+    const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
+    const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
 
-    if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) {
-      throw new Error("Meta WhatsApp credentials (WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN) not configured");
+    if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN || !ZAPI_CLIENT_TOKEN) {
+      throw new Error("Z-API credentials (ZAPI_INSTANCE_ID / ZAPI_TOKEN / ZAPI_CLIENT_TOKEN) not configured");
     }
 
     const { to, userName, medicationName, dosage } = await req.json();
@@ -71,10 +68,10 @@ Deno.serve(async (req) => {
     const appLink = "https://ondose.lovable.app";
     const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*!\n\nHora de tomar seu medicamento:\n📌 *${medicationName}*\n💊 Dose: ${dosage}\n\n${closing}\n\n✅ Marque como tomado no app:\n${appLink}\n\nResponda:\n*1* - ✅ Já tomei\n*2* - ⏰ Vou tomar depois`;
 
-    console.log(`Sending Meta WhatsApp to ${phone} (${medicationName})`);
+    console.log(`Sending Z-API WhatsApp to ${phone} (${medicationName})`);
 
-    const result = await sendMetaTextMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
-    console.log("Meta API response:", JSON.stringify(result));
+    const result = await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, phone, message);
+    console.log("Z-API response:", JSON.stringify(result));
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

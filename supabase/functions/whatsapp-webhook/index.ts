@@ -6,47 +6,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const META_API_VERSION = "v21.0";
-
-async function sendMetaTextMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
+  const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "Client-Token": clientToken,
     },
     body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
+      phone: to,
+      message: body,
     }),
   });
   const result = await response.json();
-  if (!response.ok || result?.error) {
-    console.error("Meta send error:", JSON.stringify(result?.error || result));
+  if (!response.ok) {
+    console.error("Z-API send error:", JSON.stringify(result));
   }
   return result;
 }
 
 Deno.serve(async (req) => {
-  // Meta webhook verification (GET request with hub.verify_token)
-  if (req.method === "GET") {
-    const url = new URL(req.url);
-    const mode = url.searchParams.get("hub.mode");
-    const token = url.searchParams.get("hub.verify_token");
-    const challenge = url.searchParams.get("hub.challenge");
-
-    const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "ondose_verify_2024";
-
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      console.log("Webhook verification successful");
-      return new Response(challenge, { status: 200 });
-    }
-    return new Response("Forbidden", { status: 403 });
-  }
-
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -56,27 +36,17 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")!;
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN")!;
+    const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID")!;
+    const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN")!;
+    const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN")!;
 
     const body = await req.json();
-    console.log("Meta Webhook received:", JSON.stringify(body));
+    console.log("Z-API Webhook received:", JSON.stringify(body));
 
-    // Meta webhook payload structure
-    const entry = body?.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-
-    if (!value?.messages || value.messages.length === 0) {
-      // Status updates or other non-message events
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const message = value.messages[0];
-    const phone = message.from; // sender phone number
-    const messageText = message?.text?.body?.trim();
+    // Z-API webhook payload structure
+    // Z-API sends: { phone, message: { text: { message } }, ... }
+    const phone = body?.phone;
+    const messageText = body?.text?.message?.trim() || body?.message?.text?.message?.trim();
 
     if (!phone || !messageText) {
       return new Response(JSON.stringify({ success: true, message: "No actionable message" }), {
@@ -84,17 +54,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`Message from ${phone}: "${messageText}"`);
+    // Clean phone number
+    const cleanPhone = phone.replace(/\D/g, "");
+
+    console.log(`Message from ${cleanPhone}: "${messageText}"`);
 
     // Find user by whatsapp number
-    const phoneVariants = [phone, phone.replace(/^55/, "")];
+    const phoneVariants = [cleanPhone, cleanPhone.replace(/^55/, "")];
     const { data: profiles } = await supabase
       .from("profiles")
       .select("user_id, display_name, whatsapp_number")
       .or(phoneVariants.map(p => `whatsapp_number.like.%${p.slice(-8)}%`).join(","));
 
     if (!profiles || profiles.length === 0) {
-      console.log(`No profile found for phone ${phone}`);
+      console.log(`No profile found for phone ${cleanPhone}`);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -143,25 +116,28 @@ Deno.serve(async (req) => {
           }
         }
 
-        await sendMetaTextMessage(
-          WHATSAPP_PHONE_NUMBER_ID,
-          WHATSAPP_ACCESS_TOKEN,
-          phone,
+        await sendZAPIMessage(
+          ZAPI_INSTANCE_ID,
+          ZAPI_TOKEN,
+          ZAPI_CLIENT_TOKEN,
+          cleanPhone,
           `✅ *Dose Registrada!*\n\n${pendingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
-        await sendMetaTextMessage(
-          WHATSAPP_PHONE_NUMBER_ID,
-          WHATSAPP_ACCESS_TOKEN,
-          phone,
+        await sendZAPIMessage(
+          ZAPI_INSTANCE_ID,
+          ZAPI_TOKEN,
+          ZAPI_CLIENT_TOKEN,
+          cleanPhone,
           "ℹ️ Não encontrei doses pendentes nas últimas 2 horas. Verifique no app: https://ondose.lovable.app"
         );
       }
     } else if (messageText === "2") {
-      await sendMetaTextMessage(
-        WHATSAPP_PHONE_NUMBER_ID,
-        WHATSAPP_ACCESS_TOKEN,
-        phone,
+      await sendZAPIMessage(
+        ZAPI_INSTANCE_ID,
+        ZAPI_TOKEN,
+        ZAPI_CLIENT_TOKEN,
+        cleanPhone,
         "⏰ *Entendido!*\n\nSem problemas. Não esqueça de registrar o horário correto no app assim que possível! 📱✨\nhttps://ondose.lovable.app"
       );
     }
