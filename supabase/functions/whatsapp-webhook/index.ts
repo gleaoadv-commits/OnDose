@@ -138,6 +138,14 @@ Deno.serve(async (req) => {
         cleanPhone,
         "⏰ *Entendido!*\n\nSem problemas. Não esqueça de registrar o horário correto no app assim que possível! 📱✨\nhttps://ondose.lovable.app"
       );
+    } else if (messageText === "3") {
+      await sendZAPIMessage(
+        ZAPI_INSTANCE_ID,
+        ZAPI_TOKEN,
+        ZAPI_CLIENT_TOKEN,
+        cleanPhone,
+        "📱 *Acesse o OnDose* para gerenciar suas doses individualmente:\n\nhttps://ondose.lovable.app\n\nLá você pode marcar cada medicamento separadamente! 💊"
+      );
     }
 
     return new Response(JSON.stringify({ success: true }), {
