@@ -77,7 +77,8 @@ Deno.serve(async (req) => {
 
     if (messageText === "1") {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-      const now = new Date().toISOString();
+      // Include events up to 10 min in the future (reminders are sent a few minutes early)
+      const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .eq("taken", false)
         .gte("scheduled_time", twoHoursAgo)
-        .lte("scheduled_time", now);
+        .lte("scheduled_time", tenMinFromNow);
 
       if (fetchError) {
         console.error("Error fetching events:", fetchError.message);
