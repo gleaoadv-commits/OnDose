@@ -146,13 +146,13 @@ export default function LandingPage() {
 
       {/* Navbar */}
       <nav className="fixed w-full top-10 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex justify-between items-center">
           <div className="cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
             <OnDoseLogo size="sm" />
           </div>
-          <div className="flex gap-3 items-center">
-            <Button variant="outline" className="py-2 px-4 text-xs sm:text-sm" onClick={() => navigate('/auth')}>Já tenho conta</Button>
-            <Button className="py-2 px-4 text-xs sm:text-sm" onClick={goSignup}>Criar Conta Grátis</Button>
+          <div className="flex gap-2 items-center">
+            <Button variant="outline" className="py-1 px-3 text-[11px] sm:text-xs h-8" onClick={() => navigate('/auth')}>Já tenho conta</Button>
+            <Button className="py-1 px-3 text-[11px] sm:text-xs h-8" onClick={goSignup}>Criar Conta</Button>
           </div>
         </div>
       </nav>
@@ -582,14 +582,14 @@ export default function LandingPage() {
       </section>
 
       {/* Floating CTA Bar (mobile-first) */}
-      <div className={`fixed bottom-0 left-0 w-full p-3 z-50 transition-all duration-500 ${isScrolled ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-        <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-xl border border-slate-200 shadow-2xl rounded-2xl p-3 flex items-center justify-between gap-3">
-          <div className="hidden sm:block pl-3">
-            <p className="text-sm font-bold text-slate-800">Não perca mais uma dose</p>
-            <p className="text-xs text-slate-500">Crie sua conta grátis agora</p>
+      <div className={`fixed bottom-0 left-0 w-full p-2 z-50 transition-all duration-500 ${isScrolled ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
+        <div className="max-w-md mx-auto bg-white/95 backdrop-blur-xl border border-slate-200 shadow-2xl rounded-xl p-2 flex items-center justify-between gap-2">
+          <div className="hidden sm:block pl-2">
+            <p className="text-xs font-bold text-slate-800">Não perca mais uma dose</p>
+            <p className="text-[10px] text-slate-500">Crie sua conta grátis</p>
           </div>
-          <Button className="flex-1 sm:flex-none text-sm h-11" onClick={goSignup}>
-            Começar Grátis <ArrowRight size={16} />
+          <Button className="flex-1 sm:flex-none text-xs h-9 px-4" onClick={goSignup}>
+            Começar Grátis <ArrowRight size={14} />
           </Button>
         </div>
       </div>
