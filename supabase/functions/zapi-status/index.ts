@@ -21,12 +21,16 @@ Deno.serve(async (req) => {
     });
     const status = await statusRes.json();
 
-    // Check webhook config
-    const whUrl = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/webhook-received`;
-    const whRes = await fetch(whUrl, {
-      headers: { "Client-Token": ZAPI_CLIENT_TOKEN },
-    });
-    const webhook = await whRes.json();
+    // Check webhook config - try multiple endpoints
+    let webhook = {};
+    for (const path of ["webhook", "webhook-received", "list-webhooks"]) {
+      const whUrl = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/${path}`;
+      const whRes = await fetch(whUrl, {
+        headers: { "Client-Token": ZAPI_CLIENT_TOKEN },
+      });
+      const whData = await whRes.json();
+      webhook = { ...webhook, [path]: whData };
+    }
 
     return new Response(JSON.stringify({ status, webhook }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
