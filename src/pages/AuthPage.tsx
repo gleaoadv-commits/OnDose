@@ -162,18 +162,11 @@ export default function AuthPage() {
           {/* Back button */}
           <button
             type="button"
-            onClick={() => {
-              if (!isLogin) {
-                setIsLogin(true);
-                setAcceptedTerms(false);
-              } else {
-                navigate("/landing");
-              }
-            }}
+            onClick={() => navigate("/landing")}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors -mb-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            {isLogin ? "Voltar" : "Voltar ao login"}
+            Voltar
           </button>
 
           <h2 className="text-elder-lg font-bold text-foreground text-center">

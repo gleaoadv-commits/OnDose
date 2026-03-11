@@ -149,7 +149,7 @@ export default function LandingPage() {
             <OnDoseLogo size="sm" />
           </div>
           <div className="flex gap-3 items-center">
-            <Button variant="outline" className="py-2 px-4 text-xs sm:text-sm hidden sm:flex" onClick={() => navigate('/auth')}>Entrar</Button>
+            <Button variant="outline" className="py-2 px-4 text-xs sm:text-sm" onClick={() => navigate('/auth')}>Já tenho conta</Button>
             <Button className="py-2 px-4 text-xs sm:text-sm" onClick={goSignup}>Criar Conta Grátis</Button>
           </div>
         </div>
@@ -516,7 +516,7 @@ export default function LandingPage() {
       <footer className="bg-slate-900 pt-16 pb-10 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="flex items-center justify-center mb-6">
-            <OnDoseLogo size="sm" />
+            <OnDoseLogo size="sm" theme="light" />
           </div>
           <p className="text-slate-400 text-sm mb-6">© 2025 OnDose Healthcare. Transformando vidas através da pontualidade.</p>
           <div className="flex justify-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
