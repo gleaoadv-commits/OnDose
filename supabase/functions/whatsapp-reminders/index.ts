@@ -38,6 +38,43 @@ function extractHourFromUTCString(dateStr: string): string {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
+async function generateMotivationalPhrase(apiKey: string, userName: string, medNames: string): Promise<string> {
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content: "Você gera frases motivacionais curtas (máx 80 caracteres) sobre saúde e adesão a medicamentos. Seja criativo, variado e acolhedor. Use emojis. Nunca repita a mesma frase. Retorne APENAS a frase, sem aspas nem JSON."
+          },
+          {
+            role: "user",
+            content: `Gere uma frase motivacional única para ${userName} que está tomando ${medNames}. Varie o estilo: às vezes engraçada, às vezes carinhosa, às vezes inspiradora.`
+          }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("AI motivational error:", response.status);
+      return "💪 Cuidar da saúde é o melhor investimento!";
+    }
+
+    const data = await response.json();
+    const phrase = data.choices?.[0]?.message?.content?.trim();
+    return phrase || "💪 Cuidar da saúde é o melhor investimento!";
+  } catch (e) {
+    console.error("AI motivational exception:", e);
+    return "💪 Cuidar da saúde é o melhor investimento!";
+  }
+}
+
 const PRO_PRODUCT = "prod_U0EtzwCBMSlt6o";
 const PREMIUM_PRODUCT = "prod_U0Eub1bzRh41Dc";
 
@@ -54,6 +91,7 @@ Deno.serve(async (req) => {
     const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
     const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
     const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN || !ZAPI_CLIENT_TOKEN) {
       throw new Error("Z-API credentials not configured");
@@ -65,9 +103,8 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    // Only send for doses scheduled within the next 5 minutes (matches ~2min cron interval)
-    const windowStart = new Date(now.getTime() - 1 * 60 * 1000); // 1 min ago (catch edge cases)
-    const windowEnd = new Date(now.getTime() + 5 * 60 * 1000);   // 5 min from now
+    const windowStart = new Date(now.getTime() - 1 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + 5 * 60 * 1000);
 
     console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
 
@@ -177,8 +214,15 @@ Deno.serve(async (req) => {
 
       const varMeds = group.meds.join(" e ");
       const varHora = extractHourFromUTCString(group.originalEventTime);
+      const userName = profile.display_name || "você";
 
-      const message = `💊 *Lembrete OnDose*\n\nHora de tomar: *${varMeds}*\n⏰ Horário: ${varHora}\n\nResponda:\n*1* - ✅ Já tomei\n*2* - ⏰ Vou tomar depois`;
+      // Generate unique motivational phrase via AI
+      let motivationalPhrase = "💪 Cuidar da saúde é o melhor investimento!";
+      if (LOVABLE_API_KEY) {
+        motivationalPhrase = await generateMotivationalPhrase(LOVABLE_API_KEY, userName, varMeds);
+      }
+
+      const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*! Hora de tomar:\n*${varMeds}*\n⏰ Horário: ${varHora}\n\n${motivationalPhrase}\n\nResponda:\n*1* - ✅ Já tomei tudo\n*2* - ⏰ Vou tomar depois\n*3* - 📱 Abrir o app (marcar individualmente)`;
 
       try {
         console.log(`Disparando Z-API para ${phone}. Meds: ${varMeds}, Hora: ${varHora}`);
