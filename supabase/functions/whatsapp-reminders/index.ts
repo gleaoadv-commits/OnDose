@@ -65,8 +65,9 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    const windowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    // Only send for doses scheduled within the next 5 minutes (matches ~2min cron interval)
+    const windowStart = new Date(now.getTime() - 1 * 60 * 1000); // 1 min ago (catch edge cases)
+    const windowEnd = new Date(now.getTime() + 5 * 60 * 1000);   // 5 min from now
 
     console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
 
