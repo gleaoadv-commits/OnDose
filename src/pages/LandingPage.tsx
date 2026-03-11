@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Zap,
   TrendingUp,
-  X
+  X,
+  FileText,
+  Crown
 } from 'lucide-react';
 
 import OnDoseLogo from '../components/OnDoseLogo';
@@ -332,6 +334,86 @@ export default function LandingPage() {
                 <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Exam Monitoring Spotlight — Premium */}
+      <section className="py-16 sm:py-24 bg-gradient-to-br from-amber-50 via-white to-teal-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-amber-100/40 rounded-full blur-[100px] -z-0" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold">
+                <Crown size={14} /> Funcionalidade Premium
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
+                Seus exames lidos por <span className="text-teal-600">Inteligência Artificial</span>
+              </h2>
+              <p className="text-slate-500 text-base sm:text-lg leading-relaxed">
+                Tire uma foto ou envie o PDF do seu exame. A IA lê, interpreta e organiza todos os indicadores automaticamente — com gráficos de evolução para acompanhar sua saúde ao longo do tempo.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "Leitura automática de exames por foto ou PDF",
+                  "Indicadores organizados com valores de referência",
+                  "Gráficos de evolução para levar ao médico",
+                  "Histórico completo dos seus resultados",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm sm:text-base text-slate-700 font-medium">
+                    <CheckCircle2 size={18} className="text-teal-500 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Button variant="urgency" className="text-base px-8 h-14" onClick={goSignup}>
+                Experimentar Premium <ArrowRight size={18} />
+              </Button>
+            </div>
+
+            {/* Visual mockup */}
+            <div className="relative flex justify-center">
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 max-w-sm w-full space-y-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <FileText size={22} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">Hemograma Completo</p>
+                    <p className="text-xs text-slate-400">Lido pela IA • 12/03/2025</p>
+                  </div>
+                </div>
+                {[
+                  { name: "Glicose", value: "95 mg/dL", status: "normal" },
+                  { name: "Colesterol Total", value: "210 mg/dL", status: "warning" },
+                  { name: "Hemoglobina", value: "14.2 g/dL", status: "normal" },
+                  { name: "TSH", value: "2.8 mUI/L", status: "normal" },
+                ].map((ind, i) => (
+                  <div key={i} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+                    <span className="text-sm font-medium text-slate-700">{ind.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900">{ind.value}</span>
+                      <div className={`w-2.5 h-2.5 rounded-full ${ind.status === 'normal' ? 'bg-green-400' : 'bg-amber-400'}`} />
+                    </div>
+                  </div>
+                ))}
+                <div className="bg-slate-50 rounded-xl p-3 mt-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} className="text-teal-600" />
+                    <span className="text-xs font-bold text-slate-700">Evolução da Glicose</span>
+                  </div>
+                  <div className="flex items-end gap-1.5 h-12">
+                    {[60, 45, 55, 40, 35, 50, 38].map((h, i) => (
+                      <div key={i} className="flex-1 bg-teal-400/70 rounded-t-sm" style={{ height: `${h}%` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Badge */}
+              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-amber-500 text-white px-4 py-2 rounded-2xl shadow-lg text-xs font-bold flex items-center gap-1.5">
+                <Zap size={14} /> IA Avançada
+              </div>
+            </div>
           </div>
         </div>
       </section>

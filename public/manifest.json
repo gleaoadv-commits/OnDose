@@ -2,7 +2,7 @@
   "name": "OnDose",
   "short_name": "OnDose",
   "description": "Seu controle inteligente de medicamentos",
-  "start_url": "/",
+  "start_url": "/auth",
   "display": "standalone",
   "background_color": "#f5f6f8",
   "theme_color": "#2a9d8f",
