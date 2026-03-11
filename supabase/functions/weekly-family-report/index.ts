@@ -5,21 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const META_API_VERSION = "v21.0";
-
-async function sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, body: string) {
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${phoneNumberId}/messages`;
+async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
+  const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "Client-Token": clientToken,
     },
     body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
+      phone: to,
+      message: body,
     }),
   });
   const result = await response.json();
@@ -35,14 +31,14 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-    const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
+    const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
+    const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
 
-    if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) {
-      throw new Error("Meta WhatsApp credentials not configured");
+    if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN || !ZAPI_CLIENT_TOKEN) {
+      throw new Error("Z-API credentials not configured");
     }
 
-    // Find all active family links
     const { data: links, error: linksErr } = await supabase
       .from("family_links")
       .select("*")
@@ -99,7 +95,7 @@ Deno.serve(async (req) => {
         let phone = caregiverProfile.whatsapp_number.replace(/\D/g, "");
         if (!phone.startsWith("55")) phone = "55" + phone;
 
-        await sendWhatsAppMessage(WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, phone, message);
+        await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, phone, message);
         sentCount++;
       } catch (err) {
         console.error(`Error sending report for link ${link.id}:`, err);
