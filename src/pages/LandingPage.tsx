@@ -146,13 +146,13 @@ export default function LandingPage() {
 
       {/* Navbar */}
       <nav className="fixed w-full top-10 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex justify-between items-center">
           <div className="cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
             <OnDoseLogo size="sm" />
           </div>
-          <div className="flex gap-3 items-center">
-            <Button variant="outline" className="py-2 px-4 text-xs sm:text-sm" onClick={() => navigate('/auth')}>Já tenho conta</Button>
-            <Button className="py-2 px-4 text-xs sm:text-sm" onClick={goSignup}>Criar Conta Grátis</Button>
+          <div className="flex gap-2 items-center">
+            <Button variant="outline" className="py-1 px-3 text-[11px] sm:text-xs h-8" onClick={() => navigate('/auth')}>Já tenho conta</Button>
+            <Button className="py-1 px-3 text-[11px] sm:text-xs h-8" onClick={goSignup}>Criar Conta</Button>
           </div>
         </div>
       </nav>
