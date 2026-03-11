@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Zap,
   TrendingUp,
-  X
+  X,
+  FileText,
+  Crown
 } from 'lucide-react';
 
 import OnDoseLogo from '../components/OnDoseLogo';
