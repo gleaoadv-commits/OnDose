@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      console.error("ERRO: GEMINI_API_KEY não encontrada nos secrets do Supabase");
-      return new Response(JSON.stringify({ error: "Configuração pendente: Chave de IA não encontrada." }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("ERRO: LOVABLE_API_KEY não encontrada");
+      return new Response(JSON.stringify({ error: "Configuração pendente", suggestions: [] }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -26,51 +26,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: "Você é um assistente farmacêutico especialista no mercado brasileiro. Sua tarefa é sugerir nomes de medicamentos (comerciais ou genéricos) reais e populares no Brasil com base no texto parcial fornecido. Retorne SEMPRE um JSON puro com o campo 'suggestions' contendo um array de até 5 strings. Não inclua Markdown ou explicações." }]
-        },
-        contents: [
-          {
-            parts: [{ text: `Sugira até 5 medicamentos que comecem ou contenham: "${query.trim()}"` }]
-          }
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: "Você é um assistente farmacêutico especialista no mercado brasileiro. Sua tarefa é sugerir nomes de medicamentos (comerciais ou genéricos) reais e populares no Brasil com base no texto parcial fornecido. Retorne SEMPRE um JSON puro com o campo 'suggestions' contendo um array de até 5 strings. Não inclua Markdown ou explicações." },
+          { role: "user", content: `Sugira até 5 medicamentos que comecem ou contenham: "${query.trim()}"` }
         ],
-        generationConfig: {
-          response_mime_type: "application/json",
-        }
+        response_format: { type: "json_object" },
       }),
     });
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "rate_limit", suggestions: [] }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "payment_required", suggestions: [] }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText);
       throw new Error(`AI error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const content = data.choices?.[0]?.message?.content || "{}";
     let suggestions: string[] = [];
 
     try {
       const parsed = JSON.parse(content);
       suggestions = (parsed.suggestions || []).slice(0, 5);
     } catch (e) {
-      console.error("Erro ao parsear resposta do Gemini:", e);
+      console.error("Erro ao parsear resposta:", e);
       suggestions = [];
     }
 

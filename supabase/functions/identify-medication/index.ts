@@ -10,9 +10,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      console.error("ERRO: GEMINI_API_KEY não encontrada nos secrets do Supabase");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("ERRO: LOVABLE_API_KEY não encontrada");
       return new Response(JSON.stringify({ error: "Configuração pendente: Chave de IA não encontrada." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -47,31 +47,27 @@ Responda SEMPRE em JSON com a seguinte estrutura (sem markdown, apenas JSON puro
 Se não conseguir identificar, retorne identified=false com uma mensagem em description explicando por quê.
 Seja preciso e responsável — informe que o usuário deve sempre consultar um médico ou farmacêutico.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const imageUrl = `data:${mimeType || "image/jpeg"};base64,${imageBase64}`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        contents: [
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
           {
-            parts: [
-              { text: "Identifique este medicamento na foto. Responda em JSON." },
-              {
-                inline_data: {
-                  mime_type: mimeType || "image/jpeg",
-                  data: imageBase64
-                }
-              }
+            role: "user",
+            content: [
+              { type: "text", text: "Identifique este medicamento na foto. Responda em JSON." },
+              { type: "image_url", image_url: { url: imageUrl } }
             ]
           }
         ],
-        generationConfig: {
-          response_mime_type: "application/json",
-        }
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -97,9 +93,8 @@ Seja preciso e responsável — informe que o usuário deve sempre consultar um 
     }
 
     const aiResult = await response.json();
-    const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const content = aiResult.choices?.[0]?.message?.content || "{}";
 
-    // Parse the JSON from the AI response
     let parsed;
     try {
       parsed = JSON.parse(content);
