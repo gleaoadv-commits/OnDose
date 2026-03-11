@@ -43,20 +43,19 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log("Z-API Webhook received:", JSON.stringify(body));
 
-    // Z-API webhook payload structure
-    // Z-API sends: { phone, message: { text: { message } }, ... }
+    // Z-API webhook payload: { phone, text: { message }, fromMe, isGroup, ... }
     const phone = body?.phone;
-    const messageText = body?.text?.message?.trim() || body?.message?.text?.message?.trim();
+    const messageText = body?.text?.message?.trim();
+    const fromMe = body?.fromMe;
 
-    if (!phone || !messageText) {
+    // Ignore messages sent by us or without text
+    if (fromMe || !phone || !messageText) {
       return new Response(JSON.stringify({ success: true, message: "No actionable message" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Clean phone number
     const cleanPhone = phone.replace(/\D/g, "");
-
     console.log(`Message from ${cleanPhone}: "${messageText}"`);
 
     // Find user by whatsapp number
@@ -77,7 +76,6 @@ Deno.serve(async (req) => {
     const userId = profile.user_id;
 
     if (messageText === "1") {
-      // Mark recent pending doses as taken
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
 
@@ -100,7 +98,6 @@ Deno.serve(async (req) => {
           .update({ taken: true, taken_at: new Date().toISOString() })
           .in("id", eventIds);
 
-        // Decrement stock for each medication
         for (const event of pendingEvents) {
           const { data: med } = await supabase
             .from("medications")
