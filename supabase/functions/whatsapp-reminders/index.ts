@@ -103,8 +103,9 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    const windowStart = new Date(now.getTime() - 1 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 5 * 60 * 1000);
+    // Tight window: only ±30 seconds to ensure each event is caught exactly once per cron run
+    const windowStart = new Date(now.getTime() - 30 * 1000);
+    const windowEnd = new Date(now.getTime() + 30 * 1000);
 
     console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
 
