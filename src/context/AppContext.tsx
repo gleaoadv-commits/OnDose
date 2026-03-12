@@ -539,6 +539,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } else {
       await supabase.from("medications").update(updates).eq("id", medId).eq("user_id", user!.id);
       setMedications(prev => prev.map(m => m.id === medId ? { ...m, stockCurrent: newStock } : m));
+
+      // Low stock alert when below 7 pills
+      if (newStock > 0 && newStock < 7) {
+        const alreadyNotified = notifications.some(
+          n => n.medicationId === medId && n.type === "info" && n.message.includes("quase acabando")
+        );
+        if (!alreadyNotified) {
+          setNotifications(prev => [
+            {
+              id: crypto.randomUUID(),
+              medicationId: medId,
+              message: `⚠️ ${med.name} está quase acabando! Restam apenas ${newStock} comprimido(s). Renove sua cartela.`,
+              time: new Date().toISOString(),
+              read: false,
+              type: "info" as const,
+            },
+            ...prev,
+          ]);
+        }
+      }
     }
   }, [medications, user]);
 

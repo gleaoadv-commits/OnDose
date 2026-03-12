@@ -244,10 +244,58 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Resumo: sent=${sent}, groups=${groups.size}, errors=${errors.length}`);
+    // === LOW STOCK ALERTS (< 7 pills) ===
+    let stockAlertsSent = 0;
+    try {
+      const { data: lowStockMeds } = await supabase
+        .from("medications")
+        .select("id, user_id, name, dosage, stock_current, stock_total")
+        .eq("status", "ativo")
+        .not("stock_current", "is", null)
+        .lt("stock_current", 7)
+        .gt("stock_current", 0);
+
+      if (lowStockMeds && lowStockMeds.length > 0) {
+        // Only send once per day: check current hour is between 09:00-09:01 UTC (06:00 BRT)
+        const currentHourUTC = now.getUTCHours();
+        const currentMinUTC = now.getUTCMinutes();
+        if (currentHourUTC === 12 && currentMinUTC === 0) {
+          const stockByUser = new Map<string, { name: string; stock: number }[]>();
+          for (const med of lowStockMeds) {
+            if (!stockByUser.has(med.user_id)) stockByUser.set(med.user_id, []);
+            stockByUser.get(med.user_id)!.push({ name: med.name, stock: med.stock_current! });
+          }
+
+          for (const [userId, meds] of stockByUser) {
+            const profile = profileMap.get(userId);
+            if (!profile) continue;
+
+            let phone = profile.whatsapp_number.replace(/\D/g, "").replace(/^0+/, "");
+            if (!phone.startsWith("55") && phone.length <= 11) phone = "55" + phone;
+
+            const medList = meds.map(m => `• *${m.name}* — ${m.stock} comprimido(s)`).join("\n");
+            const userName = profile.display_name || "você";
+            const appLink = "https://ondose.lovable.app";
+
+            const msg = `📦 *Alerta de Estoque - OnDose*\n\nOlá, *${userName}*! Alguns medicamentos estão acabando:\n\n${medList}\n\n🔄 Renove sua cartela para não ficar sem!\n\n📱 Acesse o app: ${appLink}`;
+
+            try {
+              const res = await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, phone, msg);
+              if (res.ok) stockAlertsSent++;
+            } catch (err) {
+              console.error(`Stock alert error for ${userId}:`, err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Low stock check error:", err);
+    }
+
+    console.log(`Resumo: sent=${sent}, stockAlerts=${stockAlertsSent}, groups=${groups.size}, errors=${errors.length}`);
 
     return new Response(
-      JSON.stringify({ sent, groups: groups.size, errors: errors.length, errorDetails: errors }),
+      JSON.stringify({ sent, stockAlertsSent, groups: groups.size, errors: errors.length, errorDetails: errors }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
