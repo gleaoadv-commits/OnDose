@@ -77,7 +77,6 @@ Deno.serve(async (req) => {
 
     if (messageText === "1") {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-      // Include events up to 10 min in the future (reminders are sent a few minutes early)
       const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       const { data: pendingEvents, error: fetchError } = await supabase
@@ -122,13 +121,8 @@ Deno.serve(async (req) => {
           `✅ *Dose Registrada!*\n\n${pendingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
-        await sendZAPIMessage(
-          ZAPI_INSTANCE_ID,
-          ZAPI_TOKEN,
-          ZAPI_CLIENT_TOKEN,
-          cleanPhone,
-          "ℹ️ Não encontrei doses pendentes nas últimas 2 horas. Verifique no app: https://ondose.lovable.app"
-        );
+        // No pending events — likely already processed by a previous webhook call, so don't reply again
+        console.log(`No pending events for user ${userId} — skipping duplicate confirmation`);
       }
     } else if (messageText === "2") {
       await sendZAPIMessage(
