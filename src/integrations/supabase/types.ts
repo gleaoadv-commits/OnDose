@@ -283,6 +283,7 @@ export type Database = {
           user_code: string
           user_id: string
           whatsapp_number: string | null
+          whatsapp_plan_welcome_sent: string | null
         }
         Insert: {
           account_type?: string
@@ -301,6 +302,7 @@ export type Database = {
           user_code: string
           user_id: string
           whatsapp_number?: string | null
+          whatsapp_plan_welcome_sent?: string | null
         }
         Update: {
           account_type?: string
@@ -319,6 +321,7 @@ export type Database = {
           user_code?: string
           user_id?: string
           whatsapp_number?: string | null
+          whatsapp_plan_welcome_sent?: string | null
         }
         Relationships: []
       }
