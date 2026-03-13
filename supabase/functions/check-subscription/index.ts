@@ -160,6 +160,47 @@ serve(async (req) => {
       logStep("Deactivated family links for non-premium user");
     }
 
+    // Send WhatsApp welcome message once when user first subscribes
+    if (plan !== "free") {
+      const { data: profileForWelcome } = await supabaseAdmin
+        .from("profiles")
+        .select("whatsapp_number, whatsapp_plan_welcome_sent, display_name")
+        .eq("user_id", userId)
+        .single();
+
+      const alreadySentForPlan = profileForWelcome?.whatsapp_plan_welcome_sent;
+
+      if (profileForWelcome?.whatsapp_number && alreadySentForPlan !== plan) {
+        try {
+          const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
+          const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
+          const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
+
+          if (ZAPI_INSTANCE_ID && ZAPI_TOKEN && ZAPI_CLIENT_TOKEN) {
+            const planLabel = plan === "premium" ? "Premium" : "PRO";
+            const userName = profileForWelcome.display_name || "usuário";
+            const msg = `🎉 *Parabéns, ${userName}!*\n\nSeu plano *${planLabel}* foi ativado com sucesso! ✅\n\nA partir de agora você receberá os lembretes de medicamentos por WhatsApp nos horários programados.\n\nAproveite todos os recursos do seu plano! 💊\n\n👉 Acesse o app: https://ondose.lovable.app`;
+
+            const url = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`;
+            await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Client-Token": ZAPI_CLIENT_TOKEN },
+              body: JSON.stringify({ phone: profileForWelcome.whatsapp_number.replace(/\D/g, ""), message: msg }),
+            });
+
+            await supabaseAdmin
+              .from("profiles")
+              .update({ whatsapp_plan_welcome_sent: plan } as any)
+              .eq("user_id", userId);
+
+            logStep("Welcome WhatsApp sent", { plan, phone: profileForWelcome.whatsapp_number });
+          }
+        } catch (welcomeErr) {
+          logStep("Welcome WhatsApp failed (non-blocking)", { error: String(welcomeErr) });
+        }
+      }
+    }
+
     logStep("Subscription result", { plan, subscriptionEnd, cancelAtPeriodEnd });
 
     return new Response(JSON.stringify({
