@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS whatsapp_plan_welcome_sent text DEFAULT NULL;
