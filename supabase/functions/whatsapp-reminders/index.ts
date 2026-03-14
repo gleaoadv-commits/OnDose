@@ -113,6 +113,7 @@ Deno.serve(async (req) => {
       .from("schedule_events")
       .select("*")
       .eq("taken", false)
+      .eq("notified", false)
       .gte("scheduled_time", windowStart.toISOString())
       .lte("scheduled_time", windowEnd.toISOString());
 
