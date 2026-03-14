@@ -234,6 +234,20 @@ Deno.serve(async (req) => {
         if (res.ok) {
           sent++;
           console.log(`Sucesso para ${phone}`);
+
+          // Mark events as notified to prevent duplicate sends
+          const groupEvents = events.filter((e: any) => {
+            const roundedTime = roundToMinute(e.scheduled_time);
+            const key = `${e.user_id}::${roundedTime}`;
+            return key === `${group.userId}::${roundToMinute(group.originalEventTime)}`;
+          });
+          const eventIds = groupEvents.map((e: any) => e.id);
+          if (eventIds.length > 0) {
+            await supabase
+              .from("schedule_events")
+              .update({ notified: true })
+              .in("id", eventIds);
+          }
         } else {
           console.error(`Erro Z-API para ${phone}:`, res.result);
           errors.push(`User ${group.userId}: ${JSON.stringify(res.result)}`);
