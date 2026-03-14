@@ -1,0 +1,1 @@
+ALTER TABLE public.schedule_events ADD COLUMN IF NOT EXISTS notified boolean NOT NULL DEFAULT false;

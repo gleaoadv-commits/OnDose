@@ -396,6 +396,7 @@ export type Database = {
           id: string
           medication_id: string
           medication_name: string
+          notified: boolean
           scheduled_time: string
           taken: boolean
           taken_at: string | null
@@ -408,6 +409,7 @@ export type Database = {
           id?: string
           medication_id: string
           medication_name: string
+          notified?: boolean
           scheduled_time: string
           taken?: boolean
           taken_at?: string | null
@@ -420,6 +422,7 @@ export type Database = {
           id?: string
           medication_id?: string
           medication_name?: string
+          notified?: boolean
           scheduled_time?: string
           taken?: boolean
           taken_at?: string | null
