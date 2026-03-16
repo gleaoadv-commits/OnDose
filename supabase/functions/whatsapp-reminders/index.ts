@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
     console.log(`Paid users with eligible WhatsApp: ${profileMap.size}`);
 
-    const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[] }>();
+    const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[]; eventIds: string[] }>();
 
     for (const event of events) {
       const profile = profileMap.get(event.user_id);
@@ -200,9 +200,17 @@ Deno.serve(async (req) => {
       const key = `${event.user_id}::${roundedTime}`;
 
       if (!groups.has(key)) {
-        groups.set(key, { userId: event.user_id, originalEventTime: event.scheduled_time, meds: [] });
+        groups.set(key, {
+          userId: event.user_id,
+          originalEventTime: event.scheduled_time,
+          meds: [],
+          eventIds: [],
+        });
       }
-      groups.get(key)!.meds.push(`${event.medication_name} (${event.dosage})`);
+
+      const groupEntry = groups.get(key)!;
+      groupEntry.meds.push(`${event.medication_name} (${event.dosage})`);
+      groupEntry.eventIds.push(event.id);
     }
 
     let sent = 0;
