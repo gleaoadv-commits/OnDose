@@ -634,7 +634,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateScheduleEventTime = useCallback(async (eventId: string, newTime: string) => {
     if (!user) return;
-    await supabase.from("schedule_events").update({ scheduled_time: newTime }).eq("id", eventId).eq("user_id", user.id);
+    await supabase
+      .from("schedule_events")
+      .update({ scheduled_time: newTime, notified: false })
+      .eq("id", eventId)
+      .eq("user_id", user.id);
     setSchedule(prev => prev.map(e => e.id === eventId ? { ...e, scheduledTime: newTime } : e));
   }, [user]);
 

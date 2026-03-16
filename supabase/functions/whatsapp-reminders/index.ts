@@ -103,11 +103,12 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    // Window of ±90 seconds to cover 2-min cron intervals without gaps
-    const windowStart = new Date(now.getTime() - 90 * 1000);
-    const windowEnd = new Date(now.getTime() + 90 * 1000);
+    const reminderLookbackMs = 15 * 60 * 1000;
+    const reminderLookaheadMs = 90 * 1000;
+    const windowStart = new Date(now.getTime() - reminderLookbackMs);
+    const windowEnd = new Date(now.getTime() + reminderLookaheadMs);
 
-    console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
+    console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()} (catch-up enabled)`);
 
     const { data: events, error: eventsError } = await supabase
       .from("schedule_events")
@@ -115,7 +116,8 @@ Deno.serve(async (req) => {
       .eq("taken", false)
       .eq("notified", false)
       .gte("scheduled_time", windowStart.toISOString())
-      .lte("scheduled_time", windowEnd.toISOString());
+      .lte("scheduled_time", windowEnd.toISOString())
+      .order("scheduled_time", { ascending: true });
 
     if (eventsError) throw new Error(`Error fetching events: ${eventsError.message}`);
 
@@ -188,7 +190,7 @@ Deno.serve(async (req) => {
 
     console.log(`Paid users with eligible WhatsApp: ${profileMap.size}`);
 
-    const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[] }>();
+    const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[]; eventIds: string[] }>();
 
     for (const event of events) {
       const profile = profileMap.get(event.user_id);
@@ -198,9 +200,17 @@ Deno.serve(async (req) => {
       const key = `${event.user_id}::${roundedTime}`;
 
       if (!groups.has(key)) {
-        groups.set(key, { userId: event.user_id, originalEventTime: event.scheduled_time, meds: [] });
+        groups.set(key, {
+          userId: event.user_id,
+          originalEventTime: event.scheduled_time,
+          meds: [],
+          eventIds: [],
+        });
       }
-      groups.get(key)!.meds.push(`${event.medication_name} (${event.dosage})`);
+
+      const groupEntry = groups.get(key)!;
+      groupEntry.meds.push(`${event.medication_name} (${event.dosage})`);
+      groupEntry.eventIds.push(event.id);
     }
 
     let sent = 0;
@@ -226,6 +236,35 @@ Deno.serve(async (req) => {
 
       const message = `💊 *Lembrete OnDose*\n\nOlá, *${userName}*! Hora de tomar:\n*${varMeds}*\n⏰ Horário: ${varHora}\n\n${motivationalPhrase}\n\nResponda:\n*1* - ✅ Já tomei tudo\n*2* - ⏰ Vou tomar depois\n*3* - 📱 Abrir o app (marcar individualmente)`;
 
+      const { data: claimedEvents, error: claimError } = await supabase
+        .from("schedule_events")
+        .update({ notified: true })
+        .in("id", group.eventIds)
+        .eq("notified", false)
+        .eq("taken", false)
+        .select("id");
+
+      if (claimError) {
+        console.error(`Erro ao reservar eventos para ${group.userId}:`, claimError.message);
+        errors.push(`User ${group.userId}: ${claimError.message}`);
+        continue;
+      }
+
+      const claimedEventIds = (claimedEvents || []).map((event: any) => event.id);
+      if (claimedEventIds.length !== group.eventIds.length) {
+        console.log(`Pulando grupo ${group.userId}::${roundToMinute(group.originalEventTime)} por disputa de execução`);
+
+        if (claimedEventIds.length > 0) {
+          await supabase
+            .from("schedule_events")
+            .update({ notified: false })
+            .in("id", claimedEventIds)
+            .eq("taken", false);
+        }
+
+        continue;
+      }
+
       try {
         console.log(`Disparando Z-API para ${phone}. Meds: ${varMeds}, Hora: ${varHora}`);
 
@@ -234,28 +273,26 @@ Deno.serve(async (req) => {
         if (res.ok) {
           sent++;
           console.log(`Sucesso para ${phone}`);
-
-          // Mark events as notified to prevent duplicate sends
-          const groupEvents = events.filter((e: any) => {
-            const roundedTime = roundToMinute(e.scheduled_time);
-            const key = `${e.user_id}::${roundedTime}`;
-            return key === `${group.userId}::${roundToMinute(group.originalEventTime)}`;
-          });
-          const eventIds = groupEvents.map((e: any) => e.id);
-          if (eventIds.length > 0) {
-            await supabase
-              .from("schedule_events")
-              .update({ notified: true })
-              .in("id", eventIds);
-          }
         } else {
           console.error(`Erro Z-API para ${phone}:`, res.result);
           errors.push(`User ${group.userId}: ${JSON.stringify(res.result)}`);
+
+          await supabase
+            .from("schedule_events")
+            .update({ notified: false })
+            .in("id", claimedEventIds)
+            .eq("taken", false);
         }
       } catch (err) {
         const errMessage = err instanceof Error ? err.message : String(err);
         console.error(`Exceção para user ${group.userId}:`, errMessage);
         errors.push(`User ${group.userId}: ${errMessage}`);
+
+        await supabase
+          .from("schedule_events")
+          .update({ notified: false })
+          .in("id", claimedEventIds)
+          .eq("taken", false);
       }
     }
 
