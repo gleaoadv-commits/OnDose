@@ -147,10 +147,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const sessionRes = await supabase.auth.getSession();
         const token = sessionRes.data?.session?.access_token;
 
+        // Limit schedule_events to a rolling window for performance
+        const windowStart = new Date();
+        windowStart.setDate(windowStart.getDate() - 30);
+        const windowEnd = new Date();
+        windowEnd.setDate(windowEnd.getDate() + 90);
+
         // Run DB queries AND subscription check simultaneously — no delay
         const [medsRes, eventsRes, rolesRes, subData] = await Promise.all([
           supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("schedule_events").select("*").eq("user_id", user.id),
+          supabase.from("schedule_events").select("*").eq("user_id", user.id)
+            .gte("scheduled_time", windowStart.toISOString())
+            .lte("scheduled_time", windowEnd.toISOString()),
           supabase.from("user_roles").select("role").eq("user_id", user.id),
           token
             ? supabase.functions.invoke("check-subscription", {
@@ -203,13 +211,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           color: row.color,
         }));
 
-        // Recalculate stockCurrent based on actual taken events for each medication
-        const recalcMeds = loadedMeds.map(med => {
-          if (med.stockTotal == null) return med;
-          const takenCount = loadedEvents.filter(e => e.medicationId === med.id && e.taken).length;
-          const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
-          return { ...med, stockCurrent: newStock };
-        });
+        // Use stock_current from DB directly (kept in sync on each dose action)
+        const recalcMeds = loadedMeds;
 
         // Fix duplicate colors: reassign unique colors to active medications
         const activeMedsForColor = recalcMeds.filter(m => m.status !== "encerrado");
@@ -232,13 +235,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           usedColors.add(med.color);
         }
 
-        // Persist recalculated stock values if they differ
-        for (const med of recalcMeds) {
-          const orig = loadedMeds.find(m => m.id === med.id);
-          if (orig && orig.stockTotal != null && orig.stockCurrent !== med.stockCurrent) {
-            supabase.from("medications").update({ stock_current: med.stockCurrent } as any).eq("id", med.id).eq("user_id", user.id);
-          }
-        }
+
+
 
         // Auto-reactivate medications paused due to free plan limit
         if (subData?.plan && subData.plan !== "free") {
