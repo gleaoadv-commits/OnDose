@@ -235,13 +235,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           usedColors.add(med.color);
         }
 
-        // Persist recalculated stock values if they differ
-        for (const med of recalcMeds) {
-          const orig = loadedMeds.find(m => m.id === med.id);
-          if (orig && orig.stockTotal != null && orig.stockCurrent !== med.stockCurrent) {
-            supabase.from("medications").update({ stock_current: med.stockCurrent } as any).eq("id", med.id).eq("user_id", user.id);
-          }
-        }
+
+
 
         // Auto-reactivate medications paused due to free plan limit
         if (subData?.plan && subData.plan !== "free") {
