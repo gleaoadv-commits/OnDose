@@ -223,6 +223,19 @@ export default function Dashboard() {
       {/* Adherence streak + weekly summary */}
       {schedule.length > 0 && <AdherenceStats schedule={schedule} />}
 
+      {/* Support button */}
+      <a href="https://wa.me/553131579232" target="_blank" rel="noopener noreferrer">
+        <Card className="p-4 rounded-xl border-green-500/30 bg-green-500/8 flex items-center gap-3 card-hover">
+          <div className="bg-green-500/15 rounded-xl p-2 shrink-0">
+            <MessageCircle className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">Precisa de ajuda?</p>
+            <p className="text-xs text-muted-foreground">Problemas na instalação? Fale conosco no WhatsApp</p>
+          </div>
+        </Card>
+      </a>
+
       {/* Critical stock alerts: ≤ 3 doses = urgent, ≤ 20% = low */}
       {(() => {
         const lowStockMeds = medications.filter(m => m.status === "ativo" && m.stockCurrent != null && m.stockTotal && (m.stockCurrent <= 3 || (m.stockCurrent / m.stockTotal) <= 0.2));
