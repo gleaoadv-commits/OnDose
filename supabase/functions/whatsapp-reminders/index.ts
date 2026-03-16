@@ -103,11 +103,12 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    // Window of ±90 seconds to cover 2-min cron intervals without gaps
-    const windowStart = new Date(now.getTime() - 90 * 1000);
-    const windowEnd = new Date(now.getTime() + 90 * 1000);
+    const reminderLookbackMs = 15 * 60 * 1000;
+    const reminderLookaheadMs = 90 * 1000;
+    const windowStart = new Date(now.getTime() - reminderLookbackMs);
+    const windowEnd = new Date(now.getTime() + reminderLookaheadMs);
 
-    console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
+    console.log(`Checking events between ${windowStart.toISOString()} and ${windowEnd.toISOString()} (catch-up enabled)`);
 
     const { data: events, error: eventsError } = await supabase
       .from("schedule_events")
@@ -115,7 +116,8 @@ Deno.serve(async (req) => {
       .eq("taken", false)
       .eq("notified", false)
       .gte("scheduled_time", windowStart.toISOString())
-      .lte("scheduled_time", windowEnd.toISOString());
+      .lte("scheduled_time", windowEnd.toISOString())
+      .order("scheduled_time", { ascending: true });
 
     if (eventsError) throw new Error(`Error fetching events: ${eventsError.message}`);
 
