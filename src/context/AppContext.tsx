@@ -211,13 +211,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           color: row.color,
         }));
 
-        // Recalculate stockCurrent based on actual taken events for each medication
-        const recalcMeds = loadedMeds.map(med => {
-          if (med.stockTotal == null) return med;
-          const takenCount = loadedEvents.filter(e => e.medicationId === med.id && e.taken).length;
-          const newStock = Math.max(0, med.stockTotal - takenCount * med.quantity);
-          return { ...med, stockCurrent: newStock };
-        });
+        // Use stock_current from DB directly (kept in sync on each dose action)
+        const recalcMeds = loadedMeds;
 
         // Fix duplicate colors: reassign unique colors to active medications
         const activeMedsForColor = recalcMeds.filter(m => m.status !== "encerrado");
