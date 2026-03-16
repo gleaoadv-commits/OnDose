@@ -147,10 +147,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const sessionRes = await supabase.auth.getSession();
         const token = sessionRes.data?.session?.access_token;
 
+        // Limit schedule_events to a rolling window for performance
+        const windowStart = new Date();
+        windowStart.setDate(windowStart.getDate() - 30);
+        const windowEnd = new Date();
+        windowEnd.setDate(windowEnd.getDate() + 90);
+
         // Run DB queries AND subscription check simultaneously — no delay
         const [medsRes, eventsRes, rolesRes, subData] = await Promise.all([
           supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("schedule_events").select("*").eq("user_id", user.id),
+          supabase.from("schedule_events").select("*").eq("user_id", user.id)
+            .gte("scheduled_time", windowStart.toISOString())
+            .lte("scheduled_time", windowEnd.toISOString()),
           supabase.from("user_roles").select("role").eq("user_id", user.id),
           token
             ? supabase.functions.invoke("check-subscription", {
