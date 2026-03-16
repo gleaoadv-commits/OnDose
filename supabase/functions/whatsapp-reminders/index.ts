@@ -287,6 +287,12 @@ Deno.serve(async (req) => {
         const errMessage = err instanceof Error ? err.message : String(err);
         console.error(`Exceção para user ${group.userId}:`, errMessage);
         errors.push(`User ${group.userId}: ${errMessage}`);
+
+        await supabase
+          .from("schedule_events")
+          .update({ notified: false })
+          .in("id", claimedEventIds)
+          .eq("taken", false);
       }
     }
 
