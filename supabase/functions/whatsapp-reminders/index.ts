@@ -51,7 +51,7 @@ async function generateMotivationalPhrase(apiKey: string, userName: string, medN
         messages: [
           {
             role: "system",
-            content: "Você gera frases motivacionais curtas (máx 80 caracteres) sobre saúde e adesão a medicamentos. Seja criativo, variado e acolhedor. Use emojis. Nunca repita a mesma frase. Retorne APENAS a frase, sem aspas nem JSON."
+            content: "Gere EXATAMENTE UMA ÚNICA frase motivacional curta (máximo 15 palavras, máximo 80 caracteres) sobre saúde e adesão a medicamentos. REGRAS OBRIGATÓRIAS: 1) Apenas UMA frase. 2) Apenas UMA linha. 3) Nunca gere lista, nunca gere múltiplas frases. 4) Use no máximo 1 emoji. 5) Seja criativo e acolhedor. 6) Retorne SOMENTE a frase, sem aspas, sem JSON, sem quebra de linha."
           },
           {
             role: "user",
@@ -67,7 +67,9 @@ async function generateMotivationalPhrase(apiKey: string, userName: string, medN
     }
 
     const data = await response.json();
-    const phrase = data.choices?.[0]?.message?.content?.trim();
+    const rawPhrase = data.choices?.[0]?.message?.content?.trim();
+    // Force single line: take only the first non-empty line
+    const phrase = rawPhrase?.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0];
     return phrase || "💪 Cuidar da saúde é o melhor investimento!";
   } catch (e) {
     console.error("AI motivational exception:", e);
