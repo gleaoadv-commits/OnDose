@@ -67,7 +67,9 @@ async function generateMotivationalPhrase(apiKey: string, userName: string, medN
     }
 
     const data = await response.json();
-    const phrase = data.choices?.[0]?.message?.content?.trim();
+    const rawPhrase = data.choices?.[0]?.message?.content?.trim();
+    // Force single line: take only the first non-empty line
+    const phrase = rawPhrase?.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0];
     return phrase || "💪 Cuidar da saúde é o melhor investimento!";
   } catch (e) {
     console.error("AI motivational exception:", e);
