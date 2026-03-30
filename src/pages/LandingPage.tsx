@@ -559,6 +559,73 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Install to Home Screen */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="bg-slate-50 rounded-3xl border border-slate-200 p-8 sm:p-12 space-y-8">
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 rounded-2xl mx-auto">
+                <Smartphone size={32} className="text-teal-600" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Instale o OnDose no seu celular</h2>
+              <p className="text-slate-500 text-sm sm:text-base max-w-xl mx-auto">
+                Use o OnDose como um app nativo, direto na sua tela inicial. Sem precisar baixar na loja!
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              {/* iPhone */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white text-lg">🍎</div>
+                  <h3 className="font-bold text-slate-800">iPhone (Safari)</h3>
+                </div>
+                <ol className="space-y-3 text-sm text-slate-600">
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                    <span>Abra o OnDose no <strong>Safari</strong></span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                    <span>Toque no ícone de <strong>compartilhar</strong> (⬆️)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                    <span>Selecione <strong>"Adicionar à Tela Inicial"</strong></span>
+                  </li>
+                </ol>
+              </div>
+
+              {/* Android */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
+                  <h3 className="font-bold text-slate-800">Android (Chrome)</h3>
+                </div>
+                <ol className="space-y-3 text-sm text-slate-600">
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                    <span>Abra o OnDose no <strong>Chrome</strong></span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                    <span>Toque nos <strong>3 pontinhos</strong> (⋮) no canto superior</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                    <span>Selecione <strong>"Adicionar à tela inicial"</strong></span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-slate-400">
+              💡 Assim o OnDose abre como um app real, com ícone na sua tela inicial!
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-16 sm:py-24 bg-gradient-to-br from-teal-600 to-teal-800 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-30"></div>
