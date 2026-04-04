@@ -154,26 +154,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         windowEnd.setDate(windowEnd.getDate() + 90);
 
         // Run DB queries AND subscription check simultaneously — no delay
-        const [medsRes, eventsRes, rolesRes, subData] = await Promise.all([
+        const [medsRes, eventsRes, rolesRes, profileRes] = await Promise.all([
           supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("schedule_events").select("*").eq("user_id", user.id)
             .gte("scheduled_time", windowStart.toISOString())
             .lte("scheduled_time", windowEnd.toISOString()),
           supabase.from("user_roles").select("role").eq("user_id", user.id),
-          token
-            ? supabase.functions.invoke("check-subscription", {
-                headers: { Authorization: `Bearer ${token}` },
-              }).then(r => r.data).catch(() => null)
-            : Promise.resolve(null),
+          supabase.from("profiles").select("plan_override").eq("user_id", user.id).single(),
         ]);
 
-        // Apply subscription result immediately — before rendering
-        if (subData?.plan) {
-          setPlan(subData.plan as UserPlan);
-          setSubscriptionEnd(subData.subscription_end ?? null);
-          setCancelAtPeriodEnd(subData.cancel_at_period_end === true);
+        // Use plan_override from DB for instant plan display (no Stripe call needed)
+        const quickPlan = profileRes.data?.plan_override as UserPlan | null;
+        if (quickPlan) {
+          setPlan(quickPlan);
         }
-        setSubscriptionReady(true);
 
         // Admin users get PRO plan (overrides subscription)
         if (rolesRes.data?.some((r: any) => r.role === "admin")) {
@@ -238,16 +232,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
 
 
-        // Auto-reactivate medications paused due to free plan limit
-        if (subData?.plan && subData.plan !== "free") {
-          const inactiveDueToPlan = recalcMeds.filter(m => m.status === "inativo_plano");
-          if (inactiveDueToPlan.length > 0) {
-            const ids = inactiveDueToPlan.map(m => m.id);
-            await supabase.from("medications").update({ status: "ativo" }).in("id", ids).eq("user_id", user.id);
-            inactiveDueToPlan.forEach(m => { m.status = "ativo"; });
-          }
-        }
-
         // Generate dose reminder notifications for today's pending events
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -273,6 +257,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setNotifications(doseNotifs);
         setMedications(recalcMeds);
         setSchedule(loadedEvents);
+
+        // Now run Stripe subscription check in background (non-blocking)
+        if (token) {
+          supabase.functions.invoke("check-subscription", {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then(r => {
+            const subData = r.data;
+            if (subData?.plan) {
+              setPlan(subData.plan as UserPlan);
+              setSubscriptionEnd(subData.subscription_end ?? null);
+              setCancelAtPeriodEnd(subData.cancel_at_period_end === true);
+
+              // Auto-reactivate medications paused due to free plan limit
+              if (subData.plan !== "free") {
+                const inactiveDueToPlan = recalcMeds.filter(m => m.status === "inativo_plano");
+                if (inactiveDueToPlan.length > 0) {
+                  const ids = inactiveDueToPlan.map(m => m.id);
+                  supabase.from("medications").update({ status: "ativo" }).in("id", ids).eq("user_id", user.id);
+                  setMedications(prev => prev.map(m =>
+                    m.status === "inativo_plano" ? { ...m, status: "ativo" as const } : m
+                  ));
+                }
+              }
+            }
+            setSubscriptionReady(true);
+          }).catch(() => {
+            setSubscriptionReady(true);
+          });
+        } else {
+          setSubscriptionReady(true);
+        }
       } catch (err) {
         console.error("Error loading data:", err);
         setSubscriptionReady(true);
