@@ -41,8 +41,12 @@ export function useApp() {
 
 function generateScheduleForMedication(med: Medication, userId: string): Omit<ScheduleEvent, "id">[] {
   const events: Omit<ScheduleEvent, "id">[] = [];
-  const start = new Date(med.startDate);
-  const end = med.endDate ? new Date(med.endDate) : new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const parseLocalDate = (s: string) => {
+    const [y, mo, d] = s.split("-").map(Number);
+    return new Date(y, (mo || 1) - 1, d || 1, 0, 0, 0, 0);
+  };
+  const start = parseLocalDate(med.startDate);
+  const end = med.endDate ? parseLocalDate(med.endDate) : new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
   const dayStep = getFrequencyDayStep(med.frequency);
   const dosageLabel = `${med.dosage} — ${med.quantity} comp.`;
 
