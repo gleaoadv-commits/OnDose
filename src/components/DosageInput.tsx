@@ -24,14 +24,15 @@ export default function DosageInput({
   inputClassName,
   compact = false,
 }: DosageInputProps) {
-  const [unit, setUnit] = useState<"mg" | "outro">(() => {
-    // Detect if current value is an mg value
+  const [unit, setUnit] = useState<"mg" | "outro" | "nao">(() => {
     if (!value) return "mg";
-    if (/^\d+\s*mg$/i.test(value.trim())) return "mg";
+    if (value.trim().toLowerCase() === "não informada") return "nao";
+    if (/^\d+(?:[.,]\d+)?\s*mg$/i.test(value.trim())) return "mg";
     return "outro";
   });
 
   const isMg = unit === "mg";
+  const isNao = unit === "nao";
 
   return (
     <div className={className}>
