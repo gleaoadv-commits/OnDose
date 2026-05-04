@@ -159,18 +159,42 @@ export default function AddMedication() {
           {/* Dosagem + Quantidade side by side */}
           <DosageInput value={dosage} onChange={setDosage} />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-sm font-bold">Quant. comprimidos</Label>
+          <div>
+            <Label className="text-sm font-bold">Quantidade por dose</Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">Quantos comprimidos tomar de cada vez?</p>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setQuantity(n)}
+                  className={`h-13 rounded-2xl border-2 font-bold text-elder-base transition-all ${
+                    quantity === n
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border/60 bg-background text-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {n} comp.
+                </button>
+              ))}
+            </div>
+            {quantity > 4 && (
               <Input
                 type="number"
                 value={quantity}
                 onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
                 min={1}
                 max={20}
-                className="mt-1.5 text-elder-base h-13 rounded-2xl border-border/60"
+                className="mt-2 text-elder-base h-13 rounded-2xl border-border/60"
               />
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setQuantity(quantity > 4 ? 1 : 5)}
+              className="text-xs text-primary font-semibold mt-2 hover:underline"
+            >
+              {quantity > 4 ? "Voltar para opções rápidas" : "Mais de 4 comprimidos"}
+            </button>
           </div>
 
           <div>
