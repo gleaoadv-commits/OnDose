@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "../components/ui/alert-dialog";
 import AnvisaBulario from "../components/AnvisaBulario";
+import DosageInput from "../components/DosageInput";
 
 export default function MedicationDetail() {
   const { id } = useParams<{ id: string }>();
