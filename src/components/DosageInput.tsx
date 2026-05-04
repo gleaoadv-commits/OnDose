@@ -57,16 +57,30 @@ export default function DosageInput({
           onClick={() => { setUnit("outro"); onChange(""); }}
           className={cn(
             "px-3 py-1 rounded-full text-xs font-bold transition-colors border",
-            !isMg
+            unit === "outro"
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-muted text-muted-foreground border-border/60 hover:bg-accent"
           )}
         >
           Outro
         </button>
+        <button
+          type="button"
+          onClick={() => { setUnit("nao"); onChange("Não informada"); }}
+          className={cn(
+            "px-3 py-1 rounded-full text-xs font-bold transition-colors border",
+            isNao
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-muted text-muted-foreground border-border/60 hover:bg-accent"
+          )}
+        >
+          Não informada
+        </button>
       </div>
 
-      {isMg ? (
+      {isNao ? (
+        <p className="text-xs text-muted-foreground italic">A dosagem ficará registrada como "Não informada".</p>
+      ) : isMg ? (
         <div className="flex flex-wrap gap-1.5">
           {MG_OPTIONS.map((opt) => (
             <button
