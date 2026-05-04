@@ -24,14 +24,15 @@ export default function DosageInput({
   inputClassName,
   compact = false,
 }: DosageInputProps) {
-  const [unit, setUnit] = useState<"mg" | "outro">(() => {
-    // Detect if current value is an mg value
+  const [unit, setUnit] = useState<"mg" | "outro" | "nao">(() => {
     if (!value) return "mg";
-    if (/^\d+\s*mg$/i.test(value.trim())) return "mg";
+    if (value.trim().toLowerCase() === "não informada") return "nao";
+    if (/^\d+(?:[.,]\d+)?\s*mg$/i.test(value.trim())) return "mg";
     return "outro";
   });
 
   const isMg = unit === "mg";
+  const isNao = unit === "nao";
 
   return (
     <div className={className}>
@@ -56,16 +57,30 @@ export default function DosageInput({
           onClick={() => { setUnit("outro"); onChange(""); }}
           className={cn(
             "px-3 py-1 rounded-full text-xs font-bold transition-colors border",
-            !isMg
+            unit === "outro"
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-muted text-muted-foreground border-border/60 hover:bg-accent"
           )}
         >
           Outro
         </button>
+        <button
+          type="button"
+          onClick={() => { setUnit("nao"); onChange("Não informada"); }}
+          className={cn(
+            "px-3 py-1 rounded-full text-xs font-bold transition-colors border",
+            isNao
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-muted text-muted-foreground border-border/60 hover:bg-accent"
+          )}
+        >
+          Não informada
+        </button>
       </div>
 
-      {isMg ? (
+      {isNao ? (
+        <p className="text-xs text-muted-foreground italic">A dosagem ficará registrada como "Não informada".</p>
+      ) : isMg ? (
         <div className="flex flex-wrap gap-1.5">
           {MG_OPTIONS.map((opt) => (
             <button

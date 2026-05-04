@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "../components/ui/alert-dialog";
 import AnvisaBulario from "../components/AnvisaBulario";
+import DosageInput from "../components/DosageInput";
 
 export default function MedicationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -199,15 +200,12 @@ export default function MedicationDetail() {
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Nome</label>
               <Input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl h-10" placeholder="Nome do medicamento" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Dosagem</label>
-                <Input value={editDosage} onChange={e => setEditDosage(e.target.value)} className="rounded-xl h-10" placeholder="Ex: 50mg" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Comprimidos/dose</label>
-                <Input type="number" value={editQuantity} onChange={e => setEditQuantity(e.target.value)} min={1} className="rounded-xl h-10" />
-              </div>
+            <div>
+              <DosageInput value={editDosage} onChange={setEditDosage} label="Dosagem" compact />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Comprimidos por dose</label>
+              <Input type="number" value={editQuantity} onChange={e => setEditQuantity(e.target.value)} min={1} className="rounded-xl h-10" />
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 block">Frequência</label>
