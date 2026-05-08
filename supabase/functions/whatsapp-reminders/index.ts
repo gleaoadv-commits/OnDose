@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     const now = new Date();
-    const reminderLookbackMs = 15 * 60 * 1000;
+    const reminderLookbackMs = 2 * 60 * 60 * 1000;
     const reminderLookaheadMs = 90 * 1000;
     const windowStart = new Date(now.getTime() - reminderLookbackMs);
     const windowEnd = new Date(now.getTime() + reminderLookaheadMs);
