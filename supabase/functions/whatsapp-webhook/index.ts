@@ -96,7 +96,17 @@ Deno.serve(async (req) => {
       }
 
       if (pendingEvents && pendingEvents.length > 0) {
-        const eventIds = pendingEvents.map((e: any) => e.id);
+        // Only confirm doses from the most recent reminder (same scheduled minute).
+        // Older notified-but-unconfirmed doses stay pending so the user can address them separately.
+        const latestTime = new Date(pendingEvents[0].scheduled_time);
+        latestTime.setSeconds(0, 0);
+        const latestKey = latestTime.toISOString();
+        const matchingEvents = pendingEvents.filter((e: any) => {
+          const d = new Date(e.scheduled_time);
+          d.setSeconds(0, 0);
+          return d.toISOString() === latestKey;
+        });
+        const eventIds = matchingEvents.map((e: any) => e.id);
         await supabase
           .from("schedule_events")
           .update({ taken: true, taken_at: new Date().toISOString() })
