@@ -75,12 +75,14 @@ Deno.serve(async (req) => {
     const profile = profiles[0];
     const userId = profile.user_id;
 
-    if (messageText === "1") {
+    const TOO_LATE_MSG = "⏳ *Tempo expirado*\n\nFaz mais de 1 hora desde o lembrete. Por segurança, não posso registrar por aqui. Por favor, abra o app para atualizar manualmente:\n\nhttps://ondose.lovable.app";
+
+    if (messageText === "1" || messageText === "2") {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
       const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-      // Only confirm doses that were actually notified via WhatsApp recently.
-      // This prevents marking unrelated pending doses (e.g. earlier missed ones, or other meds at nearby times).
+      // Look up notified events in the last 3h to detect "too late" replies (>1h after reminder).
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
         .select("id, medication_id, dosage, scheduled_time")
@@ -95,13 +97,25 @@ Deno.serve(async (req) => {
         console.error("Error fetching events:", fetchError.message);
       }
 
-      if (pendingEvents && pendingEvents.length > 0) {
+      // Filter to events within the 1h window (recent reminder).
+      const recentEvents = (pendingEvents || []).filter(
+        (e: any) => e.scheduled_time >= oneHourAgo
+      );
+
+      if (recentEvents.length === 0) {
+        // Either no pending events at all, or the most recent one is older than 1h.
+        // If there ARE older notified events still pending, tell the user it's too late.
+        if (pendingEvents && pendingEvents.length > 0) {
+          await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
+        } else {
+          console.log(`No pending events for user ${userId} — skipping duplicate confirmation`);
+        }
+      } else if (messageText === "1") {
         // Only confirm doses from the most recent reminder (same scheduled minute).
-        // Older notified-but-unconfirmed doses stay pending so the user can address them separately.
-        const latestTime = new Date(pendingEvents[0].scheduled_time);
+        const latestTime = new Date(recentEvents[0].scheduled_time);
         latestTime.setSeconds(0, 0);
         const latestKey = latestTime.toISOString();
-        const matchingEvents = pendingEvents.filter((e: any) => {
+        const matchingEvents = recentEvents.filter((e: any) => {
           const d = new Date(e.scheduled_time);
           d.setSeconds(0, 0);
           return d.toISOString() === latestKey;
@@ -135,17 +149,15 @@ Deno.serve(async (req) => {
           `✅ *Dose Registrada!*\n\n${matchingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
-        // No pending events — likely already processed by a previous webhook call, so don't reply again
-        console.log(`No pending events for user ${userId} — skipping duplicate confirmation`);
+        // messageText === "2"
+        await sendZAPIMessage(
+          ZAPI_INSTANCE_ID,
+          ZAPI_TOKEN,
+          ZAPI_CLIENT_TOKEN,
+          cleanPhone,
+          "⏰ *Entendido!*\n\nSem problemas. Não esqueça de registrar o horário correto no app assim que possível! 📱✨\nhttps://ondose.lovable.app"
+        );
       }
-    } else if (messageText === "2") {
-      await sendZAPIMessage(
-        ZAPI_INSTANCE_ID,
-        ZAPI_TOKEN,
-        ZAPI_CLIENT_TOKEN,
-        cleanPhone,
-        "⏰ *Entendido!*\n\nSem problemas. Não esqueça de registrar o horário correto no app assim que possível! 📱✨\nhttps://ondose.lovable.app"
-      );
     } else if (messageText === "3") {
       await sendZAPIMessage(
         ZAPI_INSTANCE_ID,
