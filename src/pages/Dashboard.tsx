@@ -142,6 +142,7 @@ export default function Dashboard() {
   const { medications, schedule, canAddMedication, plan, loading, subscriptionReady, updateMedication } = useApp();
   const { user } = useAuth();
   const [pendingLinks, setPendingLinks] = useState(0);
+  const [missingWhatsapp, setMissingWhatsapp] = useState(false);
 
   useEffect(() => {
     if (!user || plan !== "premium") return;
@@ -151,6 +152,22 @@ export default function Dashboard() {
       .eq("primary_user_id", user.id)
       .eq("status", "pending")
       .then(({ count }) => setPendingLinks(count ?? 0));
+  }, [user, plan]);
+
+  useEffect(() => {
+    if (!user || (plan !== "pro" && plan !== "premium")) {
+      setMissingWhatsapp(false);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("whatsapp_number")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        const num = (data as any)?.whatsapp_number?.toString().trim();
+        setMissingWhatsapp(!num);
+      });
   }, [user, plan]);
 
   const FREE_LIMIT = 2;
