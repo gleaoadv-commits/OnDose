@@ -91,10 +91,18 @@ export default function AuthPage() {
           }).eq("user_id", signupData.user.id).then(() => {});
         }
 
+        // Auto-confirm pode criar sessão automaticamente — encerrar para forçar login
+        await supabase.auth.signOut();
+
         toast({
           title: "Conta criada! 🎉",
-          description: "Você já pode acessar o OnDose.",
+          description: "Faça login para acessar o OnDose.",
         });
+
+        // Voltar para a tela de login
+        setIsLogin(true);
+        setPassword("");
+        navigate("/auth", { replace: true });
       }
     } catch (error: any) {
       toast({
