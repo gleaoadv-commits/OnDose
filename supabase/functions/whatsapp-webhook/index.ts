@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
           .update({ taken: true, taken_at: new Date().toISOString() })
           .in("id", eventIds);
 
-        for (const event of pendingEvents) {
+        for (const event of matchingEvents) {
           const { data: med } = await supabase
             .from("medications")
             .select("stock_current")
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
           ZAPI_TOKEN,
           ZAPI_CLIENT_TOKEN,
           cleanPhone,
-          `✅ *Dose Registrada!*\n\n${pendingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
+          `✅ *Dose Registrada!*\n\n${matchingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
         // No pending events — likely already processed by a previous webhook call, so don't reply again
