@@ -216,6 +216,25 @@ export default function Dashboard() {
       {/* Overdue dose alerts */}
       <OverdueDoseAlert />
 
+      {/* WhatsApp not configured (PRO/Premium) */}
+      {missingWhatsapp && (
+        <Link to="/perfil">
+          <Card className="p-3 rounded-xl border-emerald-500/30 bg-emerald-500/8 flex items-center gap-3 card-hover">
+            <div className="shrink-0 bg-emerald-500/15 rounded-xl p-2">
+              <MessageCircle className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">
+                Cadastre seu WhatsApp
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Para receber lembretes de medicamentos no WhatsApp, adicione seu número no perfil.
+              </p>
+            </div>
+          </Card>
+        </Link>
+      )}
+
       {/* Pending family link notifications */}
       {pendingLinks > 0 && (
         <Link to="/vinculos">
