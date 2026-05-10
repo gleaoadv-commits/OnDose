@@ -92,10 +92,8 @@ export default function AuthPage() {
         }
 
         toast({
-          title: "Conta criada!",
-          description: isCaregiver
-            ? "Verifique seu e-mail para confirmar o cadastro. Após confirmar, faça login para obter seu código de familiar."
-            : "Verifique seu e-mail para confirmar o cadastro.",
+          title: "Conta criada! 🎉",
+          description: "Você já pode acessar o OnDose.",
         });
       }
     } catch (error: any) {
