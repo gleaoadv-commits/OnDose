@@ -179,7 +179,7 @@ export default function MedicationDetail() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-elder-2xl font-bold text-foreground">{med.name}</h2>
+              <h2 className="text-elder-lg font-bold text-foreground break-words">{med.name}</h2>
               <Badge variant="outline" className={statusConfig[med.status].className + " text-xs font-bold"}>
                 {statusConfig[med.status].label}
               </Badge>
