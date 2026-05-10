@@ -76,16 +76,20 @@ Deno.serve(async (req) => {
     const userId = profile.user_id;
 
     if (messageText === "1") {
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
       const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
+      // Only confirm doses that were actually notified via WhatsApp recently.
+      // This prevents marking unrelated pending doses (e.g. earlier missed ones, or other meds at nearby times).
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
-        .select("id, medication_id, dosage")
+        .select("id, medication_id, dosage, scheduled_time")
         .eq("user_id", userId)
         .eq("taken", false)
-        .gte("scheduled_time", twoHoursAgo)
-        .lte("scheduled_time", tenMinFromNow);
+        .eq("notified", true)
+        .gte("scheduled_time", threeHoursAgo)
+        .lte("scheduled_time", tenMinFromNow)
+        .order("scheduled_time", { ascending: false });
 
       if (fetchError) {
         console.error("Error fetching events:", fetchError.message);
