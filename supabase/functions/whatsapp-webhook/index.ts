@@ -76,29 +76,43 @@ Deno.serve(async (req) => {
     const userId = profile.user_id;
 
     if (messageText === "1") {
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
       const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
+      // Only confirm doses that were actually notified via WhatsApp recently.
+      // This prevents marking unrelated pending doses (e.g. earlier missed ones, or other meds at nearby times).
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
-        .select("id, medication_id, dosage")
+        .select("id, medication_id, dosage, scheduled_time")
         .eq("user_id", userId)
         .eq("taken", false)
-        .gte("scheduled_time", twoHoursAgo)
-        .lte("scheduled_time", tenMinFromNow);
+        .eq("notified", true)
+        .gte("scheduled_time", threeHoursAgo)
+        .lte("scheduled_time", tenMinFromNow)
+        .order("scheduled_time", { ascending: false });
 
       if (fetchError) {
         console.error("Error fetching events:", fetchError.message);
       }
 
       if (pendingEvents && pendingEvents.length > 0) {
-        const eventIds = pendingEvents.map((e: any) => e.id);
+        // Only confirm doses from the most recent reminder (same scheduled minute).
+        // Older notified-but-unconfirmed doses stay pending so the user can address them separately.
+        const latestTime = new Date(pendingEvents[0].scheduled_time);
+        latestTime.setSeconds(0, 0);
+        const latestKey = latestTime.toISOString();
+        const matchingEvents = pendingEvents.filter((e: any) => {
+          const d = new Date(e.scheduled_time);
+          d.setSeconds(0, 0);
+          return d.toISOString() === latestKey;
+        });
+        const eventIds = matchingEvents.map((e: any) => e.id);
         await supabase
           .from("schedule_events")
           .update({ taken: true, taken_at: new Date().toISOString() })
           .in("id", eventIds);
 
-        for (const event of pendingEvents) {
+        for (const event of matchingEvents) {
           const { data: med } = await supabase
             .from("medications")
             .select("stock_current")
@@ -118,7 +132,7 @@ Deno.serve(async (req) => {
           ZAPI_TOKEN,
           ZAPI_CLIENT_TOKEN,
           cleanPhone,
-          `✅ *Dose Registrada!*\n\n${pendingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
+          `✅ *Dose Registrada!*\n\n${matchingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
         // No pending events — likely already processed by a previous webhook call, so don't reply again
