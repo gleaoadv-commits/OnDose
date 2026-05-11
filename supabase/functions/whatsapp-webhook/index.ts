@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       // Look up notified events in the last 3h to detect "too late" replies (>1h after reminder).
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
-        .select("id, medication_id, dosage, scheduled_time")
+        .select("id, medication_id, medication_name, dosage, scheduled_time")
         .eq("user_id", userId)
         .eq("taken", false)
         .eq("notified", true)
