@@ -141,12 +141,23 @@ Deno.serve(async (req) => {
           }
         }
 
+        const medList = matchingEvents
+          .map((e: any) => `• *${e.medication_name}* (${e.dosage})`)
+          .join("\n");
+        const count = matchingEvents.length;
+        const header = count > 1
+          ? `✅ *${count} doses registradas!*`
+          : `✅ *Dose Registrada!*`;
+        const intro = count > 1
+          ? `Marquei como tomadas as seguintes medicações:`
+          : `Marquei como tomada:`;
+
         await sendZAPIMessage(
           ZAPI_INSTANCE_ID,
           ZAPI_TOKEN,
           ZAPI_CLIENT_TOKEN,
           cleanPhone,
-          `✅ *Dose Registrada!*\n\n${matchingEvents.length} dose(s) marcada(s) como tomada(s). Excelente! Continue assim. Sua saúde agradece! 💪💊`
+          `${header}\n\n${intro}\n${medList}\n\nExcelente! Continue assim. Sua saúde agradece! 💪💊`
         );
       } else {
         // messageText === "2"
