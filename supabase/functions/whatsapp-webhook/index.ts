@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         if (pendingEvents && pendingEvents.length > 0) {
           await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
         } else {
-          console.log(`No pending events for user ${userId} — skipping duplicate confirmation`);
+          console.log(`No pending events for users ${userIds.join(", ")} — skipping duplicate confirmation`);
         }
       } else if (messageText === "1") {
         // Only confirm doses from the most recent reminder (same scheduled minute).
