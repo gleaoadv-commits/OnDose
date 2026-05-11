@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const profile = profiles[0];
-    const userId = profile.user_id;
+    const userIds = profiles.map((p: any) => p.user_id);
+    console.log(`Matched ${profiles.length} profile(s) for phone ${cleanPhone}: ${userIds.join(", ")}`);
 
     const TOO_LATE_MSG = "⏳ *Tempo expirado*\n\nFaz mais de 1 hora desde o lembrete. Por segurança, não posso registrar por aqui. Por favor, abra o app para atualizar manualmente:\n\nhttps://ondose.lovable.app";
 
@@ -82,11 +82,12 @@ Deno.serve(async (req) => {
       const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
       const tenMinFromNow = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-      // Look up notified events in the last 3h to detect "too late" replies (>1h after reminder).
+      // Look up notified events in the last 3h across ALL matching profiles
+      // (same WhatsApp number may belong to multiple profiles).
       const { data: pendingEvents, error: fetchError } = await supabase
         .from("schedule_events")
-        .select("id, medication_id, medication_name, dosage, scheduled_time")
-        .eq("user_id", userId)
+        .select("id, user_id, medication_id, medication_name, dosage, scheduled_time")
+        .in("user_id", userIds)
         .eq("taken", false)
         .eq("notified", true)
         .gte("scheduled_time", threeHoursAgo)
@@ -108,7 +109,7 @@ Deno.serve(async (req) => {
         if (pendingEvents && pendingEvents.length > 0) {
           await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
         } else {
-          console.log(`No pending events for user ${userId} — skipping duplicate confirmation`);
+          console.log(`No pending events for users ${userIds.join(", ")} — skipping duplicate confirmation`);
         }
       } else if (messageText === "1") {
         // Only confirm doses from the most recent reminder (same scheduled minute).
