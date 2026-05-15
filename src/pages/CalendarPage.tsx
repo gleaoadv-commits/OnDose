@@ -73,6 +73,17 @@ export default function CalendarPage() {
   }, [schedule, activeMedIds, selectedDate]);
 
   const isSelectedToday = today.toDateString() === selectedDate.toDateString();
+  const selectedDayStart = new Date(selectedDate); selectedDayStart.setHours(0,0,0,0);
+  const isPastDay = selectedDayStart < today;
+  const handleToggleDose = (event: typeof dayEvents[0]) => {
+    if (isPastDay && !event.taken) {
+      toast.error("Não é possível marcar doses de dias anteriores", {
+        description: "Você só pode marcar doses no próprio dia em que foram programadas.",
+      });
+      return;
+    }
+    if (event.taken) unmarkDoseTaken(event.id); else markDoseTaken(event.id);
+  };
   const taken = dayEvents.filter(e => e.taken).length;
   const total = dayEvents.length;
   const now = new Date();
