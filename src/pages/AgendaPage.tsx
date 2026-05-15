@@ -47,9 +47,22 @@ export default function AgendaPage() {
   };
 
   const isToday = new Date().toDateString() === currentDate.toDateString();
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const currentDayStart = new Date(currentDate); currentDayStart.setHours(0,0,0,0);
+  const isPastDay = currentDayStart < todayStart;
   const taken = dayEvents.filter(e => e.taken).length;
   const total = dayEvents.length;
   const now = new Date();
+
+  const handleToggleDose = (event: typeof dayEvents[0]) => {
+    if (isPastDay && !event.taken) {
+      toast.error("Não é possível marcar doses de dias anteriores", {
+        description: "Você só pode marcar doses no próprio dia em que foram programadas.",
+      });
+      return;
+    }
+    if (event.taken) unmarkDoseTaken(event.id); else markDoseTaken(event.id);
+  };
 
   const startEdit = (event: typeof dayEvents[0]) => {
     const t = new Date(event.scheduledTime);
@@ -134,7 +147,7 @@ export default function AgendaPage() {
                   
                   <div className="flex items-center gap-3 flex-1 p-4">
                     <button
-                      onClick={() => event.taken ? unmarkDoseTaken(event.id) : markDoseTaken(event.id)}
+                      onClick={() => handleToggleDose(event)}
                       className="shrink-0 transition-all duration-300 active:scale-90"
                     >
                       {event.taken ? (

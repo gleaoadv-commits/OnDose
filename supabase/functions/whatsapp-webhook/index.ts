@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
           ZAPI_TOKEN,
           ZAPI_CLIENT_TOKEN,
           cleanPhone,
-          "⏰ *Entendido!*\n\nSem problemas. Não esqueça de registrar o horário correto no app assim que possível! 📱✨\nhttps://ondose.lovable.app"
+          "⏰ *Tudo bem, vou aguardar!*\n\n⚠️ *Importante:* não esqueça de atualizar seu app *ainda hoje* assim que tomar a medicação. Caso contrário, as doses *não serão registradas* e ficarão como perdidas.\n\n📱 https://ondose.lovable.app"
         );
       }
     } else if (messageText === "3") {
