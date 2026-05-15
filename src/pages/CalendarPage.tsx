@@ -273,7 +273,7 @@ export default function CalendarPage() {
                       
                       <div className="flex items-center gap-3 flex-1 p-4">
                         <button
-                          onClick={() => event.taken ? unmarkDoseTaken(event.id) : markDoseTaken(event.id)}
+                          onClick={() => handleToggleDose(event)}
                           className="shrink-0 transition-all duration-300 active:scale-90"
                         >
                           {event.taken ? (
