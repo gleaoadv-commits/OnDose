@@ -323,6 +323,17 @@ export default function ProfilePage() {
         </Button>
       </Card>
 
+      {/* Medication history */}
+      <Card className="p-4 rounded-2xl border-border/40">
+        <Link to="/historico" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
+          <FileText className="h-5 w-5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Histórico de Medicamentos</p>
+            <p className="text-xs text-muted-foreground">Veja medicamentos excluídos e suas datas</p>
+          </div>
+        </Link>
+      </Card>
+
       {/* Terms link */}
       <Card className="p-4 rounded-2xl border-border/40">
         <Link to="/termos" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
@@ -333,6 +344,7 @@ export default function ProfilePage() {
           </div>
         </Link>
       </Card>
+
 
       {/* Delete Account Card */}
       <Card className="p-5 rounded-2xl border-destructive/30 bg-destructive/5 space-y-3">
