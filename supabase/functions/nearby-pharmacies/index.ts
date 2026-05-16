@@ -29,15 +29,37 @@ Deno.serve(async (req) => {
       out body center 50;
     `;
 
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(overpassQuery)}`,
-    });
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.openstreetmap.ru/api/interpreter',
+    ];
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
+    let response: Response | null = null;
+    let lastErr = '';
+    for (const url of endpoints) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'User-Agent': 'OnDose/1.0 (https://ondose.lovable.app)',
+          },
+          body: `data=${encodeURIComponent(overpassQuery)}`,
+        });
+        if (r.ok) { response = r; break; }
+        lastErr = `${url} -> ${r.status}`;
+        await r.text();
+      } catch (e) {
+        lastErr = `${url} -> ${e instanceof Error ? e.message : 'fetch failed'}`;
+      }
     }
+
+    if (!response) {
+      throw new Error(`Overpass API error: ${lastErr}`);
+    }
+
 
     const data = await response.json();
 
