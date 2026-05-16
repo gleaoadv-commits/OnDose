@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      console.error("ERRO: GEMINI_API_KEY não encontrada nos secrets do Supabase");
-      return new Response(JSON.stringify({ error: "Configuração pendente: Chave de IA não encontrada." }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("ERRO: LOVABLE_API_KEY não configurada");
+      return new Response(JSON.stringify({ error: "Configuração de IA pendente." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -38,62 +38,35 @@ Siga estas regras rigorosamente:
 4. Extraia os limites de referência (min e max) se estiverem presentes. Caso contrário, use valores padrão médicos brasileiros.
 5. Defina o "status": "normal" (dentro da faixa), "alto" (acima do max) ou "baixo" (abaixo do min).
 6. Se não conseguir ler ou os dados forem inconsistentes, retorne success=false.
-7. Retorne SEMPRE um JSON puro seguindo a estrutura fornecida. Não inclua Markdown.
+7. Retorne SEMPRE um JSON puro com a estrutura { "success": boolean, "indicators": [{ "name": string, "value": number, "unit": string, "min": number, "max": number, "status": "normal"|"alto"|"baixo" }], "observations": string }.
 
 Aviso: Informe sempre que os dados são informativos e não substituem avaliação médica.`;
 
-    let userContent: any[];
-
+    let userContent: any;
     if (pdfText) {
-      // PDF: text was extracted on the client, send as text
       userContent = [
-        {
-          type: "text",
-          text: `Aqui está o texto extraído de um PDF de exame laboratorial. Extraia todos os indicadores. Responda em JSON.\n\n${pdfText}`,
-        },
+        { type: "text", text: `Aqui está o texto extraído de um PDF de exame laboratorial. Extraia todos os indicadores. Responda em JSON.\n\n${pdfText}` },
       ];
     } else {
-      // Image: send as image_url
       const resolvedMime = mimeType || "image/jpeg";
       userContent = [
-        {
-          type: "image_url",
-          image_url: {
-            url: `data:${resolvedMime};base64,${imageBase64}`,
-          },
-        },
-        {
-          type: "text",
-          text: "Extraia todos os indicadores deste exame. Responda em JSON.",
-        },
+        { type: "text", text: "Extraia todos os indicadores deste exame. Responda em JSON." },
+        { type: "image_url", image_url: { url: `data:${resolvedMime};base64,${imageBase64}` } },
       ];
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        contents: [
-          {
-            parts: pdfText ? [{ text: `Aqui está o texto extraído de um PDF de exame laboratorial. Extraia todos os indicadores. Responda em JSON.\n\n${pdfText}` }] : [
-              { text: "Extraia todos os indicadores deste exame. Responda em JSON." },
-              {
-                inline_data: {
-                  mime_type: mimeType || "image/jpeg",
-                  data: imageBase64
-                }
-              }
-            ]
-          }
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
         ],
-        generationConfig: {
-          response_mime_type: "application/json",
-        }
       }),
     });
 
@@ -106,7 +79,7 @@ Aviso: Informe sempre que os dados são informativos e não substituem avaliaç�
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Créditos insuficientes para IA." }),
+          JSON.stringify({ error: "Créditos de IA insuficientes." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -119,12 +92,13 @@ Aviso: Informe sempre que os dados são informativos e não substituem avaliaç�
     }
 
     const aiResult = await response.json();
-    const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const content = aiResult.choices?.[0]?.message?.content || "";
 
     let parsed;
     try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
-      parsed = JSON.parse(jsonMatch[1].trim());
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const raw = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      parsed = JSON.parse(raw);
     } catch {
       parsed = {
         success: false,
