@@ -21,6 +21,7 @@ import ExamsPage from "./pages/ExamsPage";
 import FamilyLinksPage from "./pages/FamilyLinksPage";
 import CaregiverDashboard from "./pages/CaregiverDashboard";
 import PharmaciesPage from "./pages/PharmaciesPage";
+import MedicationHistoryPage from "./pages/MedicationHistoryPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
 import TermsPage from "./pages/TermsPage";
@@ -130,6 +131,7 @@ const App = () => (
                           <Route path="/exames" element={<ExamsPage />} />
                           <Route path="/vinculos" element={<FamilyLinksPage />} />
                           <Route path="/farmacias" element={<PharmaciesPage />} />
+                          <Route path="/historico" element={<MedicationHistoryPage />} />
 
                           <Route path="*" element={<NotFound />} />
                         </Routes>
