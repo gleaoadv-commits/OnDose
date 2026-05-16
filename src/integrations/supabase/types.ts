@@ -215,6 +215,7 @@ export type Database = {
           color: string
           created_at: string
           custom_frequency_hours: number | null
+          deleted_at: string | null
           dosage: string
           end_date: string | null
           frequency: string
@@ -237,6 +238,7 @@ export type Database = {
           color: string
           created_at?: string
           custom_frequency_hours?: number | null
+          deleted_at?: string | null
           dosage: string
           end_date?: string | null
           frequency: string
@@ -259,6 +261,7 @@ export type Database = {
           color?: string
           created_at?: string
           custom_frequency_hours?: number | null
+          deleted_at?: string | null
           dosage?: string
           end_date?: string | null
           frequency?: string

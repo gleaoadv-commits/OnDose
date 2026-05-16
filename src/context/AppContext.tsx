@@ -159,7 +159,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Run DB queries AND subscription check simultaneously — no delay
         const [medsRes, eventsRes, rolesRes, profileRes] = await Promise.all([
-          supabase.from("medications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("medications").select("*").eq("user_id", user.id).is("deleted_at", null).order("created_at", { ascending: false }),
           supabase.from("schedule_events").select("*").eq("user_id", user.id)
             .gte("scheduled_time", windowStart.toISOString())
             .lte("scheduled_time", windowEnd.toISOString()),
@@ -516,9 +516,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteMedication = useCallback(async (id: string) => {
     if (!user) return;
-    // Delete schedule events first (FK constraint)
-    await supabase.from("schedule_events").delete().eq("medication_id", id).eq("user_id", user.id);
-    await supabase.from("medications").delete().eq("id", id).eq("user_id", user.id);
+    // Soft delete: preserve history (medication + schedule_events stay in DB)
+    await supabase.from("medications")
+      .update({ deleted_at: new Date().toISOString(), status: "encerrado" } as any)
+      .eq("id", id).eq("user_id", user.id);
     setMedications(prev => prev.filter(m => m.id !== id));
     setSchedule(prev => prev.filter(e => e.medicationId !== id));
     setNotifications(prev => prev.filter(n => n.medicationId !== id));
