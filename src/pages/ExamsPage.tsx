@@ -41,6 +41,10 @@ interface ExamResult {
   exam_date: string;
   notes: string | null;
   image_url: string | null;
+  file_url: string | null;
+  file_mime: string | null;
+  doctor_name: string | null;
+  doctor_crm: string | null;
   created_at: string;
 }
 
@@ -68,6 +72,9 @@ export default function ExamsPage() {
   // Form state
   const [examName, setExamName] = useState("");
   const [examDate, setExamDate] = useState("");
+  const [doctorName, setDoctorName] = useState("");
+  const [doctorCrm, setDoctorCrm] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [manualIndicators, setManualIndicators] = useState<
     { name: string; value: string; unit: string; refMin: string; refMax: string }[]
   >([{ name: "", value: "", unit: "", refMin: "", refMax: "" }]);
@@ -187,6 +194,10 @@ export default function ExamsPage() {
       }
 
       setExamName(data.exam_name || "");
+      if (data.exam_date) setExamDate(data.exam_date);
+      if (data.doctor_name) setDoctorName(data.doctor_name);
+      if (data.doctor_crm) setDoctorCrm(data.doctor_crm);
+      setPendingFile(file);
       if (data.indicators?.length > 0) {
         setManualIndicators(
           data.indicators.map((ind: any) => ({
@@ -222,12 +233,35 @@ export default function ExamsPage() {
       return;
     }
 
+    // Upload PDF/imagem se houver arquivo pendente
+    let fileUrl: string | null = null;
+    let fileMime: string | null = null;
+    if (pendingFile) {
+      const ext = pendingFile.name.split(".").pop() || (pendingFile.type === "application/pdf" ? "pdf" : "bin");
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("exam-images").upload(path, pendingFile, {
+        contentType: pendingFile.type,
+        upsert: false,
+      });
+      if (upErr) {
+        console.error("Upload error:", upErr);
+        toast.error("Não foi possível salvar o arquivo do exame, mas os dados serão registrados.");
+      } else {
+        fileUrl = path;
+        fileMime = pendingFile.type;
+      }
+    }
+
     const { data: examRow, error: examErr } = await supabase
       .from("exam_results")
       .insert({
         user_id: user.id,
         exam_name: examName.trim(),
         exam_date: examDate,
+        doctor_name: doctorName.trim() || null,
+        doctor_crm: doctorCrm.trim() || null,
+        file_url: fileUrl,
+        file_mime: fileMime,
       })
       .select()
       .single();
@@ -258,6 +292,9 @@ export default function ExamsPage() {
   const resetForm = () => {
     setExamName("");
     setExamDate("");
+    setDoctorName("");
+    setDoctorCrm("");
+    setPendingFile(null);
     setManualIndicators([{ name: "", value: "", unit: "", refMin: "", refMax: "" }]);
   };
 
