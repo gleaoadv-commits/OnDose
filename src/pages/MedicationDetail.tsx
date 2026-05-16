@@ -468,13 +468,15 @@ export default function MedicationDetail() {
               <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => { resumeMedication(med.id); updateMedication(med.id, { pauseUntil: undefined }); }}>
                 <Play className="h-5 w-5 mr-2" /> Retomar Medicamento
               </Button>
-            )}
+          )}
+          {med.status !== "encerrado" && (
             <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => stopMedication(med.id)}>
               <Square className="h-5 w-5 mr-2" /> Encerrar Tratamento
             </Button>
-          </div>
-        </Card>
-      )}
+          )}
+        </div>
+      </Card>
+
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
