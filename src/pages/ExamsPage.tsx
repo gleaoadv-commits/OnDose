@@ -313,9 +313,25 @@ export default function ExamsPage() {
   };
 
   const deleteExam = async (id: string) => {
+    const exam = exams.find(e => e.id === id);
+    if (exam?.file_url) {
+      await supabase.storage.from("exam-images").remove([exam.file_url]);
+    }
     await supabase.from("exam_results").delete().eq("id", id);
     toast.success("Exame removido");
     loadData();
+  };
+
+  const openExamFile = async (exam: ExamResult) => {
+    if (!exam.file_url) return;
+    const { data, error } = await supabase.storage
+      .from("exam-images")
+      .createSignedUrl(exam.file_url, 3600);
+    if (error || !data?.signedUrl) {
+      toast.error("Não foi possível abrir o arquivo");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const getTrend = (points: { value: number }[]) => {
@@ -436,6 +452,25 @@ export default function ExamsPage() {
                   <Input value={examDate} onChange={(e) => setExamDate(e.target.value)} type="date" className="rounded-xl mt-1" />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-bold">Médico</Label>
+                  <Input value={doctorName} onChange={(e) => setDoctorName(e.target.value)} placeholder="Dr. Fulano" className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold">CRM</Label>
+                  <Input value={doctorCrm} onChange={(e) => setDoctorCrm(e.target.value)} placeholder="CRM/SP 123456" className="rounded-xl mt-1" />
+                </div>
+              </div>
+
+              {pendingFile && (
+                <div className="flex items-center gap-2 bg-amber-500/10 rounded-xl px-3 py-2">
+                  <FileText className="h-4 w-4 text-amber-600 shrink-0" />
+                  <p className="text-xs text-foreground truncate flex-1">{pendingFile.name}</p>
+                  <span className="text-[10px] text-muted-foreground">será arquivado</span>
+                </div>
+              )}
 
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -611,7 +646,23 @@ export default function ExamsPage() {
                           <p className="text-xs text-muted-foreground">
                             {new Date(exam.exam_date).toLocaleDateString("pt-BR")} • {examInds.length} indicadores
                           </p>
+                          {(exam.doctor_name || exam.doctor_crm) && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                              {exam.doctor_name}{exam.doctor_name && exam.doctor_crm ? " • " : ""}{exam.doctor_crm}
+                            </p>
+                          )}
                         </div>
+                        {exam.file_url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openExamFile(exam)}
+                            className="h-8 w-8 rounded-lg text-amber-600 hover:bg-amber-500/10 shrink-0"
+                            title="Abrir arquivo"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
