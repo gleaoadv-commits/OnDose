@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import MedicationAutocomplete from "../components/MedicationAutocomplete";
 import DosageInput from "../components/DosageInput";
 import MedicationTips from "../components/MedicationTips";
+import TimeSelect from "../components/TimeSelect";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 export default function AddMedication() {
@@ -30,6 +31,7 @@ export default function AddMedication() {
   const [name, setName] = useState(prefill?.name || "");
   const [dosage, setDosage] = useState(prefill?.dosage || "");
   const [quantity, setQuantity] = useState(1);
+  const [unitType, setUnitType] = useState<"comprimidos" | "doses">("comprimidos");
   const [stockTotal, setStockTotal] = useState<number | "">("");
   const [frequency, setFrequency] = useState<MedicationFrequency>("1x-dia");
   const [customHours, setCustomHours] = useState(4);
@@ -160,23 +162,61 @@ export default function AddMedication() {
           <DosageInput value={dosage} onChange={setDosage} />
 
           <div>
-            <Label className="text-sm font-bold">Quantidade por dose</Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-2">Quantos comprimidos tomar de cada vez?</p>
+            <Label className="text-sm font-bold">Unidade da dose</Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">Como esse medicamento é tomado?</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setUnitType("comprimidos")}
+                className={`h-13 rounded-2xl border-2 font-bold text-sm transition-all ${
+                  unitType === "comprimidos"
+                    ? "border-primary bg-primary/10 text-primary shadow-sm"
+                    : "border-border/60 bg-background text-foreground hover:border-primary/40"
+                }`}
+              >
+                Comprimidos
+              </button>
+              <button
+                type="button"
+                onClick={() => setUnitType("doses")}
+                className={`h-13 rounded-2xl border-2 font-bold text-sm transition-all ${
+                  unitType === "doses"
+                    ? "border-primary bg-primary/10 text-primary shadow-sm"
+                    : "border-border/60 bg-background text-foreground hover:border-primary/40"
+                }`}
+              >
+                Doses
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-bold">
+              {unitType === "comprimidos" ? "Quantos comprimidos por dose?" : "Quantas doses de cada vez?"}
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+              {unitType === "comprimidos"
+                ? "Quantidade de comprimidos em cada horário."
+                : "Quantidade de doses (ml, gotas, colheres) em cada horário."}
+            </p>
             <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setQuantity(n)}
-                  className={`h-13 rounded-2xl border-2 font-bold text-elder-base transition-all ${
-                    quantity === n
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
-                      : "border-border/60 bg-background text-foreground hover:border-primary/40"
-                  }`}
-                >
-                  {n} comp.
-                </button>
-              ))}
+              {[1, 2, 3, 4].map((n) => {
+                const label = unitType === "comprimidos" ? `${n} comp.` : n === 1 ? "1 dose" : `${n} doses`;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setQuantity(n)}
+                    className={`h-13 rounded-2xl border-2 font-bold text-sm transition-all ${
+                      quantity === n
+                        ? "border-primary bg-primary/10 text-primary shadow-sm"
+                        : "border-border/60 bg-background text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             {quantity > 4 && (
               <Input
@@ -193,7 +233,9 @@ export default function AddMedication() {
               onClick={() => setQuantity(quantity > 4 ? 1 : 5)}
               className="text-xs text-primary font-semibold mt-2 hover:underline"
             >
-              {quantity > 4 ? "Voltar para opções rápidas" : "Mais de 4 comprimidos"}
+              {quantity > 4
+                ? "Voltar para opções rápidas"
+                : unitType === "comprimidos" ? "Mais de 4 comprimidos" : "Mais de 4 doses"}
             </button>
           </div>
 
@@ -260,17 +302,16 @@ export default function AddMedication() {
           <div className="grid grid-cols-2 gap-2">
             {times.map((time, i) => (
               <div key={i} className="relative">
-                <Input
-                  type="time"
+                <TimeSelect
                   value={time}
-                  onChange={e => updateTime(i, e.target.value)}
-                  className="text-elder-base h-13 rounded-2xl border-border/60 pr-10 text-center font-bold"
+                  onChange={(v) => updateTime(i, v)}
+                  className={times.length > 1 ? "pr-8" : ""}
                 />
                 {times.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeTimeSlot(i)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors p-1"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors p-1"
                   >
                     <X className="h-4 w-4" />
                   </button>
