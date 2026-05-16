@@ -126,10 +126,15 @@ function MedicationCard({ med, index, onReactivate }: { med: Medication; index: 
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
-                  <Trash2 className="h-3 w-3 mr-1" /> Excluir
-                </Button>
-              )}
+                <>
+                  <Button variant="outline" size="sm" onClick={() => { resumeMedication(med.id); }} className="text-xs rounded-xl text-success border-success/30 hover:bg-success/10 h-8">
+                    <Play className="h-3 w-3 mr-1" /> Reativar
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="text-xs rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 h-8">
+                    <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                  </Button>
+                </>
+
             </div>
           )}
         </div>
