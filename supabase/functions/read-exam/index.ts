@@ -29,18 +29,30 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = `Você é um médico laboratorista especialista em interpretar resultados de exames brasileiros.
-Analise o exame enviado (imagem ou texto) e extraia TODOS os indicadores de saúde encontrados.
+Analise o exame enviado (imagem ou texto) e extraia TODAS as informações abaixo.
 
-Siga estas regras rigorosamente:
-1. Extraia o nome exato do indicador (ex: Glicose, Colesterol LDL, Creatinina, Hemoglobina).
-2. O campo "value" DEVE ser um número. Se o valor no exame usar vírgula (ex: "95,5"), converta para ponto ("95.5").
-3. Identifique a unidade de medida (ex: mg/dL, g/dL, UI/L).
-4. Extraia os limites de referência (min e max) se estiverem presentes. Caso contrário, use valores padrão médicos brasileiros.
-5. Defina o "status": "normal" (dentro da faixa), "alto" (acima do max) ou "baixo" (abaixo do min).
-6. Se não conseguir ler ou os dados forem inconsistentes, retorne success=false.
-7. Retorne SEMPRE um JSON puro com a estrutura { "success": boolean, "indicators": [{ "name": string, "value": number, "unit": string, "min": number, "max": number, "status": "normal"|"alto"|"baixo" }], "observations": string }.
+Estrutura JSON obrigatória (sem markdown, sem texto extra):
+{
+  "success": boolean,
+  "exam_name": string,        // Nome principal do exame (ex: "Hemograma Completo", "Perfil Lipídico")
+  "exam_date": string|null,   // Data da coleta no formato YYYY-MM-DD se identificável
+  "doctor_name": string|null, // Nome completo do médico solicitante/responsável, se houver
+  "doctor_crm": string|null,  // CRM do médico no formato "CRM/UF 123456" se identificável
+  "indicators": [
+    { "name": string, "value": number, "unit": string, "reference_min": number|null, "reference_max": number|null, "status": "normal"|"alto"|"baixo" }
+  ],
+  "observations": string
+}
 
-Aviso: Informe sempre que os dados são informativos e não substituem avaliação médica.`;
+Regras:
+1. Extraia o nome exato de cada indicador (Glicose, Colesterol LDL, Creatinina, Hemoglobina, etc).
+2. "value" DEVE ser número. Converta vírgula em ponto ("95,5" → 95.5).
+3. Identifique a unidade (mg/dL, g/dL, UI/L).
+4. Extraia min/max de referência se presentes; senão use padrões médicos brasileiros.
+5. status: "normal" (dentro da faixa), "alto" (acima do máx) ou "baixo" (abaixo do mín).
+6. Procure cuidadosamente por nome do médico (geralmente "Dr.", "Dra.", "Médico Responsável") e CRM.
+7. Se não conseguir ler ou os dados forem inconsistentes, retorne success=false.
+8. Retorne SEMPRE JSON puro. Não inclua Markdown.`;
 
     let userContent: any;
     if (pdfText) {

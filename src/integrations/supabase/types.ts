@@ -139,8 +139,12 @@ export type Database = {
       exam_results: {
         Row: {
           created_at: string
+          doctor_crm: string | null
+          doctor_name: string | null
           exam_date: string
           exam_name: string
+          file_mime: string | null
+          file_url: string | null
           id: string
           image_url: string | null
           notes: string | null
@@ -149,8 +153,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          doctor_crm?: string | null
+          doctor_name?: string | null
           exam_date: string
           exam_name: string
+          file_mime?: string | null
+          file_url?: string | null
           id?: string
           image_url?: string | null
           notes?: string | null
@@ -159,8 +167,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          doctor_crm?: string | null
+          doctor_name?: string | null
           exam_date?: string
           exam_name?: string
+          file_mime?: string | null
+          file_url?: string | null
           id?: string
           image_url?: string | null
           notes?: string | null
