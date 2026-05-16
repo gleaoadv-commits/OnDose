@@ -134,7 +134,7 @@ function MedicationCard({ med, index, onReactivate }: { med: Medication; index: 
                     <Trash2 className="h-3 w-3 mr-1" /> Excluir
                   </Button>
                 </>
-
+              )}
             </div>
           )}
         </div>
