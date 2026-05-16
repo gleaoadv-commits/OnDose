@@ -421,11 +421,14 @@ export default function MedicationDetail() {
         </div>
       </Card>
 
-      {med.status !== "encerrado" && (
-        <Card className="p-5 space-y-3 rounded-2xl border-border/40">
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Ações</h3>
-          <div className="flex flex-col gap-2">
-            {med.status === "ativo" ? (
+      <Card className="p-5 space-y-3 rounded-2xl border-border/40">
+        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Ações</h3>
+        <div className="flex flex-col gap-2">
+          {med.status === "encerrado" ? (
+            <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-success/30 text-success hover:bg-success/5" onClick={() => { resumeMedication(med.id); updateMedication(med.id, { status: "ativo", pauseUntil: undefined }); toast.success(`${med.name} reativado! 🎉`); }}>
+              <Play className="h-5 w-5 mr-2" /> Reativar Medicamento
+            </Button>
+          ) : med.status === "ativo" ? (
               <>
                 <Button variant="outline" size="lg" className="justify-start text-sm rounded-2xl border-border/60" onClick={() => { setPauseUntilDate(""); setEditingPause(false); pauseMedication(med.id); }}>
                   <Pause className="h-5 w-5 mr-2" /> Pausar Medicamento
