@@ -415,6 +415,7 @@ export type Database = {
           scheduled_time: string
           taken: boolean
           taken_at: string | null
+          too_late_notified: boolean
           user_id: string
         }
         Insert: {
@@ -428,6 +429,7 @@ export type Database = {
           scheduled_time: string
           taken?: boolean
           taken_at?: string | null
+          too_late_notified?: boolean
           user_id: string
         }
         Update: {
@@ -441,6 +443,7 @@ export type Database = {
           scheduled_time?: string
           taken?: boolean
           taken_at?: string | null
+          too_late_notified?: boolean
           user_id?: string
         }
         Relationships: [
