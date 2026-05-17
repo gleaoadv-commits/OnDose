@@ -127,11 +127,10 @@ Deno.serve(async (req) => {
             cleanPhone,
             `✅ *Dose já registrada no app*\n\nVocê já marcou essa(s) dose(s) diretamente pelo OnDose:\n${medList}\n\nAbra o app para conferir:\n📱 https://ondose.lovable.app`
           );
-        } else if (pendingEvents && pendingEvents.length > 0) {
-          // If there ARE older notified events still pending, tell the user it's too late.
-          await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
         } else {
-          console.log(`No pending events for users ${userIds.join(", ")} — skipping duplicate confirmation`);
+          // No recent reminder within 1h window — always inform the user it's too late
+          // (covers both: older pending events AND no events at all after >1h).
+          await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
         }
       } else if (messageText === "1") {
         // Only confirm doses from the most recent reminder (same scheduled minute).
