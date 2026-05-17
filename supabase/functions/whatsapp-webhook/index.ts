@@ -128,9 +128,50 @@ Deno.serve(async (req) => {
             `✅ *Dose já registrada no app*\n\nVocê já marcou essa(s) dose(s) diretamente pelo OnDose:\n${medList}\n\nAbra o app para conferir:\n📱 https://ondose.lovable.app`
           );
         } else {
-          // No recent reminder within 1h window — always inform the user it's too late
-          // (covers both: older pending events AND no events at all after >1h).
-          await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
+          // No recent reminder within 1h window — inform the user it's too late,
+          // but only ONCE per expired reminder (avoid spamming on repeated "1" replies).
+          const expiredCandidates = (pendingEvents || []).filter(
+            (e: any) => e.scheduled_time < oneHourAgo
+          );
+          const expiredIds = expiredCandidates.map((e: any) => e.id);
+
+          let shouldSend = true;
+          if (expiredIds.length > 0) {
+            const { data: alreadyNotified } = await supabase
+              .from("schedule_events")
+              .select("id")
+              .in("id", expiredIds)
+              .eq("too_late_notified", true);
+            // If every expired event was already flagged, don't send again.
+            if ((alreadyNotified?.length || 0) >= expiredIds.length) {
+              shouldSend = false;
+            }
+          } else {
+            // No expired pending events found at all (e.g. already cleared). Check
+            // if any too_late was sent for this user in the last 3h to avoid spam.
+            const { data: recentFlagged } = await supabase
+              .from("schedule_events")
+              .select("id")
+              .in("user_id", userIds)
+              .eq("too_late_notified", true)
+              .gte("scheduled_time", threeHoursAgo)
+              .limit(1);
+            if (recentFlagged && recentFlagged.length > 0) {
+              shouldSend = false;
+            }
+          }
+
+          if (shouldSend) {
+            await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
+            if (expiredIds.length > 0) {
+              await supabase
+                .from("schedule_events")
+                .update({ too_late_notified: true })
+                .in("id", expiredIds);
+            }
+          } else {
+            console.log(`Skipping TOO_LATE_MSG — already notified for these expired events.`);
+          }
         }
       } else if (messageText === "1") {
         // Only confirm doses from the most recent reminder (same scheduled minute).
