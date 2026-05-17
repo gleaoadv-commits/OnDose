@@ -105,8 +105,30 @@ Deno.serve(async (req) => {
 
       if (recentEvents.length === 0) {
         // Either no pending events at all, or the most recent one is older than 1h.
-        // If there ARE older notified events still pending, tell the user it's too late.
-        if (pendingEvents && pendingEvents.length > 0) {
+        // Check if there were recently-notified events already marked as taken in the app.
+        const { data: takenRecent } = await supabase
+          .from("schedule_events")
+          .select("id, medication_name, taken_at, scheduled_time")
+          .in("user_id", userIds)
+          .eq("taken", true)
+          .eq("notified", true)
+          .gte("scheduled_time", oneHourAgo)
+          .lte("scheduled_time", tenMinFromNow)
+          .order("scheduled_time", { ascending: false });
+
+        if (takenRecent && takenRecent.length > 0) {
+          const medList = takenRecent
+            .map((e: any) => `• *${e.medication_name}*`)
+            .join("\n");
+          await sendZAPIMessage(
+            ZAPI_INSTANCE_ID,
+            ZAPI_TOKEN,
+            ZAPI_CLIENT_TOKEN,
+            cleanPhone,
+            `✅ *Dose já registrada no app*\n\nVocê já marcou essa(s) dose(s) diretamente pelo OnDose:\n${medList}\n\nAbra o app para conferir:\n📱 https://ondose.lovable.app`
+          );
+        } else if (pendingEvents && pendingEvents.length > 0) {
+          // If there ARE older notified events still pending, tell the user it's too late.
           await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
         } else {
           console.log(`No pending events for users ${userIds.join(", ")} — skipping duplicate confirmation`);
