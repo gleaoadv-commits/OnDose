@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
 
     const groups = new Map<string, { userId: string; originalEventTime: string; meds: string[]; eventIds: string[] }>();
 
-    for (const event of events) {
+    for (const event of activeEvents) {
       const profile = profileMap.get(event.user_id);
       if (!profile) continue;
 
