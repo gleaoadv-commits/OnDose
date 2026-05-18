@@ -13,6 +13,7 @@ const navItems = [
   { path: "/calendario", label: "Calendário", icon: Calendar, requiresPlan: true },
   { path: "/notificacoes", label: "Alertas", icon: Bell },
   { path: "/planos", label: "Pro", icon: Crown },
+  { path: "/beta/bugs", label: "Beta", icon: Bug, requiresBeta: true },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -45,15 +46,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 title="Relatórios"
               >
                 <BarChart3 className="h-5 w-5" />
-              </Link>
-            )}
-            {isBeta && (
-              <Link
-                to="/beta/bugs"
-                className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
-                title="Beta — Bugs"
-              >
-                <Bug className="h-5 w-5" />
               </Link>
             )}
             <Link
@@ -107,7 +99,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 glass-nav z-30 pb-safe">
         <div className="max-w-2xl mx-auto flex">
           {navItems
-            .filter(item => !item.requiresPlan || plan !== "free")
+            .filter(item => (!item.requiresPlan || plan !== "free") && (!item.requiresBeta || isBeta))
             .map(({ path, label, icon: Icon }) => {
             const isActive = location.pathname === path;
             const showBadge = path === "/notificacoes" && unreadCount > 0;
