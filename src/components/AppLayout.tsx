@@ -13,6 +13,7 @@ const navItems = [
   { path: "/calendario", label: "Calendário", icon: Calendar, requiresPlan: true },
   { path: "/notificacoes", label: "Alertas", icon: Bell },
   { path: "/planos", label: "Pro", icon: Crown },
+  { path: "/beta/bugs", label: "Beta", icon: Bug, requiresBeta: true },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
