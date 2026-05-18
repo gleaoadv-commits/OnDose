@@ -132,7 +132,53 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userIds = [...new Set(events.map((e: any) => e.user_id))];
+    // Filter out events whose medication is no longer active (encerrado/pausado/inativo/deleted).
+    // schedule_events are pre-generated, so a status change after creation must be respected.
+    const medIds = [...new Set(events.map((e: any) => e.medication_id))];
+    const { data: medsForCheck, error: medsCheckError } = await supabase
+      .from("medications")
+      .select("id, status, deleted_at, pause_until")
+      .in("id", medIds);
+
+    if (medsCheckError) {
+      console.error("Error fetching medications for status check:", medsCheckError.message);
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const activeMedIds = new Set(
+      (medsForCheck || [])
+        .filter((m: any) => {
+          if (m.deleted_at) return false;
+          if (m.status !== "ativo") return false;
+          if (m.pause_until && m.pause_until >= todayStr) return false;
+          return true;
+        })
+        .map((m: any) => m.id)
+    );
+
+    const skippedEventIds = events
+      .filter((e: any) => !activeMedIds.has(e.medication_id))
+      .map((e: any) => e.id);
+
+    if (skippedEventIds.length > 0) {
+      console.log(`Skipping ${skippedEventIds.length} events tied to inactive/ended/paused/deleted medications`);
+      // Mark as notified to avoid re-evaluating them every minute
+      await supabase
+        .from("schedule_events")
+        .update({ notified: true })
+        .in("id", skippedEventIds);
+    }
+
+    const activeEvents = events.filter((e: any) => activeMedIds.has(e.medication_id));
+
+    if (activeEvents.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No active-medication doses to notify", sent: 0, skipped: skippedEventIds.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userIds = [...new Set(activeEvents.map((e: any) => e.user_id))];
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
