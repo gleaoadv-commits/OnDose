@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3, Calendar } from "lucide-react";
+import { CalendarDays, Bell, Crown, Home, LogOut, User, BarChart3, Calendar, Bug } from "lucide-react";
 import OnDoseLogo from "../components/OnDoseLogo";
 import { useAuth } from "../context/AuthContext";
 import { useApp } from "../context/AppContext";
+import { useIsBeta } from "../hooks/useIsBeta";
 import { Button } from "../components/ui/button";
 
 const navItems = [
@@ -18,6 +19,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { notifications, plan } = useApp();
+  const { isBeta } = useIsBeta();
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const unreadCount = notifications.filter(n => {
@@ -43,6 +45,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 title="Relatórios"
               >
                 <BarChart3 className="h-5 w-5" />
+              </Link>
+            )}
+            {isBeta && (
+              <Link
+                to="/beta/bugs"
+                className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
+                title="Beta — Bugs"
+              >
+                <Bug className="h-5 w-5" />
               </Link>
             )}
             <Link
