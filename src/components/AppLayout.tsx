@@ -48,15 +48,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <BarChart3 className="h-5 w-5" />
               </Link>
             )}
-            {isBeta && (
-              <Link
-                to="/beta/bugs"
-                className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
-                title="Beta — Bugs"
-              >
-                <Bug className="h-5 w-5" />
-              </Link>
-            )}
             <Link
               to="/perfil"
               className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
