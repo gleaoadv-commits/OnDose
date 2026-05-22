@@ -76,12 +76,31 @@ export default function BetaBugsPage() {
       return;
     }
     setSaving(true);
+    let screenshot_url: string | null = null;
+    if (screenshot) {
+      setUploading(true);
+      const ext = screenshot.name.split(".").pop() || "png";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("bug-screenshots")
+        .upload(path, screenshot, { upsert: false, contentType: screenshot.type });
+      setUploading(false);
+      if (upErr) {
+        toast.error("Erro ao enviar imagem");
+        console.error(upErr);
+        setSaving(false);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
+      screenshot_url = pub.publicUrl;
+    }
     const { error } = await supabase.from("bug_reports" as any).insert({
       user_id: user.id,
       title: title.trim(),
       description: description.trim() || null,
       page: page.trim() || null,
       severity,
+      screenshot_url,
     } as any);
     if (error) {
       toast.error("Erro ao registrar bug");
@@ -92,9 +111,25 @@ export default function BetaBugsPage() {
       setDescription("");
       setPage("");
       setSeverity("medium");
+      setScreenshot(null);
+      setScreenshotPreview(null);
       load();
     }
     setSaving(false);
+  };
+
+  const handleFile = (f: File | null) => {
+    if (!f) {
+      setScreenshot(null);
+      setScreenshotPreview(null);
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 5MB)");
+      return;
+    }
+    setScreenshot(f);
+    setScreenshotPreview(URL.createObjectURL(f));
   };
 
   const toggleStatus = async (bug: BugReport) => {
