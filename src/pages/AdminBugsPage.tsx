@@ -33,18 +33,28 @@ export default function AdminBugsPage() {
   const load = async () => {
     const { data, error } = await supabase
       .from("bug_reports" as any)
-      .select("*, profiles(display_name)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Erro ao carregar bugs:", error);
-    } else {
-      const normalized = (data as any[] || []).map((row: any) => ({
-        ...row,
-        display_name: row.profiles?.display_name || null,
-      }));
-      setBugs(normalized);
+      setLoading(false);
+      return;
     }
+
+    const rows = (data as any[]) || [];
+    const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+    let namesById: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", userIds);
+      (profs || []).forEach((p: any) => {
+        namesById[p.user_id] = p.display_name;
+      });
+    }
+    setBugs(rows.map((r) => ({ ...r, display_name: namesById[r.user_id] || null })));
     setLoading(false);
   };
 
@@ -106,7 +116,7 @@ export default function AdminBugsPage() {
         </div>
       ) : (
         <>
-          {open.length > 1 && (
+          {open.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-destructive uppercase tracking-wider flex items-center gap-2">
                 <Bug className="h-3.5 w-3.5" />
@@ -118,7 +128,7 @@ export default function AdminBugsPage() {
             </div>
           )}
 
-          {resolved.length > 1 && (
+          {resolved.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -130,7 +140,7 @@ export default function AdminBugsPage() {
             </div>
           )}
 
-          {bugs.length === 1 && (
+          {bugs.length === 0 && (
             <Card className="p-6 rounded-2xl text-center text-sm text-muted-foreground">
               Nenhum bug catalogado ainda.
             </Card>
