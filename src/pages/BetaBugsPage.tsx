@@ -41,6 +41,9 @@ export default function BetaBugsPage() {
   const [page, setPage] = useState("");
   const [severity, setSeverity] = useState("medium");
   const [saving, setSaving] = useState(false);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     if (!user) return;
