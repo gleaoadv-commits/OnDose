@@ -397,6 +397,9 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
           <img src={bug.screenshot_url} alt="Print do bug" className="w-full max-h-48 object-contain bg-muted" />
         </a>
       )}
+      {bug.audio_url && (
+        <audio src={bug.audio_url} controls className="w-full h-10" />
+      )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
         <span>{new Date(bug.created_at).toLocaleDateString("pt-BR")}</span>
