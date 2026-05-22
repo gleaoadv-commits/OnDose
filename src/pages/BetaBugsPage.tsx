@@ -6,7 +6,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bug, Plus, Trash2, CheckCircle2, RotateCcw } from "lucide-react";
+import { Bug, Plus, Trash2, CheckCircle2, RotateCcw, ImagePlus, X } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../context/AuthContext";
 import { useIsBeta } from "../hooks/useIsBeta";
