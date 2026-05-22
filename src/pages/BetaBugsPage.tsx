@@ -205,14 +205,41 @@ export default function BetaBugsPage() {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Print da tela (opcional)</Label>
+          {screenshotPreview ? (
+            <div className="relative rounded-xl overflow-hidden border border-border">
+              <img src={screenshotPreview} alt="Preview" className="w-full max-h-64 object-contain bg-muted" />
+              <button
+                type="button"
+                onClick={() => handleFile(null)}
+                className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 active:scale-95"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-border bg-muted/40 py-4 cursor-pointer text-sm font-semibold text-muted-foreground hover:bg-muted/60">
+              <ImagePlus className="h-4 w-4" />
+              Anexar imagem
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0] || null)}
+              />
+            </label>
+          )}
+        </div>
+
         <Button
           onClick={handleCreate}
-          disabled={saving}
+          disabled={saving || uploading}
           className="w-full rounded-2xl font-bold"
           size="lg"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {saving ? "Salvando..." : "Catalogar bug"}
+          {uploading ? "Enviando imagem..." : saving ? "Salvando..." : "Catalogar bug"}
         </Button>
       </Card>
 
