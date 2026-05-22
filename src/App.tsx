@@ -23,6 +23,7 @@ import CaregiverDashboard from "./pages/CaregiverDashboard";
 import PharmaciesPage from "./pages/PharmaciesPage";
 import MedicationHistoryPage from "./pages/MedicationHistoryPage";
 import BetaBugsPage from "./pages/BetaBugsPage";
+import AdminBugsPage from "./pages/AdminBugsPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
 import TermsPage from "./pages/TermsPage";
@@ -134,6 +135,7 @@ const App = () => (
                           <Route path="/farmacias" element={<PharmaciesPage />} />
                           <Route path="/historico" element={<MedicationHistoryPage />} />
                           <Route path="/beta/bugs" element={<BetaBugsPage />} />
+                          <Route path="/admin/bugs" element={<AdminBugsPage />} />
 
                           <Route path="*" element={<NotFound />} />
                         </Routes>
