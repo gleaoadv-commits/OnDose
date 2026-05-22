@@ -100,6 +100,23 @@ export default function BetaBugsPage() {
       const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
       screenshot_url = pub.publicUrl;
     }
+    let audio_url: string | null = null;
+    if (audioBlob) {
+      setUploading(true);
+      const path = `${user.id}/audio-${Date.now()}.webm`;
+      const { error: upErr } = await supabase.storage
+        .from("bug-screenshots")
+        .upload(path, audioBlob, { upsert: false, contentType: audioBlob.type || "audio/webm" });
+      setUploading(false);
+      if (upErr) {
+        toast.error("Erro ao enviar áudio");
+        console.error(upErr);
+        setSaving(false);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
+      audio_url = pub.publicUrl;
+    }
     const { error } = await supabase.from("bug_reports" as any).insert({
       user_id: user.id,
       title: title.trim(),
@@ -107,6 +124,7 @@ export default function BetaBugsPage() {
       page: page.trim() || null,
       severity,
       screenshot_url,
+      audio_url,
     } as any);
     if (error) {
       toast.error("Erro ao registrar bug");
@@ -119,9 +137,48 @@ export default function BetaBugsPage() {
       setSeverity("medium");
       setScreenshot(null);
       setScreenshotPreview(null);
+      setAudioBlob(null);
+      setAudioPreview(null);
       load();
     }
     setSaving(false);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size > 10 * 1024 * 1024) {
+          toast.error("Áudio muito longo (máx 10MB)");
+        } else {
+          setAudioBlob(blob);
+          setAudioPreview(URL.createObjectURL(blob));
+        }
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível acessar o microfone");
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  };
+
+  const clearAudio = () => {
+    setAudioBlob(null);
+    setAudioPreview(null);
   };
 
   const handleFile = (f: File | null) => {
