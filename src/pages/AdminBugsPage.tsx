@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Bug, ShieldAlert, CheckCircle2, Clock, User } from "lucide-react";
+import { Bug, ShieldAlert, CheckCircle2, Clock, User, Check } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useIsAdmin } from "../hooks/useIsAdmin";
 import { Navigate } from "react-router-dom";
@@ -56,6 +56,21 @@ export default function AdminBugsPage() {
     }
     setBugs(rows.map((r) => ({ ...r, display_name: namesById[r.user_id] || null })));
     setLoading(false);
+  };
+
+  const resolveBug = async (id: string) => {
+    const { error } = await supabase
+      .from("bug_reports" as any)
+      .update({ status: "resolved", updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao resolver bug:", error);
+      return;
+    }
+    setBugs((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: "resolved" } : b))
+    );
   };
 
   useEffect(() => {
@@ -123,7 +138,7 @@ export default function AdminBugsPage() {
                 Em aberto ({open.length})
               </p>
               {open.map((bug) => (
-                <AdminBugCard key={bug.id} bug={bug} />
+                <AdminBugCard key={bug.id} bug={bug} onResolve={resolveBug} />
               ))}
             </div>
           )}
@@ -135,7 +150,7 @@ export default function AdminBugsPage() {
                 Resolvidos ({resolved.length})
               </p>
               {resolved.map((bug) => (
-                <AdminBugCard key={bug.id} bug={bug} />
+                <AdminBugCard key={bug.id} bug={bug} onResolve={resolveBug} />
               ))}
             </div>
           )}
@@ -151,7 +166,7 @@ export default function AdminBugsPage() {
   );
 }
 
-function AdminBugCard({ bug }: { bug: BugReport }) {
+function AdminBugCard({ bug, onResolve }: { bug: BugReport; onResolve?: (id: string) => void }) {
   const sev = SEVERITIES[bug.severity] || SEVERITIES.medium;
   const isResolved = bug.status !== "open";
   return (
@@ -173,9 +188,20 @@ function AdminBugCard({ bug }: { bug: BugReport }) {
             </p>
           )}
         </div>
-        <Badge className={`${sev.color} border-0 text-[10px] shrink-0`}>
-          {sev.label}
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0">
+          {!isResolved && onResolve && (
+            <button
+              onClick={() => onResolve(bug.id)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-600 text-white text-[11px] font-semibold active:scale-95 transition-transform"
+            >
+              <Check className="h-3 w-3" />
+              OK
+            </button>
+          )}
+          <Badge className={`${sev.color} border-0 text-[10px]`}>
+            {sev.label}
+          </Badge>
+        </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && (
