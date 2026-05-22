@@ -118,8 +118,11 @@ export default function TodaySchedule() {
                     <p className={`text-elder-sm font-extrabold ${event.taken ? "text-muted-foreground" : ""}`} style={{ color: event.taken ? undefined : event.color }}>
                       {timeStr}
                     </p>
-                    {isPast && !event.taken && (
+                    {isPast && !event.taken && !isMissed && (
                       <p className="text-xs font-bold text-destructive animate-pulse-soft">Atrasado</p>
+                    )}
+                    {isMissed && !event.taken && (
+                      <p className="text-xs font-bold text-muted-foreground">Perdida</p>
                     )}
                     {event.taken && event.takenAt && (
                       <p className="text-xs text-success font-semibold">
