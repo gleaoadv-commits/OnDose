@@ -58,6 +58,21 @@ export default function AdminBugsPage() {
     setLoading(false);
   };
 
+  const resolveBug = async (id: string) => {
+    const { error } = await supabase
+      .from("bug_reports" as any)
+      .update({ status: "resolved", updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao resolver bug:", error);
+      return;
+    }
+    setBugs((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: "resolved" } : b))
+    );
+  };
+
   useEffect(() => {
     if (isAdmin) load();
   }, [isAdmin]);
@@ -123,7 +138,7 @@ export default function AdminBugsPage() {
                 Em aberto ({open.length})
               </p>
               {open.map((bug) => (
-                <AdminBugCard key={bug.id} bug={bug} />
+                <AdminBugCard key={bug.id} bug={bug} onResolve={resolveBug} />
               ))}
             </div>
           )}
@@ -135,7 +150,7 @@ export default function AdminBugsPage() {
                 Resolvidos ({resolved.length})
               </p>
               {resolved.map((bug) => (
-                <AdminBugCard key={bug.id} bug={bug} />
+                <AdminBugCard key={bug.id} bug={bug} onResolve={resolveBug} />
               ))}
             </div>
           )}
