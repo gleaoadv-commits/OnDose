@@ -338,7 +338,7 @@ export default function BetaBugsPage() {
           size="lg"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {uploading ? "Enviando imagem..." : saving ? "Salvando..." : "Catalogar bug"}
+          {uploading ? "Enviando anexo..." : saving ? "Salvando..." : "Catalogar bug"}
         </Button>
       </Card>
 
