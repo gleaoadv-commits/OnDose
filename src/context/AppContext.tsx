@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency, getFrequencyDayStep } from "../types/medication";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "sonner";
+
+export const DOSE_MARK_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 interface AppState {
   medications: Medication[];
@@ -582,6 +585,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const markDoseTaken = useCallback(async (eventId: string) => {
     if (!user) return;
+    const event = schedule.find(e => e.id === eventId);
+    if (event && !event.taken) {
+      const scheduledMs = new Date(event.scheduledTime).getTime();
+      const ageMs = Date.now() - scheduledMs;
+      if (ageMs > DOSE_MARK_WINDOW_MS) {
+        toast.error("Dose expirada", {
+          description: "Esta dose passou de 12h de atraso e foi registrada como perdida. Não é mais possível marcá-la como tomada.",
+        });
+        return;
+      }
+    }
     const now = new Date().toISOString();
     await supabase.from("schedule_events").update({ taken: true, taken_at: now }).eq("id", eventId).eq("user_id", user.id);
 
@@ -591,7 +605,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSchedule(updatedSchedule);
 
     // Recalculate stock from total taken doses
-    const event = schedule.find(e => e.id === eventId);
     if (event) {
       await recalculateStock(event.medicationId, updatedSchedule);
     }

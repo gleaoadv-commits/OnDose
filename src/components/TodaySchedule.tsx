@@ -57,7 +57,9 @@ export default function TodaySchedule() {
       <div className="space-y-2.5">
         {todayEvents.map((event, i) => {
           const time = new Date(event.scheduledTime);
+          const ageMs = now.getTime() - time.getTime();
           const isPast = time < now && !event.taken;
+          const isMissed = isPast && ageMs > 12 * 60 * 60 * 1000;
           const med = medications.find(m => m.id === event.medicationId);
           const isInfrequent = med && INFREQUENT_FREQUENCIES.includes(med.frequency as MedicationFrequency);
           const showMotivational = isInfrequent && !event.taken && !isPast;
@@ -116,8 +118,11 @@ export default function TodaySchedule() {
                     <p className={`text-elder-sm font-extrabold ${event.taken ? "text-muted-foreground" : ""}`} style={{ color: event.taken ? undefined : event.color }}>
                       {timeStr}
                     </p>
-                    {isPast && !event.taken && (
+                    {isPast && !event.taken && !isMissed && (
                       <p className="text-xs font-bold text-destructive animate-pulse-soft">Atrasado</p>
+                    )}
+                    {isMissed && !event.taken && (
+                      <p className="text-xs font-bold text-muted-foreground">Perdida</p>
                     )}
                     {event.taken && event.takenAt && (
                       <p className="text-xs text-success font-semibold">
