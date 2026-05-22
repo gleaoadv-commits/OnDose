@@ -21,6 +21,7 @@ type BugReport = {
   severity: string;
   status: string;
   created_at: string;
+  screenshot_url?: string | null;
 };
 
 const SEVERITIES = [
