@@ -116,7 +116,7 @@ export default function AdminBugsPage() {
         </div>
       ) : (
         <>
-          {open.length > 1 && (
+          {open.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-destructive uppercase tracking-wider flex items-center gap-2">
                 <Bug className="h-3.5 w-3.5" />
@@ -128,7 +128,7 @@ export default function AdminBugsPage() {
             </div>
           )}
 
-          {resolved.length > 1 && (
+          {resolved.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export default function AdminBugsPage() {
             </div>
           )}
 
-          {bugs.length === 1 && (
+          {bugs.length === 0 && (
             <Card className="p-6 rounded-2xl text-center text-sm text-muted-foreground">
               Nenhum bug catalogado ainda.
             </Card>
