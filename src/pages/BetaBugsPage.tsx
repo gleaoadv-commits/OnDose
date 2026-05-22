@@ -6,7 +6,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bug, Plus, Trash2, CheckCircle2, RotateCcw } from "lucide-react";
+import { Bug, Plus, Trash2, CheckCircle2, RotateCcw, ImagePlus, X } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../context/AuthContext";
 import { useIsBeta } from "../hooks/useIsBeta";
@@ -21,6 +21,7 @@ type BugReport = {
   severity: string;
   status: string;
   created_at: string;
+  screenshot_url?: string | null;
 };
 
 const SEVERITIES = [
@@ -40,6 +41,9 @@ export default function BetaBugsPage() {
   const [page, setPage] = useState("");
   const [severity, setSeverity] = useState("medium");
   const [saving, setSaving] = useState(false);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -72,12 +76,31 @@ export default function BetaBugsPage() {
       return;
     }
     setSaving(true);
+    let screenshot_url: string | null = null;
+    if (screenshot) {
+      setUploading(true);
+      const ext = screenshot.name.split(".").pop() || "png";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("bug-screenshots")
+        .upload(path, screenshot, { upsert: false, contentType: screenshot.type });
+      setUploading(false);
+      if (upErr) {
+        toast.error("Erro ao enviar imagem");
+        console.error(upErr);
+        setSaving(false);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
+      screenshot_url = pub.publicUrl;
+    }
     const { error } = await supabase.from("bug_reports" as any).insert({
       user_id: user.id,
       title: title.trim(),
       description: description.trim() || null,
       page: page.trim() || null,
       severity,
+      screenshot_url,
     } as any);
     if (error) {
       toast.error("Erro ao registrar bug");
@@ -88,9 +111,25 @@ export default function BetaBugsPage() {
       setDescription("");
       setPage("");
       setSeverity("medium");
+      setScreenshot(null);
+      setScreenshotPreview(null);
       load();
     }
     setSaving(false);
+  };
+
+  const handleFile = (f: File | null) => {
+    if (!f) {
+      setScreenshot(null);
+      setScreenshotPreview(null);
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 5MB)");
+      return;
+    }
+    setScreenshot(f);
+    setScreenshotPreview(URL.createObjectURL(f));
   };
 
   const toggleStatus = async (bug: BugReport) => {
@@ -166,14 +205,41 @@ export default function BetaBugsPage() {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Print da tela (opcional)</Label>
+          {screenshotPreview ? (
+            <div className="relative rounded-xl overflow-hidden border border-border">
+              <img src={screenshotPreview} alt="Preview" className="w-full max-h-64 object-contain bg-muted" />
+              <button
+                type="button"
+                onClick={() => handleFile(null)}
+                className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 active:scale-95"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-border bg-muted/40 py-4 cursor-pointer text-sm font-semibold text-muted-foreground hover:bg-muted/60">
+              <ImagePlus className="h-4 w-4" />
+              Anexar imagem
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0] || null)}
+              />
+            </label>
+          )}
+        </div>
+
         <Button
           onClick={handleCreate}
-          disabled={saving}
+          disabled={saving || uploading}
           className="w-full rounded-2xl font-bold"
           size="lg"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {saving ? "Salvando..." : "Catalogar bug"}
+          {uploading ? "Enviando imagem..." : saving ? "Salvando..." : "Catalogar bug"}
         </Button>
       </Card>
 
@@ -227,6 +293,11 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
         </div>
         <Badge className={`${sev.color} border-0 text-[10px] shrink-0`}>{sev.label}</Badge>
       </div>
+      {bug.screenshot_url && (
+        <a href={bug.screenshot_url} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-border">
+          <img src={bug.screenshot_url} alt="Print do bug" className="w-full max-h-48 object-contain bg-muted" />
+        </a>
+      )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
         <span>{new Date(bug.created_at).toLocaleDateString("pt-BR")}</span>

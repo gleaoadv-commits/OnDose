@@ -15,6 +15,7 @@ type BugReport = {
   status: string;
   created_at: string;
   user_id: string;
+  screenshot_url?: string | null;
   display_name?: string | null;
 };
 
@@ -218,6 +219,20 @@ function AdminBugCard({ bug, onResolve }: { bug: BugReport; onResolve?: (id: str
           </span>
         )}
       </div>
+      {bug.screenshot_url && (
+        <a
+          href={bug.screenshot_url}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-xl overflow-hidden border border-border"
+        >
+          <img
+            src={bug.screenshot_url}
+            alt="Print do bug"
+            className="w-full max-h-64 object-contain bg-muted"
+          />
+        </a>
+      )}
     </Card>
   );
 }
