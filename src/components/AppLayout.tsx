@@ -15,6 +15,7 @@ const navItems = [
   { path: "/notificacoes", label: "Alertas", icon: Bell },
   { path: "/planos", label: "Pro", icon: Crown },
   { path: "/beta/bugs", label: "Beta", icon: Bug, requiresBeta: true },
+  { path: "/admin/bugs", label: "Admin", icon: ShieldAlert, requiresAdmin: true },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -110,7 +111,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 glass-nav z-30 pb-safe">
         <div className="max-w-2xl mx-auto flex">
           {navItems
-            .filter(item => (!item.requiresPlan || plan !== "free") && (!item.requiresBeta || isBeta))
+            .filter(item => (!item.requiresPlan || plan !== "free") && (!item.requiresBeta || isBeta) && (!item.requiresAdmin || isAdmin))
             .map(({ path, label, icon: Icon }) => {
             const isActive = location.pathname === path;
             const showBadge = path === "/notificacoes" && unreadCount > 0;
