@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Bug, ShieldAlert, CheckCircle2, Clock, User } from "lucide-react";
+import { Bug, ShieldAlert, CheckCircle2, Clock, User, Check } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useIsAdmin } from "../hooks/useIsAdmin";
 import { Navigate } from "react-router-dom";
