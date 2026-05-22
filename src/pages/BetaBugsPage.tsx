@@ -293,6 +293,11 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
         </div>
         <Badge className={`${sev.color} border-0 text-[10px] shrink-0`}>{sev.label}</Badge>
       </div>
+      {bug.screenshot_url && (
+        <a href={bug.screenshot_url} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-border">
+          <img src={bug.screenshot_url} alt="Print do bug" className="w-full max-h-48 object-contain bg-muted" />
+        </a>
+      )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
         <span>{new Date(bug.created_at).toLocaleDateString("pt-BR")}</span>
