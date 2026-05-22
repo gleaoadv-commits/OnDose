@@ -22,6 +22,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { notifications, plan } = useApp();
   const { isBeta } = useIsBeta();
+  const { isAdmin } = useIsAdmin();
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const unreadCount = notifications.filter(n => {
@@ -40,6 +41,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
             <OnDoseLogo size="md" theme="light" className="flex-1" />
+            {isAdmin && (
+              <Link
+                to="/admin/bugs"
+                className="text-white/50 hover:text-white hover:bg-white/10 rounded-xl p-2"
+                title="Painel de Bugs"
+              >
+                <ShieldAlert className="h-5 w-5" />
+              </Link>
+            )}
             {(plan === "pro" || plan === "premium") && (
               <Link
                 to="/relatorios"
