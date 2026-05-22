@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { Medication, ScheduleEvent, AppNotification, UserPlan, MEDICATION_COLORS, MedicationFrequency, getFrequencyDayStep } from "../types/medication";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "sonner";
+
+export const DOSE_MARK_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 interface AppState {
   medications: Medication[];
