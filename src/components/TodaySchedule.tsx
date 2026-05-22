@@ -57,7 +57,9 @@ export default function TodaySchedule() {
       <div className="space-y-2.5">
         {todayEvents.map((event, i) => {
           const time = new Date(event.scheduledTime);
+          const ageMs = now.getTime() - time.getTime();
           const isPast = time < now && !event.taken;
+          const isMissed = isPast && ageMs > 12 * 60 * 60 * 1000;
           const med = medications.find(m => m.id === event.medicationId);
           const isInfrequent = med && INFREQUENT_FREQUENCIES.includes(med.frequency as MedicationFrequency);
           const showMotivational = isInfrequent && !event.taken && !isPast;
