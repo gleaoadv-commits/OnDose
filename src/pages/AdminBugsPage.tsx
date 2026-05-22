@@ -16,6 +16,7 @@ type BugReport = {
   created_at: string;
   user_id: string;
   screenshot_url?: string | null;
+  audio_url?: string | null;
   display_name?: string | null;
 };
 
