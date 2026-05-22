@@ -15,6 +15,7 @@ const navItems = [
   { path: "/notificacoes", label: "Alertas", icon: Bell },
   { path: "/planos", label: "Pro", icon: Crown },
   { path: "/beta/bugs", label: "Beta", icon: Bug, requiresBeta: true },
+  { path: "/admin/bugs", label: "Admin", icon: ShieldAlert, requiresAdmin: true },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
