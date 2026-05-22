@@ -33,18 +33,28 @@ export default function AdminBugsPage() {
   const load = async () => {
     const { data, error } = await supabase
       .from("bug_reports" as any)
-      .select("*, profiles(display_name)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Erro ao carregar bugs:", error);
-    } else {
-      const normalized = (data as any[] || []).map((row: any) => ({
-        ...row,
-        display_name: row.profiles?.display_name || null,
-      }));
-      setBugs(normalized);
+      setLoading(false);
+      return;
     }
+
+    const rows = (data as any[]) || [];
+    const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+    let namesById: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", userIds);
+      (profs || []).forEach((p: any) => {
+        namesById[p.user_id] = p.display_name;
+      });
+    }
+    setBugs(rows.map((r) => ({ ...r, display_name: namesById[r.user_id] || null })));
     setLoading(false);
   };
 
