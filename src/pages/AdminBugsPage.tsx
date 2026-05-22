@@ -234,6 +234,9 @@ function AdminBugCard({ bug, onResolve }: { bug: BugReport; onResolve?: (id: str
           />
         </a>
       )}
+      {bug.audio_url && (
+        <audio src={bug.audio_url} controls className="w-full h-10" />
+      )}
     </Card>
   );
 }
