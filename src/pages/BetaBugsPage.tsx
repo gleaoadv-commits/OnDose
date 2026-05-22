@@ -295,6 +295,42 @@ export default function BetaBugsPage() {
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Áudio (opcional)</Label>
+          {audioPreview ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-2">
+              <audio src={audioPreview} controls className="flex-1 h-10" />
+              <button
+                type="button"
+                onClick={clearAudio}
+                className="bg-black/60 text-white rounded-full p-1.5 active:scale-95 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : recording ? (
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-destructive text-destructive-foreground py-4 text-sm font-bold active:scale-[0.98]"
+            >
+              <Square className="h-4 w-4 fill-current" />
+              Parar gravação
+              <span className="h-2 w-2 rounded-full bg-white/90 animate-pulse" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startRecording}
+              className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-border bg-muted/40 py-4 text-sm font-semibold text-muted-foreground hover:bg-muted/60"
+            >
+              <Mic className="h-4 w-4" />
+              Gravar áudio
+            </button>
+          )}
+        </div>
+
+
         <Button
           onClick={handleCreate}
           disabled={saving || uploading}
