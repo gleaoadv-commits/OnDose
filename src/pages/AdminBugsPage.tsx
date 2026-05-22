@@ -16,6 +16,7 @@ type BugReport = {
   created_at: string;
   user_id: string;
   screenshot_url?: string | null;
+  audio_url?: string | null;
   display_name?: string | null;
 };
 
@@ -232,6 +233,9 @@ function AdminBugCard({ bug, onResolve }: { bug: BugReport; onResolve?: (id: str
             className="w-full max-h-64 object-contain bg-muted"
           />
         </a>
+      )}
+      {bug.audio_url && (
+        <audio src={bug.audio_url} controls className="w-full h-10" />
       )}
     </Card>
   );

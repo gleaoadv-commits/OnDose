@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bug, Plus, Trash2, CheckCircle2, RotateCcw, ImagePlus, X } from "lucide-react";
+import { Bug, Plus, Trash2, CheckCircle2, RotateCcw, ImagePlus, X, Mic, Square } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../context/AuthContext";
 import { useIsBeta } from "../hooks/useIsBeta";
@@ -22,6 +22,7 @@ type BugReport = {
   status: string;
   created_at: string;
   screenshot_url?: string | null;
+  audio_url?: string | null;
 };
 
 const SEVERITIES = [
@@ -44,6 +45,11 @@ export default function BetaBugsPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioPreview, setAudioPreview] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   const load = async () => {
     if (!user) return;
@@ -94,6 +100,23 @@ export default function BetaBugsPage() {
       const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
       screenshot_url = pub.publicUrl;
     }
+    let audio_url: string | null = null;
+    if (audioBlob) {
+      setUploading(true);
+      const path = `${user.id}/audio-${Date.now()}.webm`;
+      const { error: upErr } = await supabase.storage
+        .from("bug-screenshots")
+        .upload(path, audioBlob, { upsert: false, contentType: audioBlob.type || "audio/webm" });
+      setUploading(false);
+      if (upErr) {
+        toast.error("Erro ao enviar áudio");
+        console.error(upErr);
+        setSaving(false);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("bug-screenshots").getPublicUrl(path);
+      audio_url = pub.publicUrl;
+    }
     const { error } = await supabase.from("bug_reports" as any).insert({
       user_id: user.id,
       title: title.trim(),
@@ -101,6 +124,7 @@ export default function BetaBugsPage() {
       page: page.trim() || null,
       severity,
       screenshot_url,
+      audio_url,
     } as any);
     if (error) {
       toast.error("Erro ao registrar bug");
@@ -113,9 +137,48 @@ export default function BetaBugsPage() {
       setSeverity("medium");
       setScreenshot(null);
       setScreenshotPreview(null);
+      setAudioBlob(null);
+      setAudioPreview(null);
       load();
     }
     setSaving(false);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size > 10 * 1024 * 1024) {
+          toast.error("Áudio muito longo (máx 10MB)");
+        } else {
+          setAudioBlob(blob);
+          setAudioPreview(URL.createObjectURL(blob));
+        }
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível acessar o microfone");
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  };
+
+  const clearAudio = () => {
+    setAudioBlob(null);
+    setAudioPreview(null);
   };
 
   const handleFile = (f: File | null) => {
@@ -232,6 +295,42 @@ export default function BetaBugsPage() {
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Áudio (opcional)</Label>
+          {audioPreview ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-2">
+              <audio src={audioPreview} controls className="flex-1 h-10" />
+              <button
+                type="button"
+                onClick={clearAudio}
+                className="bg-black/60 text-white rounded-full p-1.5 active:scale-95 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : recording ? (
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-destructive text-destructive-foreground py-4 text-sm font-bold active:scale-[0.98]"
+            >
+              <Square className="h-4 w-4 fill-current" />
+              Parar gravação
+              <span className="h-2 w-2 rounded-full bg-white/90 animate-pulse" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startRecording}
+              className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-border bg-muted/40 py-4 text-sm font-semibold text-muted-foreground hover:bg-muted/60"
+            >
+              <Mic className="h-4 w-4" />
+              Gravar áudio
+            </button>
+          )}
+        </div>
+
+
         <Button
           onClick={handleCreate}
           disabled={saving || uploading}
@@ -239,7 +338,7 @@ export default function BetaBugsPage() {
           size="lg"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {uploading ? "Enviando imagem..." : saving ? "Salvando..." : "Catalogar bug"}
+          {uploading ? "Enviando anexo..." : saving ? "Salvando..." : "Catalogar bug"}
         </Button>
       </Card>
 
@@ -297,6 +396,9 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
         <a href={bug.screenshot_url} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-border">
           <img src={bug.screenshot_url} alt="Print do bug" className="w-full max-h-48 object-contain bg-muted" />
         </a>
+      )}
+      {bug.audio_url && (
+        <audio src={bug.audio_url} controls className="w-full h-10" />
       )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
