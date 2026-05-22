@@ -27,8 +27,7 @@ export default function OverdueDoseAlert() {
 
   const overdueEvents = useMemo(() => {
     const now = new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000);
 
     const activeMedIds = new Set(
       medications.filter((m) => m.status === "ativo").map((m) => m.id)
@@ -38,7 +37,7 @@ export default function OverdueDoseAlert() {
       .filter((e) => {
         if (e.taken || dismissedIds.has(e.id)) return false;
         const d = new Date(e.scheduledTime);
-        return d >= today && d < now && activeMedIds.has(e.medicationId);
+        return d >= cutoff && d < now && activeMedIds.has(e.medicationId);
       })
       .sort(
         (a, b) =>
