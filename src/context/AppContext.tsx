@@ -605,7 +605,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSchedule(updatedSchedule);
 
     // Recalculate stock from total taken doses
-    const event = schedule.find(e => e.id === eventId);
     if (event) {
       await recalculateStock(event.medicationId, updatedSchedule);
     }
