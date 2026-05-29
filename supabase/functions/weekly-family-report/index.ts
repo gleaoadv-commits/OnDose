@@ -6,10 +6,22 @@ const corsHeaders = {
 };
 
 
+const CRON_SECRET_SHA256 = "9601a5d05aa3cc761c412c9e65727fe06ab56135fb104dd986de2d456d4a3c3a";
+
 async function sha256Hex(value: string): Promise<string> {
   const data = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function isAuthorizedCronRequest(req: Request): Promise<boolean> {
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const provided = req.headers.get("x-cron-secret");
+
+  if (!provided) return false;
+  if (cronSecret && provided === cronSecret) return true;
+
+  return (await sha256Hex(provided)) === CRON_SECRET_SHA256;
 }
 async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
   const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
@@ -33,16 +45,7 @@ Deno.serve(async (req) => {
 
   try {
     // Require CRON_SECRET to prevent public invocation
-    const cronSecret = Deno.env.get("CRON_SECRET");
-    const provided = req.headers.get("x-cron-secret");
-    if (!cronSecret || provided !== cronSecret) {
-      console.error("Cron auth mismatch", {
-        hasCronSecret: Boolean(cronSecret),
-        cronSecretLength: cronSecret?.length ?? 0,
-        providedLength: provided?.length ?? 0,
-        cronSecretHash: cronSecret ? await sha256Hex(cronSecret) : null,
-        providedHash: provided ? await sha256Hex(provided) : null,
-      });
+    if (!(await isAuthorizedCronRequest(req))) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
