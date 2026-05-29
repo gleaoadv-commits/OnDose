@@ -83,14 +83,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { to, userName, medicationName, dosage } = await req.json();
 
-    if (!to || !userName || !medicationName || !dosage) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: to, userName, medicationName, dosage" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     let phone = to.replace(/\D/g, "").replace(/^0+/, "");
     if (!phone.startsWith("55") && phone.length <= 11) {
