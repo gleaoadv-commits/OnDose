@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -30,12 +32,55 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
     const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
     const ZAPI_CLIENT_TOKEN = Deno.env.get("ZAPI_CLIENT_TOKEN");
 
     if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN || !ZAPI_CLIENT_TOKEN) {
       throw new Error("Z-API credentials (ZAPI_INSTANCE_ID / ZAPI_TOKEN / ZAPI_CLIENT_TOKEN) not configured");
+    }
+
+    const { to, userName, medicationName, dosage } = await req.json();
+
+    if (!to || !userName || !medicationName || !dosage) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: to, userName, medicationName, dosage" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify that the target phone belongs to the authenticated user
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("whatsapp_number")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const normTarget = String(to).replace(/\D/g, "").replace(/^0+/, "").replace(/^55/, "");
+    const normProfile = String(profile?.whatsapp_number || "").replace(/\D/g, "").replace(/^0+/, "").replace(/^55/, "");
+    if (!normProfile || normProfile !== normTarget) {
+      return new Response(JSON.stringify({ error: "Phone number does not match authenticated user" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { to, userName, medicationName, dosage } = await req.json();
