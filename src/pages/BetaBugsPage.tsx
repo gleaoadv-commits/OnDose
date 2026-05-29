@@ -415,7 +415,18 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
         </a>
       )}
       {bug.audio_url && (
-        <audio src={bug.audio_url} controls className="w-full h-10" />
+        <div className="space-y-1">
+          <audio src={bug.audio_url} controls preload="metadata" className="w-full h-10" />
+          <a
+            href={bug.audio_url}
+            target="_blank"
+            rel="noreferrer"
+            download
+            className="block text-[11px] text-primary underline"
+          >
+            Não tocou? Abrir/baixar áudio
+          </a>
+        </div>
       )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
