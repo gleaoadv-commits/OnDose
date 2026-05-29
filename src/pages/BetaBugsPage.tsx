@@ -103,7 +103,8 @@ export default function BetaBugsPage() {
     let audio_url: string | null = null;
     if (audioBlob) {
       setUploading(true);
-      const path = `${user.id}/audio-${Date.now()}.webm`;
+      const ext = (audioBlob.type.includes("mp4") || audioBlob.type.includes("aac")) ? "m4a" : "webm";
+      const path = `${user.id}/audio-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("bug-screenshots")
         .upload(path, audioBlob, { upsert: false, contentType: audioBlob.type || "audio/webm" });
@@ -144,16 +145,32 @@ export default function BetaBugsPage() {
     setSaving(false);
   };
 
+  const pickMimeType = () => {
+    const candidates = [
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/aac",
+      "audio/webm;codecs=opus",
+      "audio/webm",
+    ];
+    for (const t of candidates) {
+      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(t)) return t;
+    }
+    return "";
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      const mimeType = pickMimeType();
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const type = mr.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type });
         if (blob.size > 10 * 1024 * 1024) {
           toast.error("Áudio muito longo (máx 10MB)");
         } else {
@@ -398,7 +415,18 @@ function BugCard({ bug, onToggle, onDelete }: { bug: BugReport; onToggle: (b: Bu
         </a>
       )}
       {bug.audio_url && (
-        <audio src={bug.audio_url} controls className="w-full h-10" />
+        <div className="space-y-1">
+          <audio src={bug.audio_url} controls preload="metadata" className="w-full h-10" />
+          <a
+            href={bug.audio_url}
+            target="_blank"
+            rel="noreferrer"
+            download
+            className="block text-[11px] text-primary underline"
+          >
+            Não tocou? Abrir/baixar áudio
+          </a>
+        </div>
       )}
       <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
         {bug.page && <span className="px-2 py-0.5 bg-muted rounded-full">{bug.page}</span>}
