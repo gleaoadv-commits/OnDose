@@ -103,7 +103,8 @@ export default function BetaBugsPage() {
     let audio_url: string | null = null;
     if (audioBlob) {
       setUploading(true);
-      const path = `${user.id}/audio-${Date.now()}.webm`;
+      const ext = (audioBlob.type.includes("mp4") || audioBlob.type.includes("aac")) ? "m4a" : "webm";
+      const path = `${user.id}/audio-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("bug-screenshots")
         .upload(path, audioBlob, { upsert: false, contentType: audioBlob.type || "audio/webm" });
