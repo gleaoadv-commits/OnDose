@@ -1,16 +1,38 @@
 import { useMemo } from "react";
 import { Card } from "../components/ui/card";
 import { Flame, TrendingUp, CheckCircle2, XCircle } from "lucide-react";
-import { ScheduleEvent } from "../types/medication";
+import { ScheduleEvent, Medication } from "../types/medication";
 
 interface AdherenceStatsProps {
   schedule: ScheduleEvent[];
+  medications?: Medication[];
 }
 
-export default function AdherenceStats({ schedule }: AdherenceStatsProps) {
+export default function AdherenceStats({ schedule, medications = [] }: AdherenceStatsProps) {
   const { streak, weeklyRate, weekDays } = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Only count doses tied to currently-active medications, and within their active window.
+    // Medications that were encerrado (ended/expired) or inativo_plano should NOT contribute
+    // to the weekly adherence — their old scheduled events would otherwise show up as missed.
+    const medById = new Map(medications.map(m => [m.id, m]));
+    const isCountableEvent = (e: ScheduleEvent) => {
+      const med = medById.get(e.medicationId);
+      if (!med) return false;
+      if (med.status === "encerrado" || med.status === "inativo_plano") return false;
+      const eDate = new Date(e.scheduledTime);
+      if (med.endDate) {
+        const end = new Date(med.endDate + "T23:59:59");
+        if (eDate > end) return false;
+      }
+      if (med.startDate) {
+        const start = new Date(med.startDate + "T00:00:00");
+        if (eDate < start) return false;
+      }
+      return true;
+    };
+    const countableSchedule = medications.length > 0 ? schedule.filter(isCountableEvent) : schedule;
 
     // --- Weekly summary (last 7 days including today) ---
     const weekDays: { label: string; taken: number; total: number; date: Date }[] = [];
@@ -19,7 +41,7 @@ export default function AdherenceStats({ schedule }: AdherenceStatsProps) {
       d.setDate(d.getDate() - i);
       const dayStart = new Date(d).toISOString().slice(0, 10);
 
-      const dayEvents = schedule.filter(e => {
+      const dayEvents = countableSchedule.filter(e => {
         const eDate = new Date(e.scheduledTime);
         return eDate.toISOString().slice(0, 10) === dayStart && new Date(e.scheduledTime) <= now;
       });
@@ -43,18 +65,17 @@ export default function AdherenceStats({ schedule }: AdherenceStatsProps) {
       d.setDate(d.getDate() - i);
       const dayStr = d.toISOString().slice(0, 10);
 
-      const dayEvents = schedule.filter(e => {
+      const dayEvents = countableSchedule.filter(e => {
         return new Date(e.scheduledTime).toISOString().slice(0, 10) === dayStr;
       });
 
-      if (dayEvents.length === 0) break; // no doses scheduled = streak ends
+      if (dayEvents.length === 0) break;
       const allTaken = dayEvents.every(e => e.taken);
       if (!allTaken) break;
       streak++;
     }
 
-    // Also count today if all scheduled (past) doses are taken
-    const todayEvents = schedule.filter(e => {
+    const todayEvents = countableSchedule.filter(e => {
       const eDate = new Date(e.scheduledTime);
       return eDate.toISOString().slice(0, 10) === today.toISOString().slice(0, 10) && eDate <= now;
     });
@@ -63,7 +84,7 @@ export default function AdherenceStats({ schedule }: AdherenceStatsProps) {
     }
 
     return { streak, weeklyRate, weekDays };
-  }, [schedule]);
+  }, [schedule, medications]);
 
   if (weeklyRate === null && streak === 0) return null;
 
