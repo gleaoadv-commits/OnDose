@@ -32,6 +32,17 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate webhook source: Z-API can be configured to send a security token
+    // in the "client-token" header. Require it to match our env to prevent spoofing.
+    const WEBHOOK_SECRET = Deno.env.get("ZAPI_WEBHOOK_TOKEN") || Deno.env.get("ZAPI_CLIENT_TOKEN");
+    const providedToken = req.headers.get("client-token") || req.headers.get("x-webhook-token");
+    if (!WEBHOOK_SECRET || providedToken !== WEBHOOK_SECRET) {
+      console.error("Webhook source validation failed");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);

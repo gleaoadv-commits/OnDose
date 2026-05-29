@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Credential files (NEVER commit)
+keys.json
+keys2.json
+keys3.json
+new_api_keys.json
+api_keys.txt
+projects.json
+projects.txt
+*.pem
