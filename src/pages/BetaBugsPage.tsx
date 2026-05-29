@@ -144,16 +144,32 @@ export default function BetaBugsPage() {
     setSaving(false);
   };
 
+  const pickMimeType = () => {
+    const candidates = [
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/aac",
+      "audio/webm;codecs=opus",
+      "audio/webm",
+    ];
+    for (const t of candidates) {
+      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(t)) return t;
+    }
+    return "";
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      const mimeType = pickMimeType();
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const type = mr.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type });
         if (blob.size > 10 * 1024 * 1024) {
           toast.error("Áudio muito longo (máx 10MB)");
         } else {
