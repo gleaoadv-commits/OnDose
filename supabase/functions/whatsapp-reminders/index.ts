@@ -6,6 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+
+async function sha256Hex(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 async function sendZAPIMessage(instanceId: string, token: string, clientToken: string, to: string, body: string) {
   const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
   const response = await fetch(url, {
@@ -90,6 +96,13 @@ Deno.serve(async (req) => {
     const cronSecret = Deno.env.get("CRON_SECRET");
     const provided = req.headers.get("x-cron-secret");
     if (!cronSecret || provided !== cronSecret) {
+      console.error("Cron auth mismatch", {
+        hasCronSecret: Boolean(cronSecret),
+        cronSecretLength: cronSecret?.length ?? 0,
+        providedLength: provided?.length ?? 0,
+        cronSecretHash: cronSecret ? await sha256Hex(cronSecret) : null,
+        providedHash: provided ? await sha256Hex(provided) : null,
+      });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
