@@ -262,7 +262,7 @@ export default function Dashboard() {
       )}
 
       {/* Adherence streak + weekly summary */}
-      {schedule.length > 0 && <AdherenceStats schedule={schedule} />}
+      {schedule.length > 0 && <AdherenceStats schedule={schedule} medications={medications} />}
 
       {/* Support button */}
       <a href="https://wa.me/553131579232" target="_blank" rel="noopener noreferrer">
