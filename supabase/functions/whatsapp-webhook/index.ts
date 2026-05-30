@@ -32,12 +32,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate webhook source: Z-API can be configured to send a security token
-    // in the "client-token" header. Require it to match our env to prevent spoofing.
+    // Validate webhook source. Z-API may send the security token via header
+    // ("client-token" / "x-webhook-token") OR via query string (?token=...).
     const WEBHOOK_SECRET = Deno.env.get("ZAPI_WEBHOOK_TOKEN") || Deno.env.get("ZAPI_CLIENT_TOKEN");
-    const providedToken = req.headers.get("client-token") || req.headers.get("x-webhook-token");
+    const url = new URL(req.url);
+    const providedToken =
+      req.headers.get("client-token") ||
+      req.headers.get("x-webhook-token") ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      url.searchParams.get("token");
+
     if (!WEBHOOK_SECRET || providedToken !== WEBHOOK_SECRET) {
-      console.error("Webhook source validation failed");
+      // Diagnostic: log incoming headers (without leaking the secret) so we can
+      // see what Z-API is actually sending and align configuration.
+      const headerDump: Record<string, string> = {};
+      req.headers.forEach((v, k) => {
+        if (["authorization", "client-token", "x-webhook-token", "apikey"].includes(k.toLowerCase())) {
+          headerDump[k] = v ? `${v.slice(0, 4)}...(${v.length})` : "";
+        } else {
+          headerDump[k] = v;
+        }
+      });
+      console.error("Webhook source validation failed", JSON.stringify({
+        hasSecret: !!WEBHOOK_SECRET,
+        providedTokenPresent: !!providedToken,
+        queryKeys: [...url.searchParams.keys()],
+        headers: headerDump,
+      }));
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
