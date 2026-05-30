@@ -22,9 +22,11 @@ async function sendZAPIMessage(instanceId: string, token: string, clientToken: s
   const result = await response.json();
   if (!response.ok) {
     console.error("Z-API send error:", JSON.stringify(result));
+    return { ok: false, result };
   }
-  return result;
+  return { ok: true, result };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
