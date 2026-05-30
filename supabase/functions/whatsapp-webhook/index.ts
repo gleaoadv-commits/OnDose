@@ -197,8 +197,9 @@ Deno.serve(async (req) => {
           }
 
           if (shouldSend) {
-            await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
-            if (expiredIds.length > 0) {
+            const sendResult = await sendZAPIMessage(ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN, cleanPhone, TOO_LATE_MSG);
+            // Only mark as notified if the message was actually delivered.
+            if (sendResult.ok && expiredIds.length > 0) {
               await supabase
                 .from("schedule_events")
                 .update({ too_late_notified: true })
