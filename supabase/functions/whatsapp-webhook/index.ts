@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
     const WEBHOOK_SECRET = Deno.env.get("ZAPI_WEBHOOK_TOKEN") || Deno.env.get("ZAPI_CLIENT_TOKEN");
     const url = new URL(req.url);
     const providedToken =
+      req.headers.get("z-api-token") ||
       req.headers.get("client-token") ||
       req.headers.get("x-webhook-token") ||
       req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
