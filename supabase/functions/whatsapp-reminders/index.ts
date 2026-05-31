@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+// Redeploy trigger to refresh ZAPI_CLIENT_TOKEN env
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
